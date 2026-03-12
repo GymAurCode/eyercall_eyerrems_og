@@ -125,13 +125,13 @@ export default function SalesPage() {
             <h3 className="text-lg font-semibold mb-4">Sales Trend</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="month" stroke="var(--muted-foreground)" />
+                <YAxis stroke="var(--muted-foreground)" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                   }}
                 />
@@ -184,7 +184,15 @@ export default function SalesPage() {
                       {sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : "N/A"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={sale.status === "Completed" || sale.status === "completed" ? "default" : "secondary"}>
+                      <Badge
+                        variant={
+                          sale.status === "Completed" || sale.status === "completed"
+                            ? "success"
+                            : sale.status === "Cancelled" || sale.status === "cancelled"
+                              ? "destructive"
+                              : "warning"
+                        }
+                      >
                         {sale.status || "Pending"}
                       </Badge>
                     </TableCell>

@@ -13,13 +13,13 @@ export default function NotificationCenter() {
 
   const markAllRead = async () => {
     if (unread.length === 0) return
-    await markRead.mutateAsync(unread.map((n) => n.id))
+    await markRead.mutateAsync(unread.map((n: any) => n.id))
   }
 
   const source = unreadOnly ? unread : notifications
   const filtered = useMemo(() => {
     const base = source
-    const byChannel = channel === "all" ? base : base.filter((n) => String((n as any).channel || "").toLowerCase() === channel)
+    const byChannel = channel === "all" ? base : base.filter((n: any) => String((n as any).channel || "").toLowerCase() === channel)
     return byChannel
   }, [source, channel])
 

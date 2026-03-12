@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Building2, Users, DollarSign, TrendingUp, UserCheck, FileText, AlertCircle, Loader2, Home, RefreshCw, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AnimatedCounter } from "@/components/ui/animated-counter"
 import {
   BarChart,
   Bar,
@@ -31,7 +32,17 @@ import { Badge } from "@/components/ui/badge"
 
 export function DashboardOverview() {
   const [openDialog, setOpenDialog] = useState<string | null>(null)
-  const [stats, setStats] = useState<any[]>([])
+  const [topStats, setTopStats] = useState<
+    Array<{
+      label: string
+      value: number
+      deltaLabel: string
+      deltaType: "positive" | "negative" | "neutral"
+      icon: any
+      gradient: string
+    }>
+  >([])
+
   const [revenueData, setRevenueData] = useState<any[]>([])
   const [propertyTypeData, setPropertyTypeData] = useState<any[]>([])
   const [occupancyData, setOccupancyData] = useState<any[]>([])
@@ -51,7 +62,7 @@ export function DashboardOverview() {
       } else {
         setLoading(true)
       }
-      
+
       // Fetch stats from API
       const [propertiesStats, hrStats, crmStats, financeStats, salesResponse, leasesResponse, revenueExpenseResponse] = await Promise.all([
         apiService.stats.getPropertiesStats().catch(() => ({ data: {} })),
@@ -81,112 +92,82 @@ export function DashboardOverview() {
       // - Other income transactions
       const unitRevenue = propsData.monthlyRevenue || 0 // Fallback: unit rent only
       const financeMonthlyRevenue = financeData.monthlyRevenue || 0 // Primary: all income from finance ledger
-      
+
       // Use finance stats data (includes rent + sale revenue calculations)
       const totalRevenue = financeData.totalRevenue || 0
       const totalProfit = financeData.totalProfit || 0
-      
+
       // Additional revenue breakdown for display (informational only)
       const now = new Date()
       const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
       const endOfCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
-      
+
       // Calculate sales revenue this month (for verification/display)
       const salesThisMonth = Array.isArray(salesData)
         ? salesData.filter((s: any) => {
-            const saleDate = s.saleDate ? new Date(s.saleDate) : null
-            const isCompleted = s.status === "Completed" || s.status === "completed"
-            const isThisMonth = saleDate && saleDate >= startOfCurrentMonth && saleDate <= endOfCurrentMonth
-            return isCompleted && isThisMonth
-          })
+          const saleDate = s.saleDate ? new Date(s.saleDate) : null
+          const isCompleted = s.status === "Completed" || s.status === "completed"
+          const isThisMonth = saleDate && saleDate >= startOfCurrentMonth && saleDate <= endOfCurrentMonth
+          return isCompleted && isThisMonth
+        })
         : []
       const salesRevenueThisMonth = salesThisMonth.reduce((sum: number, s: any) => sum + (parseFloat(s.saleValue) || 0), 0)
-      
+
       // Commissions this month (for verification/display)
       const commissionsThisMonth = financeData.commissionsThisMonth || 0
 
       // Calculate properties and tenants added this month from change strings
       const propertiesChangeStr = propsData.propertiesChange || "+0 this month"
       const propertiesThisMonth = parseInt(propertiesChangeStr.match(/\+(\d+)/)?.[1] || "0") || 0
-      
+
       const tenantsChangeStr = propsData.tenantsChange || "+0 this month"
       const tenantsThisMonth = parseInt(tenantsChangeStr.match(/\+(\d+)/)?.[1] || "0") || 0
 
-      // Set comprehensive stats
-      setStats([
+      const clientsTotal = Number((crmData as any).totalClients ?? (crmData as any).totalCustomers ?? (crmData as any).clients ?? 0) || 0
+      const clientsDeltaStr = String((crmData as any).clientsChange ?? (crmData as any).customersChange ?? "+0 this month")
+      const clientsThisMonth = parseInt(clientsDeltaStr.match(/\+(\d+)/)?.[1] || "0") || 0
+
+      const totalSales = Array.isArray(salesData) ? salesData.length : 0
+      const completedSales = Array.isArray(salesData)
+        ? salesData.filter((s: any) => s.status === "Completed" || s.status === "completed").length
+        : 0
+
+      setTopStats([
         {
-          name: "Total Properties",
-          value: propsData.totalProperties?.toString() || "0",
-          change: propsData.propertiesChange || "+0 this month",
-          changeType: propertiesThisMonth > 0 ? "positive" : "neutral",
+          label: "Total Properties",
+          value: Number(propsData.totalProperties) || 0,
+          deltaLabel: propsData.propertiesChange || "+0 this month",
+          deltaType: propertiesThisMonth > 0 ? "positive" : "neutral",
           icon: Building2,
-          href: "/details/properties",
+          gradient: "from-violet-600 via-indigo-600 to-sky-500",
         },
         {
-          name: "Total Units",
-          value: propsData.totalUnits?.toString() || "0",
-          change: `${propsData.occupiedUnits || 0} occupied, ${propsData.vacantUnits || 0} vacant`,
-          changeType: "neutral",
-          icon: Home,
-          href: "/details/units",
-        },
-        {
-          name: "Occupied Units",
-          value: propsData.occupiedUnits?.toString() || "0",
-          change: propsData.occupancyRate ? `${propsData.occupancyRate}% occupancy` : "0% occupancy",
-          changeType: "positive",
-          icon: TrendingUp,
-          href: "/details/occupied-units",
-        },
-        {
-          name: "Vacant Units",
-          value: propsData.vacantUnits?.toString() || "0",
-          change: propsData.vacancyRate ? `${propsData.vacancyRate}% vacancy` : "0% vacancy",
-          changeType: "neutral",
-          icon: Home,
-          href: "/details/vacant-units",
-        },
-        {
-          name: "Active Tenants",
-          value: propsData.totalTenants?.toLocaleString() || "0",
-          change: propsData.tenantsChange || "+0 this month",
-          changeType: tenantsThisMonth > 0 ? "positive" : "neutral",
+          label: "Total Clients",
+          value: clientsTotal,
+          deltaLabel: clientsDeltaStr,
+          deltaType: clientsThisMonth > 0 ? "positive" : "neutral",
           icon: Users,
-          href: "/details/tenants",
+          gradient: "from-fuchsia-600 via-pink-600 to-rose-500",
         },
         {
-          name: "Total Revenue",
-          value: totalRevenue >= 1000000 
-            ? `Rs ${(totalRevenue / 1000000).toFixed(1)}M`
-            : totalRevenue >= 1000 
-            ? `Rs ${(totalRevenue / 1000).toFixed(0)}K`
-            : `Rs ${Math.round(totalRevenue).toLocaleString()}`,
-          change: "Rent + Sale (from payments & transactions)",
-          changeType: totalRevenue > 0 ? "positive" : "neutral",
+          label: "Total Sales",
+          value: totalSales,
+          deltaLabel: `${completedSales} completed`,
+          deltaType: completedSales > 0 ? "positive" : "neutral",
+          icon: TrendingUp,
+          gradient: "from-amber-500 via-orange-500 to-rose-500",
+        },
+        {
+          label: "Total Revenue",
+          value: Number(totalRevenue) || 0,
+          deltaLabel: "Rent + Sales",
+          deltaType: totalRevenue > 0 ? "positive" : "neutral",
           icon: DollarSign,
-          href: "/details/revenue",
-        },
-        {
-          name: "Total Profit",
-          value: totalProfit >= 1000000 
-            ? `Rs ${(totalProfit / 1000000).toFixed(1)}M`
-            : totalProfit >= 1000 
-            ? `Rs ${(totalProfit / 1000).toFixed(0)}K`
-            : `Rs ${Math.round(totalProfit).toLocaleString()}`,
-          change: "Rent Profit + Sale Profit",
-          changeType: totalProfit > 0 ? "positive" : "negative",
-          icon: TrendingUp,
-          href: "/details/revenue",
-        },
-        {
-          name: "Occupancy Rate",
-          value: propsData.occupancyRate ? `${propsData.occupancyRate}%` : "0%",
-          change: propsData.occupancyChange || "+0%",
-          changeType: propsData.occupancyRate && propsData.occupancyRate > 50 ? "positive" : "neutral",
-          icon: TrendingUp,
-          href: "/details/occupancy",
+          gradient: "from-teal-500 via-emerald-500 to-lime-500",
         },
       ])
+
+
 
       // Use actual revenue vs expense data if available, otherwise generate from current data
       let revenueTrendData = []
@@ -203,16 +184,16 @@ export function DashboardOverview() {
         const monthlyRevenueValue = financeData.monthlyRevenue || 0
         const monthlyExpensesValue = financeData.monthlyExpenses || 0
         const monthlyProfitValue = financeData.monthlyProfit || 0
-        
+
         for (let i = 11; i >= 0; i--) {
           const monthDate = new Date(nowDate.getFullYear(), nowDate.getMonth() - i, 1)
           const monthLabel = monthDate.toLocaleString('default', { month: 'short', year: 'numeric' })
-          
+
           // Use current month's actual data for the latest month, estimate for others
           const monthRevenue = i === 11 ? monthlyRevenueValue : monthlyRevenueValue * (0.85 + Math.random() * 0.3)
           const monthExpenses = i === 11 ? monthlyExpensesValue : monthlyExpensesValue * (0.85 + Math.random() * 0.3)
           const monthProfit = i === 11 ? monthlyProfitValue : monthRevenue - monthExpenses
-          
+
           revenueTrendData.push({
             month: monthLabel,
             revenue: Math.round(monthRevenue),
@@ -235,20 +216,20 @@ export function DashboardOverview() {
       const properties = propertiesResponse.data?.data || propertiesResponse.data || []
       const occupancyByProperty = Array.isArray(properties)
         ? properties
-            .filter((p: any) => p.type !== 'house' && (p.units || p._count?.units || 0) > 0)
-            .slice(0, 10) // Top 10 properties
-            .map((p: any) => {
-              const totalUnits = p.units || p._count?.units || 0
-              const occupied = p.occupied || 0
-              const occupancyRate = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0
-              return {
-                property: p.name || 'Unknown',
-                occupancy: occupancyRate,
-                totalUnits,
-                occupiedUnits: occupied,
-              }
-            })
-            .sort((a: any, b: any) => b.occupancy - a.occupancy)
+          .filter((p: any) => p.type !== 'house' && (p.units || p._count?.units || 0) > 0)
+          .slice(0, 10) // Top 10 properties
+          .map((p: any) => {
+            const totalUnits = p.units || p._count?.units || 0
+            const occupied = p.occupied || 0
+            const occupancyRate = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0
+            return {
+              property: p.name || 'Unknown',
+              occupancy: occupancyRate,
+              totalUnits,
+              occupiedUnits: occupied,
+            }
+          })
+          .sort((a: any, b: any) => b.occupancy - a.occupancy)
         : []
       setOccupancyData(occupancyByProperty)
 
@@ -275,16 +256,7 @@ export function DashboardOverview() {
     } catch (err) {
       console.error("Failed to fetch dashboard data:", err)
       // Set empty defaults
-      setStats([
-        { name: "Total Properties", value: "0", change: "+0 this month", changeType: "neutral", icon: Building2, href: "/details/properties" },
-        { name: "Total Units", value: "0", change: "0 occupied, 0 vacant", changeType: "neutral", icon: Home, href: "/details/units" },
-        { name: "Occupied Units", value: "0", change: "0% occupancy", changeType: "neutral", icon: TrendingUp, href: "/details/occupied-units" },
-        { name: "Vacant Units", value: "0", change: "0% vacancy", changeType: "neutral", icon: Home, href: "/details/vacant-units" },
-        { name: "Active Tenants", value: "0", change: "+0 this month", changeType: "neutral", icon: Users, href: "/details/tenants" },
-        { name: "Monthly Revenue", value: "Rs 0", change: "+0%", changeType: "neutral", icon: DollarSign, href: "/details/revenue" },
-        { name: "Monthly Profit", value: "Rs 0", change: "No expenses", changeType: "neutral", icon: TrendingUp, href: "/details/revenue" },
-        { name: "Occupancy Rate", value: "0%", change: "+0%", changeType: "neutral", icon: TrendingUp, href: "/details/occupancy" },
-      ])
+
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -331,60 +303,63 @@ export function DashboardOverview() {
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.length === 0 ? (
-            // Empty state
-            <Card className="p-6 md:col-span-2 lg:col-span-4">
-              <div className="text-center py-8">
-                <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">No Data Available</h3>
-                <p className="text-sm text-muted-foreground mb-4">Start by adding your first property to see dashboard metrics.</p>
-                <Button onClick={() => setOpenDialog("property")}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Property
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            stats.map((stat) => (
-            <Card
-              key={stat.name}
-              className="p-6 cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => {
-                if (stat.href) {
-                  router.push(stat.href)
-                } else {
-                  // Fallback navigation
-                  if (stat.name === "Total Properties") router.push("/details/properties")
-                  if (stat.name === "Active Tenants") router.push("/details/tenants")
-                  if (stat.name === "Monthly Revenue" || stat.name === "Monthly Profit") router.push("/details/revenue")
-                  if (stat.name === "Occupancy Rate") router.push("/details/occupancy")
-                  if (stat.name.includes("Units")) router.push("/details/units")
-                }
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <stat.icon className="h-6 w-6 text-primary" />
-                </div>
-                <span
+        <div className="space-y-6">
+          {/* Premium KPI cards (top 4) */}
+          {topStats.length > 0 && (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {topStats.map((s) => (
+                <Card
+                  key={s.label}
                   className={cn(
-                    "text-xs font-medium px-2 py-1 rounded",
-                    stat.changeType === "positive" ? "text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950" :
-                    stat.changeType === "negative" ? "text-red-700 bg-red-50 dark:text-red-400 dark:bg-red-950" :
-                    "text-muted-foreground bg-muted"
+                    "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)]",
                   )}
                 >
-                  {stat.change}
-                </span>
-              </div>
-              <div className="mt-4">
-                <p className="text-sm font-medium text-muted-foreground">{stat.name}</p>
-                <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-              </div>
-            </Card>
-            ))
+                  <div className={cn("absolute inset-0 bg-gradient-to-br", s.gradient)} />
+                  <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+                  <div className="relative p-6 text-white">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                        <s.icon className="h-5 w-5 text-white" />
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                          s.deltaType === "positive" && "bg-emerald-400/15",
+                          s.deltaType === "negative" && "bg-rose-400/15",
+                        )}
+                      >
+                        {s.deltaLabel}
+                      </span>
+                    </div>
+                    <div className="mt-6">
+                      <p className="text-sm font-semibold/relaxed text-white/85">{s.label}</p>
+                      <p className="mt-1 text-3xl font-bold tracking-tight">
+                        {s.label === "Total Revenue" ? (
+                          <>
+                            Rs{" "}
+                            <AnimatedCounter
+                              value={s.value}
+                              format={(n) => {
+                                const v = Math.round(n)
+                                if (v >= 10000000) return `${(v / 10000000).toFixed(2)}Cr`
+                                if (v >= 100000) return `${(v / 100000).toFixed(1)}L`
+                                if (v >= 1000) return `${(v / 1000).toFixed(1)}K`
+                                return v.toLocaleString()
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <AnimatedCounter value={s.value} />
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           )}
+
+
         </div>
       )}
 
@@ -402,14 +377,14 @@ export function DashboardOverview() {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="month" 
-                  stroke="hsl(var(--muted-foreground))"
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  dataKey="month"
+                  stroke="var(--muted-foreground)"
                   tick={{ fontSize: 12 }}
                 />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))"
+                <YAxis
+                  stroke="var(--muted-foreground)"
                   tick={{ fontSize: 12 }}
                   tickFormatter={(value) => {
                     if (value >= 1000000) return `Rs ${(value / 1000000).toFixed(1)}M`
@@ -419,8 +394,8 @@ export function DashboardOverview() {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                   }}
                   formatter={(value: any) => {
@@ -431,20 +406,20 @@ export function DashboardOverview() {
                   }}
                 />
                 <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#2563eb" 
-                  strokeWidth={2} 
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#2563eb"
+                  strokeWidth={2}
                   name="Revenue"
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="profit" 
-                  stroke="#10b981" 
-                  strokeWidth={2} 
+                <Line
+                  type="monotone"
+                  dataKey="profit"
+                  stroke="#10b981"
+                  strokeWidth={2}
                   name="Profit"
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
@@ -462,9 +437,9 @@ export function DashboardOverview() {
               <div className="text-center">
                 <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No properties available</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="mt-4"
                   onClick={() => setOpenDialog("property")}
                 >
@@ -514,25 +489,25 @@ export function DashboardOverview() {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={occupancyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="property" 
-                  stroke="hsl(var(--muted-foreground))"
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  dataKey="property"
+                  stroke="var(--muted-foreground)"
                   tick={{ fontSize: 11 }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
                 />
-                <YAxis 
-                  stroke="hsl(var(--muted-foreground))"
+                <YAxis
+                  stroke="var(--muted-foreground)"
                   tick={{ fontSize: 12 }}
                   domain={[0, 100]}
                   tickFormatter={(value) => `${value}%`}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                   }}
                   formatter={(value: any, name: string, props: any) => [
@@ -540,9 +515,9 @@ export function DashboardOverview() {
                     "Occupancy"
                   ]}
                 />
-                <Bar 
-                  dataKey="occupancy" 
-                  fill="#2563eb" 
+                <Bar
+                  dataKey="occupancy"
+                  fill="#2563eb"
                   radius={[8, 8, 0, 0]}
                   name="Occupancy Rate"
                 />
@@ -564,39 +539,39 @@ export function DashboardOverview() {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={salesFunnelData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  type="number" 
-                  stroke="hsl(var(--muted-foreground))"
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  type="number"
+                  stroke="var(--muted-foreground)"
                   tick={{ fontSize: 12 }}
                 />
-                <YAxis 
-                  dataKey="stage" 
-                  type="category" 
-                  stroke="hsl(var(--muted-foreground))"
+                <YAxis
+                  dataKey="stage"
+                  type="category"
+                  stroke="var(--muted-foreground)"
                   tick={{ fontSize: 12 }}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                   }}
                   formatter={(value: any) => [`${value} sales`, "Count"]}
                 />
-                <Bar 
-                  dataKey="count" 
+                <Bar
+                  dataKey="count"
                   radius={[0, 8, 8, 0]}
                   name="Sales Count"
                 >
                   {salesFunnelData.map((entry: any, index: number) => (
-                    <Cell 
-                      key={`cell-${index}`} 
+                    <Cell
+                      key={`cell-${index}`}
                       fill={
                         entry.stage === "Completed" ? "#10b981" :
-                        entry.stage === "Pending" ? "#f59e0b" :
-                        "#ef4444"
-                      } 
+                          entry.stage === "Pending" ? "#f59e0b" :
+                            "#ef4444"
+                      }
                     />
                   ))}
                 </Bar>
@@ -668,7 +643,7 @@ export function DashboardOverview() {
                           {getActivityBadge()}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {activity.time || activity.createdAt 
+                          {activity.time || activity.createdAt
                             ? new Date(activity.createdAt || activity.time).toLocaleString()
                             : "Just now"}
                         </p>
@@ -717,8 +692,8 @@ export function DashboardOverview() {
         </Card>
       </div>
 
-      <AddPropertyDialog 
-        open={openDialog === "property"} 
+      <AddPropertyDialog
+        open={openDialog === "property"}
         onOpenChange={(open) => {
           if (!open) {
             setOpenDialog(null)
@@ -729,8 +704,8 @@ export function DashboardOverview() {
           fetchDashboardData()
         }}
       />
-      <AddTenantDialog 
-        open={openDialog === "tenant"} 
+      <AddTenantDialog
+        open={openDialog === "tenant"}
         onOpenChange={(open) => {
           if (!open) {
             setOpenDialog(null)
@@ -741,16 +716,16 @@ export function DashboardOverview() {
           fetchDashboardData()
         }}
       />
-      <AddInvoiceDialog 
-        open={openDialog === "invoice"} 
+      <AddInvoiceDialog
+        open={openDialog === "invoice"}
         onOpenChange={(open) => {
           if (!open) {
             setOpenDialog(null)
           }
         }}
       />
-      <AddEmployeeDialog 
-        open={openDialog === "employee"} 
+      <AddEmployeeDialog
+        open={openDialog === "employee"}
         onOpenChange={(open) => {
           if (!open) {
             setOpenDialog(null)

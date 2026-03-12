@@ -244,13 +244,13 @@ export default function ClientsPage() {
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={topClients}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" angle={-45} textAnchor="end" height={100} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                  <XAxis dataKey="name" stroke="var(--muted-foreground)" angle={-45} textAnchor="end" height={100} />
+                  <YAxis stroke="var(--muted-foreground)" />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
+                      backgroundColor: "var(--card)",
+                      border: "1px solid var(--border)",
                       borderRadius: "8px",
                     }}
                     formatter={(value: number) => [`Rs ${value.toLocaleString("en-IN")}`, "Deal Value"]}

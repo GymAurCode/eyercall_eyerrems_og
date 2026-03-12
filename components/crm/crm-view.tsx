@@ -10,6 +10,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { apiService } from "@/lib/api"
+import { cn } from "@/lib/utils"
 
 // Lazy load heavy components to reduce initial chunk size
 const LeadsView = lazy(() => import("./leads-view").then(m => ({ default: m.LeadsView })))
@@ -134,28 +135,28 @@ export function CRMView() {
       // Handle nested response structures: { success: true, data: [...] } or { data: [...] } or axios wrapped
       const extractData = (response: any): any[] => {
         if (!response) return []
-        
+
         // Handle axios response wrapper: response.data contains the actual API response
         const apiResponse = response.data || response
-        
+
         // If already an array, return it
         if (Array.isArray(apiResponse)) return apiResponse
-        
+
         // Handle { success: true, data: [...] } structure
         if (apiResponse?.success && Array.isArray(apiResponse.data)) {
           return apiResponse.data
         }
-        
+
         // Handle { data: [...] } structure (nested data)
         if (apiResponse?.data && Array.isArray(apiResponse.data)) {
           return apiResponse.data
         }
-        
+
         // Handle direct { data: [...] } on response
         if (response.data && Array.isArray(response.data)) {
           return response.data
         }
-        
+
         return []
       }
 
@@ -164,7 +165,7 @@ export function CRMView() {
       const deals: any[] = extractData(dealsRes as any)
       const dealers: any[] = extractData(dealersRes as any)
       const commissions: any[] = extractData(commissionsRes as any)
-      
+
       // Debug logging (can be removed later)
       console.log('CRM Stats Data:', {
         leadsCount: leads.length,
@@ -232,7 +233,7 @@ export function CRMView() {
 
       // Build recent activities feed
       const activities: any[] = []
-      
+
       // Add recent leads
       leads.slice(0, 5).forEach((lead) => {
         if (lead.createdAt) {
@@ -285,6 +286,7 @@ export function CRMView() {
           value: leads.length.toString(),
           change: `+${leadsThisWeek} this week`,
           icon: UserPlus,
+          gradient: "from-violet-600 via-indigo-600 to-sky-500",
           href: "/details/leads",
         },
         {
@@ -292,6 +294,7 @@ export function CRMView() {
           value: activeClientsCount.toString(),
           change: `+${clientsThisMonth} this month`,
           icon: Users,
+          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
           href: "/details/clients",
         },
         {
@@ -299,6 +302,7 @@ export function CRMView() {
           value: pipelineDeals.length.toString(),
           change: pipelineValue > 0 ? `Rs ${(pipelineValue / 1_000_000).toFixed(2)}Cr value` : "Rs 0 value",
           icon: TrendingUp,
+          gradient: "from-amber-500 via-orange-500 to-rose-500",
           href: "/details/deals",
         },
         {
@@ -306,6 +310,7 @@ export function CRMView() {
           value: dealers.length.toString(),
           change: totalCommissions > 0 ? `Rs ${(totalCommissions / 1_000).toFixed(0)}K commissions` : "Rs 0 commissions",
           icon: Briefcase,
+          gradient: "from-blue-600 via-indigo-600 to-violet-600",
           href: "/details/dealers",
         },
       ])
@@ -363,22 +368,36 @@ export function CRMView() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {crmStats.map((stat) => (
-          <Card
-            key={stat.name}
-            className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
-            onClick={() => router.push(stat.href)}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <stat.icon className="h-6 w-6 text-primary" />
+            <Card
+              key={stat.name}
+              className={cn(
+                "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+              )}
+              onClick={() => router.push(stat.href)}
+            >
+              <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
+              <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+              <div className="relative p-6 text-white">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                    <stat.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                    )}
+                  >
+                    {stat.change}
+                  </span>
+                </div>
+                <div className="mt-6">
+                  <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
+                  <p className="mt-1 text-3xl font-bold tracking-tight">
+                    {stat.value}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{stat.name}</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-              <p className="text-sm text-muted-foreground mt-1">{stat.change}</p>
-            </div>
-          </Card>
+            </Card>
           ))}
         </div>
       )}
@@ -394,22 +413,22 @@ export function CRMView() {
           {pipelineData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={pipelineData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  type="number" 
-                  stroke="hsl(var(--muted-foreground))"
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis
+                  type="number"
+                  stroke="var(--muted-foreground)"
                   tick={{ fontSize: 12 }}
                 />
-                <YAxis 
-                  dataKey="stage" 
-                  type="category" 
-                  stroke="hsl(var(--muted-foreground))"
+                <YAxis
+                  dataKey="stage"
+                  type="category"
+                  stroke="var(--muted-foreground)"
                   tick={{ fontSize: 12 }}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "var(--card)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                   }}
                   formatter={(value: any) => [`${value}`, "Count"]}

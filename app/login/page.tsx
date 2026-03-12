@@ -14,10 +14,7 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
-  Video,
-  Camera,
-  ScanEye,
-  Shield,
+  Building2,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { AuthToasts } from "@/lib/toast-utils"
@@ -40,6 +37,33 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [rememberMe, setRememberMe] = useState(false)
+
+  // Carousel logic
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const slides = [
+    {
+      title: "Eyercall",
+      description: "Eyercall is a web conferencing platform for online meetings, collaboration, and virtual communication.",
+      buttonText: "Check out Eyercall",
+      buttonLink: "https://eyercall.com"
+    },
+    {
+      title: "EyerREMS",
+      description: "EyerREMS is a real estate management system created by Eyercall that helps manage properties, tenants, finances, and operations efficiently."
+    },
+    {
+      title: "Smart Property Management",
+      description: "Our platform helps you manage properties, tenants, finances, and operations from one powerful dashboard."
+    }
+  ]
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [slides.length])
 
   const canSubmit = useMemo(
     () => isValidEmail(email) && password.trim().length > 0 && !loading,
@@ -93,120 +117,127 @@ export default function LoginPage() {
       {/* Left Panel (wide) — EYERCALL branding & product information */}
       <div
         className={cn(
-          "hidden lg:flex lg:w-[58%] relative overflow-hidden",
-          "bg-gradient-to-br from-teal-700 via-teal-700 to-teal-800"
+          "hidden lg:flex w-1/2 relative overflow-hidden bg-neutral-900"
         )}
       >
         <div
-          className="absolute inset-0 opacity-[0.04]"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 ease-in-out"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `url('/login-bg.png')`,
           }}
         />
-        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+        {/* Dark gradient overlay for readability and premium feel */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-indigo-950/60 to-purple-900/40 opacity-90" />
+
+        <div className="relative z-10 flex flex-col justify-between p-12 xl:p-20 w-full h-full text-white">
           <div>
-            <div className="flex items-center gap-3 mb-10">
-              <div className="w-10 h-10 rounded-lg bg-white/15 flex items-center justify-center border border-white/20">
-                <span className="text-white font-bold text-xl">E</span>
+            <div className="flex items-center gap-3 mb-[20vh]">
+              <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-lg">
+                <Building2 className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-white">EYERCALL</span>
+              <span className="text-2xl font-bold tracking-wide text-white">EyerREMS</span>
             </div>
 
-            <h1 className="text-3xl xl:text-4xl font-bold text-white tracking-tight leading-tight mb-4 max-w-xl">
-              EYERCALL — Verified Presence Communication
-            </h1>
-            <p className="text-lg text-white/90 max-w-xl leading-relaxed mb-14">
-              Secure Video Meets & Proctored Exams with Presence Verification
-            </p>
+            <div className="relative h-64">
+              {slides.map((slide, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "absolute top-0 left-0 w-full transition-all duration-700 ease-in-out",
+                    currentSlide === index
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-4 pointer-events-none"
+                  )}
+                >
+                  <h1 className="text-4xl xl:text-5xl font-bold tracking-tight leading-tight mb-6 max-w-xl">
+                    {slide.title}
+                  </h1>
+                  <p className="text-xl text-white/80 max-w-xl leading-relaxed mb-8">
+                    {slide.description}
+                  </p>
+
+                  {slide.buttonText && slide.buttonLink && (
+                    <a
+                      href={slide.buttonLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-6 py-3 border border-white/20 hover:border-white/50 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg text-white font-medium transition-all duration-300"
+                    >
+                      {slide.buttonText}
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-12">
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <Camera className="w-5 h-5 text-white/80" aria-hidden />
-                <h2 className="text-base font-semibold text-white">Presence Verified Meetings</h2>
-              </div>
-              <ul className="space-y-2.5 text-white/90 text-sm pl-0">
-                <li className="flex items-start gap-3">
-                  <Camera className="w-4 h-4 mt-0.5 shrink-0 text-white/70" aria-hidden />
-                  <span>Confirmed visual presence in real time</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <ScanEye className="w-4 h-4 mt-0.5 shrink-0 text-white/70" aria-hidden />
-                  <span>Eye attention detection during sessions</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Shield className="w-4 h-4 mt-0.5 shrink-0 text-white/70" aria-hidden />
-                  <span>Secure and monitored professional calls</span>
-                </li>
-              </ul>
-            </section>
-
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <Video className="w-5 h-5 text-white/80" aria-hidden />
-                <h2 className="text-base font-semibold text-white">Proctored Virtual Exams</h2>
-              </div>
-              <ul className="space-y-2.5 text-white/90 text-sm pl-0">
-                <li className="flex items-start gap-3">
-                  <ScanEye className="w-4 h-4 mt-0.5 shrink-0 text-white/70" aria-hidden />
-                  <span>Online exam proctoring with eye monitoring</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Eye className="w-4 h-4 mt-0.5 shrink-0 text-white/70" aria-hidden />
-                  <span>Flag and log suspicious behavior</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Shield className="w-4 h-4 mt-0.5 shrink-0 text-white/70" aria-hidden />
-                  <span>Compliance-grade reporting</span>
-                </li>
-              </ul>
-            </section>
+          <div className="flex gap-3">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={cn(
+                  "h-1.5 rounded-full transition-all duration-500",
+                  currentSlide === index ? "w-8 bg-white" : "w-4 bg-white/30 hover:bg-white/50"
+                )}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
-
-          <p className="text-sm text-white/80 max-w-xl leading-relaxed pt-6 border-t border-white/15 mt-6">
-            Enterprise-grade security, compliance logging, and audit readiness for regulated
-            industries.
-          </p>
         </div>
       </div>
 
       {/* Right Panel (narrow) — Login form only */}
-      <div className="flex-1 lg:w-[42%] flex items-center justify-center p-6 sm:p-10 bg-white overflow-y-auto">
-        <div className="w-full max-w-[340px] space-y-8">
-          <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">
-            Sign In to EYERCALL
-          </h1>
+      <div className="flex-1 w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 bg-[#0B0F19] relative overflow-y-auto">
+        {/* Subtle background glow effects */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-900/20 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="w-full max-w-[400px] space-y-8 bg-white/5 backdrop-blur-xl border border-white/10 p-8 sm:p-10 rounded-2xl shadow-2xl relative z-10">
+          <div className="flex justify-center lg:hidden mb-6">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg">
+              <Building2 className="w-6 h-6 text-white" />
+            </div>
+          </div>
+
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-bold text-white tracking-tight">
+              Welcome back
+            </h1>
+            <p className="text-sm text-neutral-400">
+              Sign in to manage your properties and team
+            </p>
+          </div>
 
           {error && (
             <Alert
               variant="destructive"
-              className="bg-red-50 border-red-200 text-red-900"
+              className="bg-red-500/10 border-red-500/50 text-red-200"
               role="alert"
             >
-              <AlertCircle className="h-4 w-4 text-red-700" aria-hidden />
-              <AlertTitle className="text-red-900 font-semibold">Authentication error</AlertTitle>
-              <AlertDescription className="text-red-800">{error}</AlertDescription>
+              <AlertCircle className="h-4 w-4 text-red-400" aria-hidden />
+              <AlertTitle className="text-red-200 font-semibold">Authentication error</AlertTitle>
+              <AlertDescription className="text-red-300">{error}</AlertDescription>
             </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="login-email" className="text-neutral-900 font-medium">
-                Email
+              <Label htmlFor="login-email" className="text-neutral-300 font-medium">
+                Email Address
               </Label>
               <Input
                 id="login-email"
                 type="email"
                 name="email"
                 autoComplete="email"
-                placeholder="you@company.com"
+                placeholder="name@company.com"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value)
                   setError(null)
                 }}
-                className="h-11 bg-white border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-0 rounded-lg"
+                className="h-11 bg-neutral-900/50 border-white/10 text-white placeholder:text-neutral-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 focus:bg-neutral-900/80 rounded-lg transition-all"
                 required
                 disabled={loading}
                 aria-required
@@ -216,19 +247,19 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="login-password" className="text-neutral-900 font-medium">
+                <Label htmlFor="login-password" className="text-neutral-300 font-medium">
                   Password
                 </Label>
                 <Link
                   href="/reset-password"
-                  className="text-sm text-teal-700 hover:text-teal-800 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 rounded"
+                  className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
                 >
                   Forgot password?
                 </Link>
               </div>
               <div className="relative">
                 <Lock
-                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 pointer-events-none"
+                  className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 pointer-events-none"
                   aria-hidden
                 />
                 <Input
@@ -242,7 +273,7 @@ export default function LoginPage() {
                     setPassword(e.target.value)
                     setError(null)
                   }}
-                  className="pl-10 pr-10 h-11 bg-white border-neutral-300 text-neutral-900 placeholder:text-neutral-400 focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-0 rounded-lg"
+                  className="pl-10 pr-10 h-11 bg-neutral-900/50 border-white/10 text-white placeholder:text-neutral-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500 focus:bg-neutral-900/80 rounded-lg transition-all"
                   required
                   disabled={loading}
                   aria-required
@@ -251,7 +282,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded text-neutral-500 hover:text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded text-neutral-500 hover:text-neutral-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   tabIndex={0}
                 >
@@ -264,28 +295,41 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div className="flex items-center space-x-2 pt-1 pb-2">
+              <input
+                type="checkbox"
+                id="remember"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-white/20 bg-neutral-900/50 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-neutral-900"
+              />
+              <Label htmlFor="remember" className="text-sm font-medium leading-none text-neutral-400 cursor-pointer">
+                Remember me for 30 days
+              </Label>
+            </div>
+
             <Button
               type="submit"
-              className="w-full h-11 bg-teal-700 hover:bg-teal-800 text-white font-medium text-base rounded-lg shadow-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full h-11 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-base rounded-lg shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
               disabled={!canSubmit}
               aria-busy={loading}
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" aria-hidden />
                   Signing in...
                 </>
               ) : (
-                "Login"
+                "Sign In"
               )}
             </Button>
 
-            <div className="relative">
+            <div className="relative mt-6 mb-4">
               <div className="absolute inset-0 flex items-center" aria-hidden>
-                <span className="w-full border-t border-neutral-200" />
+                <span className="w-full border-t border-white/10" />
               </div>
               <div className="relative flex justify-center text-xs uppercase tracking-wider">
-                <span className="bg-white px-2 text-neutral-400">Or</span>
+                <span className="bg-[#0f1423] px-3 font-medium text-neutral-500 rounded-full">Or continue with</span>
               </div>
             </div>
 
@@ -294,17 +338,24 @@ export default function LoginPage() {
               variant="outline"
               onClick={handleGoogleLogin}
               disabled={loading}
-              className="w-full h-11 border-teal-600 text-teal-700 hover:bg-teal-50 hover:border-teal-700 rounded-lg focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+              className="w-full h-11 bg-transparent border-white/10 text-neutral-300 hover:bg-white/5 hover:text-white rounded-lg focus-visible:ring-2 focus-visible:ring-white/20 transition-all hover:shadow-md"
             >
-              Login with Google
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                <path d="M1 1h22v22H1z" fill="none" />
+              </svg>
+              Google
             </Button>
           </form>
 
-          <p className="text-sm text-neutral-600">
-            New to EYERCALL?{" "}
+          <p className="text-center text-sm text-neutral-400 mt-6">
+            Don't have an account?{" "}
             <Link
               href="/signup"
-              className="font-medium text-teal-700 hover:text-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 rounded"
+              className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
             >
               Request Access
             </Link>

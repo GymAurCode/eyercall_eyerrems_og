@@ -13,6 +13,7 @@ import { PayrollView } from "./payroll-view"
 import { LeaveView } from "./leave-view"
 import { AddEmployeeDialog } from "./add-employee-dialog"
 import { AttendancePortalView } from "./attendance-portal-view"
+import { cn } from "@/lib/utils"
 
 export function HRView() {
   const router = useRouter()
@@ -94,18 +95,19 @@ export function HRView() {
     try {
       setStatsLoading(true)
       const response = await apiService.stats.getHRStats()
-      
+
       // API returns { success: true, data: {...} }, axios wraps it so response.data = { success: true, data: {...} }
       // Try multiple access patterns to handle different response structures
       const responseData = response.data as any
       const data = responseData?.data || responseData || {}
-      
+
       setHrStats([
         {
           name: "Total Employees",
           value: (data.totalEmployees ?? 0).toString(),
           change: data.employeesChange || "+0 this month",
           icon: Users,
+          gradient: "from-violet-600 via-indigo-600 to-sky-500",
           href: "/details/employees",
         },
         {
@@ -113,6 +115,7 @@ export function HRView() {
           value: (data.activeToday ?? 0).toString(),
           change: data.attendanceRate ? `${data.attendanceRate}% attendance` : "0% attendance",
           icon: UserCheck,
+          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
           href: "/details/active-today",
         },
         {
@@ -120,6 +123,7 @@ export function HRView() {
           value: (data.pendingLeaves ?? 0).toString(),
           change: data.urgentLeaves ? `${data.urgentLeaves} urgent` : "0 urgent",
           icon: Calendar,
+          gradient: "from-rose-500 via-red-500 to-pink-500",
           href: "/details/pending-leaves",
         },
         {
@@ -127,6 +131,7 @@ export function HRView() {
           value: (data.avgWorkHours ?? 0).toString(),
           change: "per week",
           icon: Clock,
+          gradient: "from-blue-600 via-indigo-600 to-violet-600",
           href: "/details/work-hours",
         },
       ])
@@ -139,6 +144,7 @@ export function HRView() {
           value: "0",
           change: "+0 this month",
           icon: Users,
+          gradient: "from-violet-600 via-indigo-600 to-sky-500",
           href: "/details/employees",
         },
         {
@@ -146,6 +152,7 @@ export function HRView() {
           value: "0",
           change: "0% attendance",
           icon: UserCheck,
+          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
           href: "/details/active-today",
         },
         {
@@ -153,6 +160,7 @@ export function HRView() {
           value: "0",
           change: "0 urgent",
           icon: Calendar,
+          gradient: "from-rose-500 via-red-500 to-pink-500",
           href: "/details/pending-leaves",
         },
         {
@@ -160,6 +168,7 @@ export function HRView() {
           value: "0",
           change: "per week",
           icon: Clock,
+          gradient: "from-blue-600 via-indigo-600 to-violet-600",
           href: "/details/work-hours",
         },
       ])
@@ -198,22 +207,36 @@ export function HRView() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {hrStats.map((stat) => (
-          <Card
-            key={stat.name}
-            className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
-            onClick={() => router.push(stat.href)}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                <stat.icon className="h-6 w-6 text-primary" />
+            <Card
+              key={stat.name}
+              className={cn(
+                "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+              )}
+              onClick={() => router.push(stat.href)}
+            >
+              <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
+              <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+              <div className="relative p-6 text-white">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                    <stat.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                    )}
+                  >
+                    {stat.change}
+                  </span>
+                </div>
+                <div className="mt-6">
+                  <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
+                  <p className="mt-1 text-3xl font-bold tracking-tight">
+                    {stat.value}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">{stat.name}</p>
-              <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-              <p className="text-sm text-muted-foreground mt-1">{stat.change}</p>
-            </div>
-          </Card>
+            </Card>
           ))}
         </div>
       )}
@@ -250,8 +273,8 @@ export function HRView() {
       </Tabs>
 
       {/* Add Employee Dialog */}
-      <AddEmployeeDialog 
-        open={showAddDialog} 
+      <AddEmployeeDialog
+        open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onSuccess={() => {
           fetchHRStats()

@@ -130,7 +130,7 @@ export function FinanceView() {
       setStatsError(null)
       const response: any = await apiService.stats.getFinanceStats()
       const data = response?.data?.data || response?.data || {}
-      
+
       setFinancialStats([
         {
           name: "Total Revenue",
@@ -138,6 +138,7 @@ export function FinanceView() {
           change: formatPercentage(data.revenueChangePercent),
           changeType: getChangeType(data.revenueChangePercent),
           icon: DollarSign,
+          gradient: "from-teal-500 via-emerald-500 to-lime-500",
           href: "/details/revenue",
         },
         {
@@ -146,6 +147,7 @@ export function FinanceView() {
           change: formatPercentage(data.paymentsChangePercent),
           changeType: getChangeType(data.paymentsChangePercent, true),
           icon: Receipt,
+          gradient: "from-amber-500 via-orange-500 to-rose-500",
           href: "/details/outstanding-payments",
         },
         {
@@ -154,6 +156,7 @@ export function FinanceView() {
           change: formatPercentage(data.expensesChangePercent),
           changeType: getChangeType(data.expensesChangePercent, true),
           icon: TrendingDown,
+          gradient: "from-rose-500 via-red-500 to-pink-500",
           href: "/details/expenses",
         },
         {
@@ -162,6 +165,7 @@ export function FinanceView() {
           change: formatPercentage(data.commissionsChangePercent),
           changeType: getChangeType(data.commissionsChangePercent),
           icon: Percent,
+          gradient: "from-amber-500 via-orange-500 to-rose-500",
           href: "/details/commissions",
         },
       ])
@@ -221,25 +225,34 @@ export function FinanceView() {
               financialStats.map((stat) => (
                 <Card
                   key={stat.name}
-                  className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
+                  className={cn(
+                    "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                  )}
                   onClick={() => router.push(stat.href)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                      <stat.icon className="h-6 w-6 text-primary" />
+                  <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
+                  <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+                  <div className="relative p-6 text-white">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                        <stat.icon className="h-5 w-5 text-white" />
+                      </div>
+                      <span
+                        className={cn(
+                          "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                          stat.changeType === "positive" && "bg-emerald-400/15",
+                          stat.changeType === "negative" && "bg-rose-400/15",
+                        )}
+                      >
+                        {stat.change}
+                      </span>
                     </div>
-                    <span
-                      className={cn(
-                        "text-sm font-medium",
-                        stat.changeType === "positive" ? "text-success" : "text-destructive",
-                      )}
-                    >
-                      {stat.change}
-                    </span>
-                  </div>
-                  <div className="mt-4">
-                    <p className="text-sm font-medium text-muted-foreground">{stat.name}</p>
-                    <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
+                    <div className="mt-6">
+                      <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
+                      <p className="mt-1 text-3xl font-bold tracking-tight">
+                        {stat.value}
+                      </p>
+                    </div>
                   </div>
                 </Card>
               ))

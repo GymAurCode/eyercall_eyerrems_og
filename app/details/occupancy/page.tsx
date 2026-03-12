@@ -202,13 +202,13 @@ export default function OccupancyDetailsPage() {
               {occupancyTrendData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={occupancyTrendData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                    <YAxis stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="month" stroke="var(--muted-foreground)" />
+                    <YAxis stroke="var(--muted-foreground)" domain={[0, 100]} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        backgroundColor: "var(--card)",
+                        border: "1px solid var(--border)",
                         borderRadius: "8px",
                       }}
                     />
@@ -228,19 +228,19 @@ export default function OccupancyDetailsPage() {
               {propertyOccupancyData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={propertyOccupancyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                     <XAxis
                       dataKey="property"
-                      stroke="hsl(var(--muted-foreground))"
+                      stroke="var(--muted-foreground)"
                       angle={-45}
                       textAnchor="end"
                       height={100}
                     />
-                    <YAxis stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
+                    <YAxis stroke="var(--muted-foreground)" domain={[0, 100]} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
+                        backgroundColor: "var(--card)",
+                        border: "1px solid var(--border)",
                         borderRadius: "8px",
                       }}
                     />

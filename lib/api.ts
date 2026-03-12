@@ -1384,8 +1384,11 @@ export const apiService = {
   },
 
   // Generic methods for unified exports
-  post: (url: string, data?: any, config?: any) => api.post(url, data, config),
-  get: (url: string, config?: any) => api.get(url, config),
+  get: <T = any>(url: string, config?: any) => api.get<T>(url, config),
+  post: <T = any>(url: string, data?: any, config?: any) => api.post<T>(url, data, config),
+  put: <T = any>(url: string, data?: any, config?: any) => api.put<T>(url, data, config),
+  patch: <T = any>(url: string, data?: any, config?: any) => api.patch<T>(url, data, config),
+  delete: <T = any>(url: string, config?: any) => api.delete<T>(url, config),
 }
 
 export default api

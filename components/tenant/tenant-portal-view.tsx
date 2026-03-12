@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 import { Home, Receipt, Wrench, FileText, Loader2, Users, Mail, Phone, Search } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
@@ -74,8 +75,8 @@ export function TenantPortalView() {
       const tenants = Array.isArray((tenantsRes as any)?.data?.data)
         ? (tenantsRes as any).data.data
         : Array.isArray((tenantsRes as any)?.data)
-        ? (tenantsRes as any).data
-        : []
+          ? (tenantsRes as any).data
+          : []
       setAllTenants(tenants)
     } catch (error) {
       console.error("Error fetching all tenants:", error)
@@ -103,8 +104,8 @@ export function TenantPortalView() {
         const tenants = Array.isArray((tenantsRes as any)?.data?.data)
           ? (tenantsRes as any).data.data
           : Array.isArray((tenantsRes as any)?.data)
-          ? (tenantsRes as any).data
-          : []
+            ? (tenantsRes as any).data
+            : []
         if (targetTenantId) {
           tenant = tenants.find((t: any) => String(t.id) === String(targetTenantId))
         }
@@ -147,8 +148,8 @@ export function TenantPortalView() {
         const leases = Array.isArray((leasesRes as any)?.data?.data)
           ? (leasesRes as any).data.data
           : Array.isArray((leasesRes as any)?.data)
-          ? (leasesRes as any).data
-          : []
+            ? (leasesRes as any).data
+            : []
         const tenantLeases = leases.filter((l: any) => String(l.tenantId) === String(tenant.id))
         const activeLease =
           tenantLeases.find((l: any) => (l.status || "").toLowerCase() === "active") ||
@@ -159,8 +160,8 @@ export function TenantPortalView() {
         const invoices = Array.isArray((invoicesRes as any)?.data?.data)
           ? (invoicesRes as any).data.data
           : Array.isArray((invoicesRes as any)?.data)
-          ? (invoicesRes as any).data
-          : []
+            ? (invoicesRes as any).data
+            : []
         const tenantInvoices = invoices.filter(
           (inv: any) => String(inv.tenantId || inv.tenant?.id) === String(tenant.id)
         )
@@ -169,25 +170,25 @@ export function TenantPortalView() {
         const allMessages = Array.isArray((messagesRes as any)?.data?.data)
           ? (messagesRes as any).data.data
           : Array.isArray((messagesRes as any)?.data)
-          ? (messagesRes as any).data
-          : []
-        
+            ? (messagesRes as any).data
+            : []
+
         const tenantMaintenanceRequests = allMessages.filter((msg: any) => {
           const content = msg.content || ""
           if (!content.startsWith("[MAINTENANCE]")) return false
-          
+
           // Enhanced tenant identification for maintenance requests
           const tenantName = (tenant.name || "").toLowerCase()
           const tenantEmail = (tenant.email || "").toLowerCase()
           const tenantUnit = (tenant.unit?.unitName || "").toLowerCase()
-          
+
           const messageText = content.replace("[MAINTENANCE]", "").toLowerCase()
-          
-          return messageText.includes(tenantName) || 
-                 messageText.includes(tenantEmail) || 
-                 messageText.includes(tenantUnit) ||
-                 // Also check if the sender matches the tenant
-                 (msg.senderEmail && msg.senderEmail.toLowerCase() === tenantEmail)
+
+          return messageText.includes(tenantName) ||
+            messageText.includes(tenantEmail) ||
+            messageText.includes(tenantUnit) ||
+            // Also check if the sender matches the tenant
+            (msg.senderEmail && msg.senderEmail.toLowerCase() === tenantEmail)
         })
 
         const upcomingInvoice = tenantInvoices
@@ -196,17 +197,17 @@ export function TenantPortalView() {
 
         const rentValue = Number(
           activeLease?.rent ??
-            tenant.unit?.monthlyRent ??
-            tenant.unit?.rent ??
-            tenantInvoices?.[0]?.amount ??
-            tenant.rent ??
-            0
+          tenant.unit?.monthlyRent ??
+          tenant.unit?.rent ??
+          tenantInvoices?.[0]?.amount ??
+          tenant.rent ??
+          0
         )
         const nextDueDate = upcomingInvoice?.dueDate
           ? new Date(upcomingInvoice.dueDate)
           : activeLease?.leaseStart
-          ? new Date(activeLease.leaseStart)
-          : null
+            ? new Date(activeLease.leaseStart)
+            : null
 
         const daysUntilDue =
           nextDueDate && Number.isFinite(nextDueDate.getTime())
@@ -220,13 +221,13 @@ export function TenantPortalView() {
             : null
 
         // Count maintenance requests by status for this tenant
-        const pendingMaintenance = tenantMaintenanceRequests.filter((req: any) => 
+        const pendingMaintenance = tenantMaintenanceRequests.filter((req: any) =>
           !req.content.includes("[COMPLETED]") && !req.content.includes("[IN-PROGRESS]")
         ).length
-        const inProgressMaintenance = tenantMaintenanceRequests.filter((req: any) => 
+        const inProgressMaintenance = tenantMaintenanceRequests.filter((req: any) =>
           req.content.includes("[IN-PROGRESS]")
         ).length
-        const completedMaintenance = tenantMaintenanceRequests.filter((req: any) => 
+        const completedMaintenance = tenantMaintenanceRequests.filter((req: any) =>
           req.content.includes("[COMPLETED]")
         ).length
 
@@ -238,28 +239,28 @@ export function TenantPortalView() {
           currentRentDesc:
             nextDueDate && Number.isFinite(nextDueDate.getTime())
               ? `Due on ${nextDueDate.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                })}`
+                month: "short",
+                day: "numeric",
+              })}`
               : "No upcoming due date",
           nextPayment:
             upcomingInvoice && upcomingInvoice.dueDate
               ? new Date(upcomingInvoice.dueDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
               : "N/A",
           nextPaymentDesc:
             daysUntilDue === null
               ? "No scheduled payments"
               : daysUntilDue > 0
-              ? `${daysUntilDue} days remaining`
-              : daysUntilDue === 0
-              ? "Due today"
-              : `Overdue by ${Math.abs(daysUntilDue)} days`,
+                ? `${daysUntilDue} days remaining`
+                : daysUntilDue === 0
+                  ? "Due today"
+                  : `Overdue by ${Math.abs(daysUntilDue)} days`,
           maintenanceCount: pendingMaintenance,
-          maintenanceDesc: tenantMaintenanceRequests.length === 0 
+          maintenanceDesc: tenantMaintenanceRequests.length === 0
             ? "No requests"
             : `${pendingMaintenance} pending, ${completedMaintenance} completed`,
           leaseExpiry:
@@ -302,6 +303,7 @@ export function TenantPortalView() {
       value: stats.currentRent,
       description: stats.currentRentDesc,
       icon: Home,
+      gradient: "from-blue-600 via-indigo-600 to-violet-600",
       href: "/details/current-rent",
     },
     {
@@ -309,6 +311,7 @@ export function TenantPortalView() {
       value: stats.nextPayment,
       description: stats.nextPaymentDesc,
       icon: Receipt,
+      gradient: "from-amber-500 via-orange-500 to-rose-500",
       href: "/details/next-payment",
     },
     {
@@ -316,6 +319,7 @@ export function TenantPortalView() {
       value: stats.maintenanceCount.toString(),
       description: stats.maintenanceDesc,
       icon: Wrench,
+      gradient: "from-rose-500 via-red-500 to-pink-500",
       href: "/details/maintenance-requests",
     },
     {
@@ -323,6 +327,7 @@ export function TenantPortalView() {
       value: stats.leaseExpiry,
       description: stats.leaseExpiryDesc,
       icon: FileText,
+      gradient: "from-teal-500 via-emerald-500 to-lime-500",
       href: "/details/lease-expiry",
     },
   ]
@@ -342,7 +347,7 @@ export function TenantPortalView() {
     const unitName = (tenant.unit?.unitName || tenant.unit?.unitNumber || "").toLowerCase()
     const propertyName = (tenant.unit?.property?.name || tenant.property?.name || "").toLowerCase()
     const searchLower = searchQuery.toLowerCase()
-    
+
     return (
       name.includes(searchLower) ||
       email.includes(searchLower) ||
@@ -474,16 +479,32 @@ export function TenantPortalView() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {tenantStats.map((stat) => (
           <Link key={stat.name} href={stat.href}>
-            <Card className="p-6 cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                  <stat.icon className="h-6 w-6 text-primary" />
+            <Card
+              className={cn(
+                "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+              )}
+            >
+              <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
+              <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+              <div className="relative p-6 text-white">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                    <stat.icon className="h-5 w-5 text-white" />
+                  </div>
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                    )}
+                  >
+                    {stat.description}
+                  </span>
                 </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{stat.name}</p>
-                <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{stat.description}</p>
+                <div className="mt-6">
+                  <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
+                  <p className="mt-1 text-3xl font-bold tracking-tight">
+                    {stat.value}
+                  </p>
+                </div>
               </div>
             </Card>
           </Link>

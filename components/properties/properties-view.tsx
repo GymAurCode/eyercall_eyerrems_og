@@ -57,7 +57,8 @@ import { toSimpleFilters, toExportFilters } from "@/lib/filter-transform"
 import { countActiveFilters } from "@/lib/filter-config-registry"
 import { apiService } from "@/lib/api"
 import { PropertyToasts, handleApiError } from "@/lib/toast-utils"
-import { formatCurrency } from "@/lib/utils"
+import { AnimatedCounter } from "@/components/ui/animated-counter"
+import { formatCurrency, cn } from "@/lib/utils"
 import { getPropertyImageSrc } from "@/lib/property-image-utils"
 
 export function PropertiesView() {
@@ -216,6 +217,7 @@ export function PropertiesView() {
           value: data.totalProperties?.toString() || "0",
           change: data.propertiesChange || "+0 this month",
           icon: Building2,
+          gradient: "from-violet-600 via-indigo-600 to-sky-500",
           href: "/details/properties",
         },
         {
@@ -223,6 +225,7 @@ export function PropertiesView() {
           value: data.activeProperties?.toString() || "0",
           change: "Currently active",
           icon: Building2,
+          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
           href: "/details/properties",
         },
         {
@@ -230,6 +233,7 @@ export function PropertiesView() {
           value: data.propertiesForSale?.toString() || "0",
           change: data.saleValue ? `Rs ${(data.saleValue / 1000000).toFixed(1)}M total value` : "Rs 0 total value",
           icon: ShoppingCart,
+          gradient: "from-amber-500 via-orange-500 to-rose-500",
           href: "/details/properties-for-sale",
         },
         {
@@ -237,6 +241,7 @@ export function PropertiesView() {
           value: data.totalUnits?.toString() || "0",
           change: "Across all properties",
           icon: Home,
+          gradient: "from-blue-600 via-indigo-600 to-violet-600",
           href: "/details/units",
         },
         {
@@ -244,6 +249,7 @@ export function PropertiesView() {
           value: data.occupiedUnits?.toString() || "0",
           change: data.occupancyRate ? `${data.occupancyRate}% occupancy` : "0% occupancy",
           icon: KeyRound,
+          gradient: "from-fuchsia-600 via-pink-600 to-rose-500",
           href: "/details/occupied-units",
         },
         {
@@ -251,6 +257,7 @@ export function PropertiesView() {
           value: data.vacantUnits?.toString() || "0",
           change: data.vacancyRate ? `${data.vacancyRate}% vacancy` : "0% vacancy",
           icon: Home,
+          gradient: "from-slate-600 via-gray-600 to-zinc-600",
           href: "/details/vacant-units",
         },
         {
@@ -258,6 +265,7 @@ export function PropertiesView() {
           value: data.monthlyRevenue ? `Rs ${(data.monthlyRevenue / 1000).toFixed(0)}K` : "Rs 0",
           change: "From occupied units",
           icon: DollarSign,
+          gradient: "from-teal-500 via-emerald-500 to-lime-500",
           href: "/details/revenue",
         },
         {
@@ -265,6 +273,7 @@ export function PropertiesView() {
           value: data.totalTenants?.toLocaleString() || "0",
           change: data.tenantsChange || "+0 this month",
           icon: Users,
+          gradient: "from-sky-500 via-blue-500 to-indigo-500",
           href: "/details/tenants",
         },
       ])
@@ -280,6 +289,7 @@ export function PropertiesView() {
           value: "0",
           change: "+0 this month",
           icon: Building2,
+          gradient: "from-violet-600 via-indigo-600 to-sky-500",
           href: "/details/properties",
         },
         {
@@ -287,6 +297,7 @@ export function PropertiesView() {
           value: "0",
           change: "Currently active",
           icon: Building2,
+          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
           href: "/details/properties",
         },
         {
@@ -294,6 +305,7 @@ export function PropertiesView() {
           value: "0",
           change: "Rs 0 total value",
           icon: ShoppingCart,
+          gradient: "from-amber-500 via-orange-500 to-rose-500",
           href: "/details/properties-for-sale",
         },
         {
@@ -301,6 +313,7 @@ export function PropertiesView() {
           value: "0",
           change: "Across all properties",
           icon: Home,
+          gradient: "from-blue-600 via-indigo-600 to-violet-600",
           href: "/details/units",
         },
         {
@@ -308,6 +321,7 @@ export function PropertiesView() {
           value: "0",
           change: "0% occupancy",
           icon: KeyRound,
+          gradient: "from-fuchsia-600 via-pink-600 to-rose-500",
           href: "/details/occupied-units",
         },
         {
@@ -315,6 +329,7 @@ export function PropertiesView() {
           value: "0",
           change: "0% vacancy",
           icon: Home,
+          gradient: "from-slate-600 via-gray-600 to-zinc-600",
           href: "/details/vacant-units",
         },
         {
@@ -322,6 +337,7 @@ export function PropertiesView() {
           value: "Rs 0",
           change: "From occupied units",
           icon: DollarSign,
+          gradient: "from-teal-500 via-emerald-500 to-lime-500",
           href: "/details/revenue",
         },
         {
@@ -329,6 +345,7 @@ export function PropertiesView() {
           value: "0",
           change: "+0 this month",
           icon: Users,
+          gradient: "from-sky-500 via-blue-500 to-indigo-500",
           href: "/details/tenants",
         },
       ])
@@ -543,47 +560,75 @@ export function PropertiesView() {
             propertyStats.map((stat) => (
               <Card
                 key={stat.name}
-                className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
+                className={cn(
+                  "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                )}
                 onClick={() => router.push(stat.href)}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <stat.icon className="h-6 w-6 text-primary" />
+                <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
+                <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+                <div className="relative p-6 text-white">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                      <stat.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                      )}
+                    >
+                      {stat.change}
+                    </span>
                   </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.name}</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{stat.change}</p>
+                  <div className="mt-6">
+                    <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
+                    <p className="mt-1 text-3xl font-bold tracking-tight">
+                      {stat.value}
+                    </p>
+                  </div>
                 </div>
               </Card>
             ))
           ) : (
             // Default boxes if stats array is empty
             [
-              { name: "Total Properties", value: "0", change: "+0 this month", icon: Building2, href: "/details/properties" },
-              { name: "Active Properties", value: "0", change: "Currently active", icon: Building2, href: "/details/properties" },
-              { name: "Properties for Sale", value: "0", change: "Rs 0 total value", icon: ShoppingCart, href: "/details/properties-for-sale" },
-              { name: "Total Units", value: "0", change: "Across all properties", icon: Home, href: "/details/units" },
-              { name: "Occupied Units", value: "0", change: "0% occupancy", icon: KeyRound, href: "/details/occupied-units" },
-              { name: "Vacant Units", value: "0", change: "0% vacancy", icon: Home, href: "/details/vacant-units" },
-              { name: "Monthly Revenue", value: "Rs 0", change: "From occupied units", icon: DollarSign, href: "/details/revenue" },
-              { name: "Total Tenants", value: "0", change: "+0 this month", icon: Users, href: "/details/tenants" },
+              { name: "Total Properties", value: "0", change: "+0 this month", icon: Building2, gradient: "from-violet-600 via-indigo-600 to-sky-500", href: "/details/properties" },
+              { name: "Active Properties", value: "0", change: "Currently active", icon: Building2, gradient: "from-emerald-500 via-teal-500 to-cyan-500", href: "/details/properties" },
+              { name: "Properties for Sale", value: "0", change: "Rs 0 total value", icon: ShoppingCart, gradient: "from-amber-500 via-orange-500 to-rose-500", href: "/details/properties-for-sale" },
+              { name: "Total Units", value: "0", change: "Across all properties", icon: Home, gradient: "from-blue-600 via-indigo-600 to-violet-600", href: "/details/units" },
+              { name: "Occupied Units", value: "0", change: "0% occupancy", icon: KeyRound, gradient: "from-fuchsia-600 via-pink-600 to-rose-500", href: "/details/occupied-units" },
+              { name: "Vacant Units", value: "0", change: "0% vacancy", icon: Home, gradient: "from-slate-600 via-gray-600 to-zinc-600", href: "/details/vacant-units" },
+              { name: "Monthly Revenue", value: "Rs 0", change: "From occupied units", icon: DollarSign, gradient: "from-teal-500 via-emerald-500 to-lime-500", href: "/details/revenue" },
+              { name: "Total Tenants", value: "0", change: "+0 this month", icon: Users, gradient: "from-sky-500 via-blue-500 to-indigo-500", href: "/details/tenants" },
             ].map((stat) => (
               <Card
                 key={stat.name}
-                className="p-6 cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
+                className={cn(
+                  "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                )}
                 onClick={() => router.push(stat.href)}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <stat.icon className="h-6 w-6 text-primary" />
+                <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
+                <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+                <div className="relative p-6 text-white">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                      <stat.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                      )}
+                    >
+                      {stat.change}
+                    </span>
                   </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.name}</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{stat.change}</p>
+                  <div className="mt-6">
+                    <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
+                    <p className="mt-1 text-3xl font-bold tracking-tight">
+                      {stat.value}
+                    </p>
+                  </div>
                 </div>
               </Card>
             ))
@@ -625,69 +670,69 @@ export function PropertiesView() {
             <div className="text-center py-12 text-muted-foreground">No properties found</div>
           ) : (
             <>
-            <Card className="p-0">
-              <div className="p-4 border-b">
-                <p className="text-sm text-muted-foreground">
-                  Showing <span className="font-semibold text-foreground">{properties.length}</span> of <span className="font-semibold text-foreground">{totalItems}</span> properties
-                </p>
-              </div>
-              <DataTableFromRegistry
-                entity="property"
-                data={properties}
-                loading={loading}
-                error={error}
-                emptyMessage="No properties found"
-                onRowClick={(p) => router.push(`/property/${p.id}`)}
-                renderCell={(col, value, row) => {
-                  if (col.key === "name") {
-                    return (
-                      <div className="flex items-center gap-3">
-                        {row.imageUrl ? (
-                          <div className="h-10 w-10 rounded overflow-hidden flex-shrink-0">
-                            <img src={getPropertyImageSrc(row.id, row.imageUrl)} alt={row.tid || "Property"} className="h-full w-full object-cover" />
+              <Card className="p-0">
+                <div className="p-4 border-b">
+                  <p className="text-sm text-muted-foreground">
+                    Showing <span className="font-semibold text-foreground">{properties.length}</span> of <span className="font-semibold text-foreground">{totalItems}</span> properties
+                  </p>
+                </div>
+                <DataTableFromRegistry
+                  entity="property"
+                  data={properties}
+                  loading={loading}
+                  error={error}
+                  emptyMessage="No properties found"
+                  onRowClick={(p) => router.push(`/property/${p.id}`)}
+                  renderCell={(col, value, row) => {
+                    if (col.key === "name") {
+                      return (
+                        <div className="flex items-center gap-3">
+                          {row.imageUrl ? (
+                            <div className="h-10 w-10 rounded overflow-hidden flex-shrink-0">
+                              <img src={getPropertyImageSrc(row.id, row.imageUrl)} alt={row.tid || "Property"} className="h-full w-full object-cover" />
+                            </div>
+                          ) : (
+                            <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <Building2 className="h-5 w-5 text-primary" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-semibold">{row.name || "N/A"}</div>
+                            <div className="text-xs text-muted-foreground">{row.propertyCode || "No Code"}</div>
                           </div>
-                        ) : (
-                          <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Building2 className="h-5 w-5 text-primary" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-semibold">{row.name || "N/A"}</div>
-                          <div className="text-xs text-muted-foreground">{row.propertyCode || "No Code"}</div>
                         </div>
-                      </div>
-                    )
-                  }
-                  if (col.key === "status") return <Badge variant={row.status === "Active" ? "default" : row.status === "Maintenance" ? "destructive" : row.status === "For Sale" ? "secondary" : "outline"} className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setEditingStatusProperty({ id: row.id, status: row.status || "Active", name: row.tid }) }}>{row.status || "—"}</Badge>
-                  if (col.key === "address") return <div className="flex items-center gap-1 text-sm text-muted-foreground max-w-[200px]"><MapPin className="h-3 w-3 flex-shrink-0" /><span className="truncate">{row.address || row.location || "—"}</span></div>
-                  if (col.key === "unitsDisplay") return <div className="flex items-center gap-1"><Home className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{row.occupied ?? 0}/{row.units ?? row._count?.units ?? 0}</span></div>
-                  if (col.key === "occupiedDisplay") { const u = row.units ?? row._count?.units ?? 0; const o = row.occupied ?? 0; return <div className="flex items-center gap-1"><Users className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{u > 0 ? `${Math.round((o / u) * 100)}%` : "—"}</span></div> }
-                  if (col.key === "salePrice") return row.salePrice != null ? <span className="font-semibold">Rs {Number(row.salePrice).toLocaleString("en-IN")}</span> : "—"
-                  if (col.key === "revenue") return <div className="flex items-center gap-1"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{row.revenue || "Rs 0"}</span></div>
-                  if (col.key === "tid") return <span className="font-mono text-xs">{row.tid || "—"}</span>
-                  if (col.key === "type") return row.type || "—"
-                  return undefined
-                }}
-                renderActions={(property) => (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => router.push(`/property/${property.id}`)}><Eye className="h-4 w-4 mr-2" />View</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(`/ledger/property/${property.id}`)}><FileText className="h-4 w-4 mr-2" />Open Ledger</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleGeneratePropertyReport(property)}><FileText className="h-4 w-4 mr-2" />Generate Report</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => { setEditingPropertyId(property.id); setShowAddDialog(true) }}><Edit className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => { setStructurePropertyId(String(property.id)); setStructurePropertyName(property.tid || ""); setShowStructureDialog(true) }}><Building2 className="h-4 w-4 mr-2" />Create Structure</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={() => setDeletingProperty({ id: property.id, name: property.tid, propertyCode: property.propertyCode })}><Trash2 className="h-4 w-4 mr-2" />Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              />
-            </Card>
-            {totalPages > 1 && (
+                      )
+                    }
+                    if (col.key === "status") return <Badge variant={row.status === "Active" ? "default" : row.status === "Maintenance" ? "destructive" : row.status === "For Sale" ? "secondary" : "outline"} className="cursor-pointer" onClick={(e) => { e.stopPropagation(); setEditingStatusProperty({ id: row.id, status: row.status || "Active", name: row.tid }) }}>{row.status || "—"}</Badge>
+                    if (col.key === "address") return <div className="flex items-center gap-1 text-sm text-muted-foreground max-w-[200px]"><MapPin className="h-3 w-3 flex-shrink-0" /><span className="truncate">{row.address || row.location || "—"}</span></div>
+                    if (col.key === "unitsDisplay") return <div className="flex items-center gap-1"><Home className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{row.occupied ?? 0}/{row.units ?? row._count?.units ?? 0}</span></div>
+                    if (col.key === "occupiedDisplay") { const u = row.units ?? row._count?.units ?? 0; const o = row.occupied ?? 0; return <div className="flex items-center gap-1"><Users className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{u > 0 ? `${Math.round((o / u) * 100)}%` : "—"}</span></div> }
+                    if (col.key === "salePrice") return row.salePrice != null ? <span className="font-semibold">Rs {Number(row.salePrice).toLocaleString("en-IN")}</span> : "—"
+                    if (col.key === "revenue") return <div className="flex items-center gap-1"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{row.revenue || "Rs 0"}</span></div>
+                    if (col.key === "tid") return <span className="font-mono text-xs">{row.tid || "—"}</span>
+                    if (col.key === "type") return row.type || "—"
+                    return undefined
+                  }}
+                  renderActions={(property) => (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => router.push(`/property/${property.id}`)}><Eye className="h-4 w-4 mr-2" />View</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/ledger/property/${property.id}`)}><FileText className="h-4 w-4 mr-2" />Open Ledger</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleGeneratePropertyReport(property)}><FileText className="h-4 w-4 mr-2" />Generate Report</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setEditingPropertyId(property.id); setShowAddDialog(true) }}><Edit className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setStructurePropertyId(String(property.id)); setStructurePropertyName(property.tid || ""); setShowStructureDialog(true) }}><Building2 className="h-4 w-4 mr-2" />Create Structure</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => setDeletingProperty({ id: property.id, name: property.tid, propertyCode: property.propertyCode })}><Trash2 className="h-4 w-4 mr-2" />Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                />
+              </Card>
+              {totalPages > 1 && (
                 <div className="mt-4 flex flex-col items-center gap-2">
                   <Pagination>
                     <PaginationContent>
@@ -697,7 +742,7 @@ export function PropertiesView() {
                           className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                         />
                       </PaginationItem>
-                      
+
                       <PaginationItem>
                         <span className="flex h-9 min-w-[2rem] items-center justify-center text-sm font-medium">
                           Page {currentPage} of {totalPages}

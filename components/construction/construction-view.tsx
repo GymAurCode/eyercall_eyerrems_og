@@ -106,7 +106,7 @@ export function ConstructionView() {
       const projects = responseData?.data || responseData || []
       const active = projects.filter((p: any) => p.status === "active")
       const totalCost = projects.reduce((sum: number, p: any) => sum + (p.actualCost || 0), 0)
-      
+
       setStats({
         totalProjects: projects.length,
         activeProjects: active.length,
@@ -151,61 +151,63 @@ export function ConstructionView() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Projects</p>
-              {statsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin mt-2" />
-              ) : (
-                <p className="text-2xl font-bold">{stats.totalProjects}</p>
-              )}
+        {[
+          {
+            name: "Total Projects",
+            value: statsLoading ? null : stats.totalProjects,
+            icon: Building2,
+            gradient: "from-violet-600 via-indigo-600 to-sky-500",
+          },
+          {
+            name: "Active Projects",
+            value: statsLoading ? null : stats.activeProjects,
+            icon: TrendingUp,
+            gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+          },
+          {
+            name: "Total Cost",
+            value: statsLoading ? null : formatCurrency(stats.totalCost),
+            icon: FileText,
+            gradient: "from-amber-500 via-orange-500 to-rose-500",
+          },
+          {
+            name: "Pending Approvals",
+            value: statsLoading ? null : stats.pendingApprovals,
+            icon: Users,
+            gradient: "from-blue-600 via-indigo-600 to-violet-600",
+          },
+        ].map((stat) => (
+          <Card
+            key={stat.name}
+            className={cn(
+              "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+            )}
+            onClick={() => {
+              if (stat.name === "Active Projects") updateActiveTab("projects")
+              if (stat.name === "Pending Approvals") updateActiveTab("labor")
+            }}
+          >
+            <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
+            <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+            <div className="relative p-6 text-white">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
+                  <stat.icon className="h-5 w-5 text-white" />
+                </div>
+              </div>
+              <div className="mt-6">
+                <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
+                {stat.value === null ? (
+                  <Loader2 className="h-5 w-5 animate-spin mt-2" />
+                ) : (
+                  <p className="mt-1 text-3xl font-bold tracking-tight">
+                    {stat.value}
+                  </p>
+                )}
+              </div>
             </div>
-            <Building2 className="h-8 w-8 text-blue-500 opacity-50" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
-              {statsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin mt-2" />
-              ) : (
-                <p className="text-2xl font-bold">{stats.activeProjects}</p>
-              )}
-            </div>
-            <TrendingUp className="h-8 w-8 text-green-500 opacity-50" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Cost</p>
-              {statsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin mt-2" />
-              ) : (
-                <p className="text-2xl font-bold">{formatCurrency(stats.totalCost)}</p>
-              )}
-            </div>
-            <FileText className="h-8 w-8 text-orange-500 opacity-50" />
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Pending Approvals</p>
-              {statsLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin mt-2" />
-              ) : (
-                <p className="text-2xl font-bold">{stats.pendingApprovals}</p>
-              )}
-            </div>
-            <Users className="h-8 w-8 text-yellow-500 opacity-50" />
-          </div>
-        </Card>
+          </Card>
+        ))}
       </div>
 
       {/* Tabs */}

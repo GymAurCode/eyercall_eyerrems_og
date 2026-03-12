@@ -20,9 +20,9 @@ export default function ReminderDashboard() {
 
   const stats = useMemo(() => {
     const t = todayYmd();
-    const todayCount = reminders.filter((r) => r.reminder_date === t && r.status === 'pending').length;
-    const upcomingCount = reminders.filter((r) => r.reminder_date > t && r.status === 'pending').length;
-    const overdueCount = reminders.filter((r) => r.reminder_date < t && r.status === 'pending').length;
+    const todayCount = reminders.filter((r: any) => r.reminder_date === t && r.status === 'pending').length;
+    const upcomingCount = reminders.filter((r: any) => r.reminder_date > t && r.status === 'pending').length;
+    const overdueCount = reminders.filter((r: any) => r.reminder_date < t && r.status === 'pending').length;
     return { todayCount, upcomingCount, overdueCount };
   }, [reminders]);
 
