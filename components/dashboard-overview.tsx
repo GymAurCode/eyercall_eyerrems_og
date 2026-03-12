@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation"
 import { apiService } from "@/lib/api"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
+import { MiniChartCard } from "@/components/ui/mini-chart-card"
 
 export function DashboardOverview() {
   const [openDialog, setOpenDialog] = useState<string | null>(null)
@@ -139,23 +140,15 @@ export function DashboardOverview() {
           deltaLabel: propsData.propertiesChange || "+0 this month",
           deltaType: propertiesThisMonth > 0 ? "positive" : "neutral",
           icon: Building2,
-          gradient: "from-violet-600 via-indigo-600 to-sky-500",
+          gradient: "bg-[linear-gradient(135deg,#5b3df5,#3b2dbd)]",
         },
         {
-          label: "Total Clients",
-          value: clientsTotal,
-          deltaLabel: clientsDeltaStr,
-          deltaType: clientsThisMonth > 0 ? "positive" : "neutral",
+          label: "Total Tenants",
+          value: Number(propsData.totalTenants) || 0,
+          deltaLabel: propsData.tenantsChange || "+0 this month",
+          deltaType: tenantsThisMonth > 0 ? "positive" : "neutral",
           icon: Users,
-          gradient: "from-fuchsia-600 via-pink-600 to-rose-500",
-        },
-        {
-          label: "Total Sales",
-          value: totalSales,
-          deltaLabel: `${completedSales} completed`,
-          deltaType: completedSales > 0 ? "positive" : "neutral",
-          icon: TrendingUp,
-          gradient: "from-amber-500 via-orange-500 to-rose-500",
+          gradient: "bg-[linear-gradient(135deg,#e11d48,#9f1239)]",
         },
         {
           label: "Total Revenue",
@@ -163,7 +156,23 @@ export function DashboardOverview() {
           deltaLabel: "Rent + Sales",
           deltaType: totalRevenue > 0 ? "positive" : "neutral",
           icon: DollarSign,
-          gradient: "from-teal-500 via-emerald-500 to-lime-500",
+          gradient: "bg-[linear-gradient(135deg,#ea580c,#b45309)]",
+        },
+        {
+          label: "Total Maintenance Requests",
+          value: Number(propsData.totalMaintenanceRequests) || 0,
+          deltaLabel: "All requests",
+          deltaType: "neutral",
+          icon: AlertCircle,
+          gradient: "bg-[linear-gradient(135deg,#0d9488,#115e59)]",
+        },
+        {
+          label: "Total Staff",
+          value: Number(hrData.totalEmployees) || 0,
+          deltaLabel: "Active employees",
+          deltaType: "neutral",
+          icon: UserCheck,
+          gradient: "bg-[linear-gradient(135deg,#2563eb,#1e3a8a)]",
         },
       ])
 
@@ -293,7 +302,7 @@ export function DashboardOverview() {
 
       {/* Stats Grid */}
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="p-6">
               <div className="flex items-center justify-center h-24">
@@ -306,16 +315,16 @@ export function DashboardOverview() {
         <div className="space-y-6">
           {/* Premium KPI cards (top 4) */}
           {topStats.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
               {topStats.map((s) => (
                 <Card
                   key={s.label}
                   className={cn(
-                    "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)]",
+                    "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:brightness-110 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.65)]",
                   )}
                 >
                   <div className={cn("absolute inset-0 bg-gradient-to-br", s.gradient)} />
-                  <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+                  <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2),transparent_60%)]" />
                   <div className="relative p-6 text-white">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
@@ -362,6 +371,50 @@ export function DashboardOverview() {
 
         </div>
       )}
+
+      {/* Mini Charts Row */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <MiniChartCard
+          title="Monthly Revenue Trend"
+          value={revenueData.length > 0 ? revenueData[revenueData.length - 1]?.revenue : 0}
+          valuePrefix="Rs "
+          data={revenueData.slice(-6)}
+          dataKey="revenue"
+          chartType="line"
+          colors={["#3b82f6"]}
+          trend={{ value: 12.5 }}
+        />
+        <MiniChartCard
+          title="Occupancy Overview"
+          value={occupancyData.length > 0 ? Math.round(occupancyData.reduce((acc, curr) => acc + curr.occupancy, 0) / (occupancyData.length || 1)) : 0}
+          valueSuffix="%"
+          data={occupancyData.slice(0, 5)}
+          dataKey="totalUnits"
+          nameKey="property"
+          chartType="donut"
+          trend={{ value: 5.2 }}
+        />
+        <MiniChartCard
+          title="Sales Pipeline"
+          value={salesFunnelData.reduce((acc, curr) => acc + curr.count, 0)}
+          data={salesFunnelData}
+          dataKey="count"
+          nameKey="stage"
+          chartType="bar"
+          colors={["#10b981"]}
+          trend={{ value: 8.4 }}
+        />
+        <MiniChartCard
+          title="Profit Growth"
+          value={revenueData.length > 0 ? revenueData[revenueData.length - 1]?.profit : 0}
+          valuePrefix="Rs "
+          data={revenueData.slice(-6)}
+          dataKey="profit"
+          chartType="area"
+          colors={["#f59e0b"]}
+          trend={{ value: 15.3 }}
+        />
+      </div>
 
       {/* Revenue & Profit Trends */}
       <div className="grid gap-6 lg:grid-cols-2">

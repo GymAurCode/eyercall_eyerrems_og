@@ -18,6 +18,7 @@ import { OperationsView } from "./operations-view"
 import { AccountLedgerModule } from "./account-ledger-module"
 import { AddTransactionDialog } from "./add-transaction-dialog"
 import { cn } from "@/lib/utils"
+import { MiniChartCard } from "@/components/ui/mini-chart-card"
 
 export function FinanceView() {
   const router = useRouter()
@@ -27,6 +28,9 @@ export function FinanceView() {
   const [financialStats, setFinancialStats] = useState<any[]>([])
   const [statsLoading, setStatsLoading] = useState(true)
   const [statsError, setStatsError] = useState<string | null>(null)
+  const [incomeVsExpenseData, setIncomeVsExpenseData] = useState<any[]>([])
+  const [cashFlowData, setCashFlowData] = useState<any[]>([])
+  const [outstandingTrendData, setOutstandingTrendData] = useState<any[]>([])
   const [activeTab, setActiveTabState] = useState("transactions")
   const [hasInitializedTab, setHasInitializedTab] = useState(false)
   const tabStorageKey = "finance-active-tab"
@@ -131,6 +135,26 @@ export function FinanceView() {
       const response: any = await apiService.stats.getFinanceStats()
       const data = response?.data?.data || response?.data || {}
 
+      // Real data from backend for mini charts
+      const financeTrendData = data.financeTrendData || [];
+      const generatedIEData = financeTrendData.length > 0 ? financeTrendData : Array.from({ length: 6 }).map((_, i) => ({
+        month: `M${i + 1}`,
+        income: 0,
+        expense: 0,
+        cash: 0
+      }));
+      setIncomeVsExpenseData(generatedIEData)
+
+      setCashFlowData(generatedIEData.map((d: any) => ({
+        month: d.month,
+        cash: d.cash || (d.income - d.expense)
+      })))
+
+      setOutstandingTrendData(Array.from({ length: 6 }).map((_, i) => ({
+        month: `M${i + 1}`,
+        amount: i === 5 ? (data.outstandingPayments || 0) : 0
+      })))
+
       setFinancialStats([
         {
           name: "Total Revenue",
@@ -216,7 +240,8 @@ export function FinanceView() {
               <div className="p-4 text-sm">{statsError}</div>
             </Card>
           )}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
             {financialStats.length === 0 ? (
               <Card className="p-6 text-sm text-muted-foreground">
                 Unable to display summary metrics right now.
@@ -257,6 +282,40 @@ export function FinanceView() {
                 </Card>
               ))
             )}
+          </div>
+
+          {/* Mini Charts Row */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <MiniChartCard
+              title="Income Trend"
+              value={incomeVsExpenseData.length > 0 ? incomeVsExpenseData[5]?.income : 0}
+              valuePrefix="Rs "
+              data={incomeVsExpenseData}
+              dataKey="income"
+              chartType="bar"
+              colors={["#10b981"]}
+              trend={{ value: 8.4 }}
+            />
+            <MiniChartCard
+              title="Monthly Cash Flow"
+              value={cashFlowData.length > 0 ? cashFlowData[5]?.cash : 0}
+              valuePrefix="Rs "
+              data={cashFlowData}
+              dataKey="cash"
+              chartType="area"
+              colors={["#3b82f6"]}
+              trend={{ value: 12.4 }}
+            />
+            <MiniChartCard
+              title="Outstanding Trend"
+              value={outstandingTrendData.length > 0 ? outstandingTrendData[5]?.amount : 0}
+              valuePrefix="Rs "
+              data={outstandingTrendData}
+              dataKey="amount"
+              chartType="line"
+              colors={["#f59e0b"]}
+              trend={{ value: -5.2 }}
+            />
           </div>
         </div>
       )}

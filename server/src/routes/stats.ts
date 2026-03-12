@@ -7,31 +7,31 @@ import { authenticate, AuthRequest } from '../middleware/auth';
 function getTimeAgo(date: Date): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (diffInSeconds < 60) {
     return 'Just now';
   }
-  
+
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
     return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
   }
-  
+
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
     return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
   }
-  
+
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
     return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
   }
-  
+
   const diffInWeeks = Math.floor(diffInDays / 7);
   if (diffInWeeks < 4) {
     return `${diffInWeeks} week${diffInWeeks > 1 ? 's' : ''} ago`;
   }
-  
+
   const diffInMonths = Math.floor(diffInDays / 30);
   return `${diffInMonths} month${diffInMonths > 1 ? 's' : ''} ago`;
 }
@@ -56,6 +56,10 @@ router.get('/properties', authenticate, async (req: AuthRequest, res: Response) 
   try {
     // Get all property counts
     const totalProperties = await prisma.property.count({
+      where: { isDeleted: false },
+    });
+
+    const totalMaintenanceRequests = await prisma.maintenanceRequest.count({
       where: { isDeleted: false },
     });
 
@@ -159,7 +163,7 @@ router.get('/properties', authenticate, async (req: AuthRequest, res: Response) 
     // Calculate hybrid occupancy rate: (occupiedUnits + rentedOrSoldHouses) / (totalUnits + totalHouses) * 100
     const totalOccupiable = totalUnits + totalHouses;
     const totalOccupied = occupiedUnits + rentedOrSoldHouses;
-    const occupancyRate = totalOccupiable > 0 
+    const occupancyRate = totalOccupiable > 0
       ? Math.round((totalOccupied / totalOccupiable) * 100 * 10) / 10  // Round to 1 decimal
       : 0;
     const vacancyRate = totalUnits > 0 ? Math.round((vacantUnits / totalUnits) * 100) : 0;
@@ -211,8 +215,8 @@ router.get('/properties', authenticate, async (req: AuthRequest, res: Response) 
       propertiesLastMonth > 0
         ? `+${propertiesThisMonth} this month`
         : propertiesThisMonth > 0
-        ? `+${propertiesThisMonth} this month`
-        : '+0 this month';
+          ? `+${propertiesThisMonth} this month`
+          : '+0 this month';
 
     // Calculate tenants change
     const tenantsThisMonth = await prisma.tenant.count({
@@ -238,8 +242,8 @@ router.get('/properties', authenticate, async (req: AuthRequest, res: Response) 
       tenantsLastMonth > 0
         ? `+${tenantsThisMonth} this month`
         : tenantsThisMonth > 0
-        ? `+${tenantsThisMonth} this month`
-        : '+0 this month';
+          ? `+${tenantsThisMonth} this month`
+          : '+0 this month';
 
     // Get property type distribution
     const propertyTypeData = await prisma.property.groupBy({
@@ -270,6 +274,22 @@ router.get('/properties', authenticate, async (req: AuthRequest, res: Response) 
       name: item.status || 'Unknown',
       value: item._count.id,
     }));
+
+    // Generate property added trend data for last 6 months
+    const propertiesAddedTrend = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+      const count = await prisma.property.count({
+        where: { createdAt: { gte: start, lte: end }, isDeleted: false }
+      });
+      propertiesAddedTrend.push({
+        month: start.toLocaleString('default', { month: 'short' }),
+        amount: count
+      });
+    }
 
     // Get recent activities from Activity table
     let formattedActivities: any[] = [];
@@ -314,6 +334,7 @@ router.get('/properties', authenticate, async (req: AuthRequest, res: Response) 
       success: true,
       data: {
         totalProperties,
+        totalMaintenanceRequests,
         activeProperties,
         maintenanceProperties,
         vacantProperties,
@@ -331,6 +352,7 @@ router.get('/properties', authenticate, async (req: AuthRequest, res: Response) 
         tenantsChange,
         propertyTypeData: formattedPropertyTypeData,
         propertyStatusData: formattedPropertyStatusData,
+        propertiesAddedTrend,
         recentActivities: formattedActivities,
         // Additional fields for hybrid occupancy calculation
         totalHouses,
@@ -505,7 +527,7 @@ router.get('/crm', authenticate, async (req: AuthRequest, res: Response) => {
       where: { isDeleted: false }
     });
     const activeClients = await prisma.client.count({
-      where: { 
+      where: {
         status: 'active',
         isDeleted: false
       }
@@ -707,14 +729,14 @@ router.get('/finance', authenticate, async (req: AuthRequest, res: Response) => 
     const rentRevenueTransactions = rentTransactions.filter((tx) => {
       const categoryName = tx.transactionCategory?.name?.toLowerCase() || '';
       const description = tx.description?.toLowerCase() || '';
-      const isSale = categoryName.includes('sale') || 
-                    description.includes('sale') ||
-                    description.includes('property sale');
+      const isSale = categoryName.includes('sale') ||
+        description.includes('sale') ||
+        description.includes('property sale');
       return !isSale;
     });
 
     const totalRentRevenue = rentRevenueTransactions.reduce(
-      (sum, tx) => sum + (tx.totalAmount || tx.amount || 0), 
+      (sum, tx) => sum + (tx.totalAmount || tx.amount || 0),
       0
     );
 
@@ -729,7 +751,7 @@ router.get('/finance', authenticate, async (req: AuthRequest, res: Response) => 
     });
 
     const rentRevenueFromPayments = rentPayments.reduce(
-      (sum, payment) => sum + (payment.amount || 0), 
+      (sum, payment) => sum + (payment.amount || 0),
       0
     );
 
@@ -759,7 +781,7 @@ router.get('/finance', authenticate, async (req: AuthRequest, res: Response) => 
     // Rent Profit = Rent Revenue - Expenses
     // Sale Profit = Sale Revenue - Property Costs
     const totalPropertyCost = completedSales.reduce(
-      (sum, sale) => sum + (sale.actualPropertyValue || 0), 
+      (sum, sale) => sum + (sale.actualPropertyValue || 0),
       0
     );
     const rentProfit = totalRentRevenueFinal - totalExpenses;
@@ -772,7 +794,7 @@ router.get('/finance', authenticate, async (req: AuthRequest, res: Response) => 
       return txDate >= startOfCurrentMonth && txDate <= endOfCurrentMonth;
     });
     const monthlyRentRevenueFromTransactions = monthlyRentTransactions.reduce(
-      (sum, tx) => sum + (tx.totalAmount || tx.amount || 0), 
+      (sum, tx) => sum + (tx.totalAmount || tx.amount || 0),
       0
     );
     const monthlyRentPayments = rentPayments.filter((payment) => {
@@ -780,7 +802,7 @@ router.get('/finance', authenticate, async (req: AuthRequest, res: Response) => 
       return paymentDate >= startOfCurrentMonth && paymentDate <= endOfCurrentMonth;
     });
     const monthlyRentRevenueFromPayments = monthlyRentPayments.reduce(
-      (sum, payment) => sum + (payment.amount || 0), 
+      (sum, payment) => sum + (payment.amount || 0),
       0
     );
     const monthlyRentRevenue = monthlyRentRevenueFromTransactions + monthlyRentRevenueFromPayments;
@@ -794,6 +816,23 @@ router.get('/finance', authenticate, async (req: AuthRequest, res: Response) => 
 
     // Calculate monthly profit
     const monthlyProfit = monthlyRentRevenue + monthlySaleRevenue - monthlyExpenses;
+
+    // Calculate 6-month historical trend
+    const financeTrendData = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+      const income = await sumTransactionsByType('income', { gte: start, lte: end });
+      const expense = await sumTransactionsByType('expense', { gte: start, lte: end });
+      financeTrendData.push({
+        month: start.toLocaleString('default', { month: 'short' }),
+        income,
+        expense,
+        cash: income - expense
+      });
+    }
 
     res.json({
       success: true,
@@ -1094,7 +1133,7 @@ router.get('/finance/revenue-vs-expense', authenticate, async (req: AuthRequest,
     });
   } catch (error: any) {
     console.error('Get revenue vs expense data error:', error);
-    
+
     // Check if it's a column not found error
     if (error?.code === 'P2022' || error?.message?.includes('column') || error?.message?.includes('does not exist')) {
       return res.status(500).json({

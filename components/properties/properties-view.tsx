@@ -60,6 +60,7 @@ import { PropertyToasts, handleApiError } from "@/lib/toast-utils"
 import { AnimatedCounter } from "@/components/ui/animated-counter"
 import { formatCurrency, cn } from "@/lib/utils"
 import { getPropertyImageSrc } from "@/lib/property-image-utils"
+import { MiniChartCard } from "@/components/ui/mini-chart-card"
 
 export function PropertiesView() {
   const router = useRouter()
@@ -77,6 +78,9 @@ export function PropertiesView() {
   const [loading, setLoading] = useState(true)
   const [statsLoading, setStatsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [occupancyChartData, setOccupancyChartData] = useState<any[]>([])
+  const [typeChartData, setTypeChartData] = useState<any[]>([])
+  const [rentCollectionData, setRentCollectionData] = useState<any[]>([])
   const [activeTab, setActiveTabState] = useState("properties")
   const [hasInitializedTab, setHasInitializedTab] = useState(false)
   const tabStorageKey = "properties-active-tab"
@@ -210,6 +214,23 @@ export function PropertiesView() {
       const responseData = response.data as any
       const data = responseData?.data || responseData || {}
 
+      // Generate chart data based on stats
+      setOccupancyChartData([
+        { name: "Occupied", value: parseInt(data.occupiedUnits) || 0 },
+        { name: "Vacant", value: parseInt(data.vacantUnits) || 0 }
+      ])
+
+      setTypeChartData((data.propertyTypeData || []).map((d: any) => ({
+        type: d.name, count: d.value
+      })))
+
+      const propertiesAddedTrend = data.propertiesAddedTrend || [];
+      const trendData = propertiesAddedTrend.length > 0 ? propertiesAddedTrend : Array.from({ length: 6 }).map((_, i) => ({
+        month: `M${i + 1}`,
+        amount: 0
+      }));
+      setRentCollectionData(trendData)
+
       // Always set stats boxes, even if data is empty
       setPropertyStats([
         {
@@ -217,7 +238,7 @@ export function PropertiesView() {
           value: data.totalProperties?.toString() || "0",
           change: data.propertiesChange || "+0 this month",
           icon: Building2,
-          gradient: "from-violet-600 via-indigo-600 to-sky-500",
+          gradient: "bg-[linear-gradient(135deg,#5b3df5,#3b2dbd)]",
           href: "/details/properties",
         },
         {
@@ -225,7 +246,7 @@ export function PropertiesView() {
           value: data.activeProperties?.toString() || "0",
           change: "Currently active",
           icon: Building2,
-          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+          gradient: "bg-[linear-gradient(135deg,#0d9488,#115e59)]",
           href: "/details/properties",
         },
         {
@@ -233,7 +254,7 @@ export function PropertiesView() {
           value: data.propertiesForSale?.toString() || "0",
           change: data.saleValue ? `Rs ${(data.saleValue / 1000000).toFixed(1)}M total value` : "Rs 0 total value",
           icon: ShoppingCart,
-          gradient: "from-amber-500 via-orange-500 to-rose-500",
+          gradient: "bg-[linear-gradient(135deg,#ea580c,#b45309)]",
           href: "/details/properties-for-sale",
         },
         {
@@ -241,7 +262,7 @@ export function PropertiesView() {
           value: data.totalUnits?.toString() || "0",
           change: "Across all properties",
           icon: Home,
-          gradient: "from-blue-600 via-indigo-600 to-violet-600",
+          gradient: "bg-[linear-gradient(135deg,#2563eb,#1e3a8a)]",
           href: "/details/units",
         },
         {
@@ -249,7 +270,7 @@ export function PropertiesView() {
           value: data.occupiedUnits?.toString() || "0",
           change: data.occupancyRate ? `${data.occupancyRate}% occupancy` : "0% occupancy",
           icon: KeyRound,
-          gradient: "from-fuchsia-600 via-pink-600 to-rose-500",
+          gradient: "bg-[linear-gradient(135deg,#e11d48,#9f1239)]",
           href: "/details/occupied-units",
         },
         {
@@ -257,7 +278,7 @@ export function PropertiesView() {
           value: data.vacantUnits?.toString() || "0",
           change: data.vacancyRate ? `${data.vacancyRate}% vacancy` : "0% vacancy",
           icon: Home,
-          gradient: "from-slate-600 via-gray-600 to-zinc-600",
+          gradient: "bg-[linear-gradient(135deg,#475569,#1e293b)]",
           href: "/details/vacant-units",
         },
         {
@@ -265,7 +286,7 @@ export function PropertiesView() {
           value: data.monthlyRevenue ? `Rs ${(data.monthlyRevenue / 1000).toFixed(0)}K` : "Rs 0",
           change: "From occupied units",
           icon: DollarSign,
-          gradient: "from-teal-500 via-emerald-500 to-lime-500",
+          gradient: "bg-[linear-gradient(135deg,#059669,#064e3b)]",
           href: "/details/revenue",
         },
         {
@@ -273,7 +294,7 @@ export function PropertiesView() {
           value: data.totalTenants?.toLocaleString() || "0",
           change: data.tenantsChange || "+0 this month",
           icon: Users,
-          gradient: "from-sky-500 via-blue-500 to-indigo-500",
+          gradient: "bg-[linear-gradient(135deg,#0284c7,#1e3a8a)]",
           href: "/details/tenants",
         },
       ])
@@ -545,7 +566,7 @@ export function PropertiesView() {
 
       {/* Stats Boxes - Always show, even if empty */}
       {statsLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <Card key={i} className="p-6">
               <div className="flex items-center justify-center h-24">
@@ -555,18 +576,18 @@ export function PropertiesView() {
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           {propertyStats.length > 0 ? (
             propertyStats.map((stat) => (
               <Card
                 key={stat.name}
                 className={cn(
-                  "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                  "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:brightness-110 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.65)] cursor-pointer",
                 )}
                 onClick={() => router.push(stat.href)}
               >
                 <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
-                <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+                <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2),transparent_60%)]" />
                 <div className="relative p-6 text-white">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
@@ -592,24 +613,24 @@ export function PropertiesView() {
           ) : (
             // Default boxes if stats array is empty
             [
-              { name: "Total Properties", value: "0", change: "+0 this month", icon: Building2, gradient: "from-violet-600 via-indigo-600 to-sky-500", href: "/details/properties" },
-              { name: "Active Properties", value: "0", change: "Currently active", icon: Building2, gradient: "from-emerald-500 via-teal-500 to-cyan-500", href: "/details/properties" },
-              { name: "Properties for Sale", value: "0", change: "Rs 0 total value", icon: ShoppingCart, gradient: "from-amber-500 via-orange-500 to-rose-500", href: "/details/properties-for-sale" },
-              { name: "Total Units", value: "0", change: "Across all properties", icon: Home, gradient: "from-blue-600 via-indigo-600 to-violet-600", href: "/details/units" },
-              { name: "Occupied Units", value: "0", change: "0% occupancy", icon: KeyRound, gradient: "from-fuchsia-600 via-pink-600 to-rose-500", href: "/details/occupied-units" },
-              { name: "Vacant Units", value: "0", change: "0% vacancy", icon: Home, gradient: "from-slate-600 via-gray-600 to-zinc-600", href: "/details/vacant-units" },
-              { name: "Monthly Revenue", value: "Rs 0", change: "From occupied units", icon: DollarSign, gradient: "from-teal-500 via-emerald-500 to-lime-500", href: "/details/revenue" },
-              { name: "Total Tenants", value: "0", change: "+0 this month", icon: Users, gradient: "from-sky-500 via-blue-500 to-indigo-500", href: "/details/tenants" },
+              { name: "Total Properties", value: "0", change: "+0 this month", icon: Building2, gradient: "bg-[linear-gradient(135deg,#5b3df5,#3b2dbd)]", href: "/details/properties" },
+              { name: "Active Properties", value: "0", change: "Currently active", icon: Building2, gradient: "bg-[linear-gradient(135deg,#0d9488,#115e59)]", href: "/details/properties" },
+              { name: "Properties for Sale", value: "0", change: "Rs 0 total value", icon: ShoppingCart, gradient: "bg-[linear-gradient(135deg,#ea580c,#b45309)]", href: "/details/properties-for-sale" },
+              { name: "Total Units", value: "0", change: "Across all properties", icon: Home, gradient: "bg-[linear-gradient(135deg,#2563eb,#1e3a8a)]", href: "/details/units" },
+              { name: "Occupied Units", value: "0", change: "0% occupancy", icon: KeyRound, gradient: "bg-[linear-gradient(135deg,#e11d48,#9f1239)]", href: "/details/occupied-units" },
+              { name: "Vacant Units", value: "0", change: "0% vacancy", icon: Home, gradient: "bg-[linear-gradient(135deg,#475569,#1e293b)]", href: "/details/vacant-units" },
+              { name: "Monthly Revenue", value: "Rs 0", change: "From occupied units", icon: DollarSign, gradient: "bg-[linear-gradient(135deg,#059669,#064e3b)]", href: "/details/revenue" },
+              { name: "Total Tenants", value: "0", change: "+0 this month", icon: Users, gradient: "bg-[linear-gradient(135deg,#0284c7,#1e3a8a)]", href: "/details/tenants" },
             ].map((stat) => (
               <Card
                 key={stat.name}
                 className={cn(
-                  "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                  "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:brightness-110 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.65)] cursor-pointer",
                 )}
                 onClick={() => router.push(stat.href)}
               >
                 <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
-                <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
+                <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2),transparent_60%)]" />
                 <div className="relative p-6 text-white">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
@@ -635,6 +656,37 @@ export function PropertiesView() {
           )}
         </div>
       )}
+
+      {/* Mini Charts Row */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <MiniChartCard
+          title="Occupied vs Vacant Units"
+          value={occupancyChartData.find(d => d.name === "Occupied")?.value || 0}
+          valueSuffix={` / ${(occupancyChartData.find(d => d.name === "Occupied")?.value || 0) + (occupancyChartData.find(d => d.name === "Vacant")?.value || 0)}`}
+          data={occupancyChartData}
+          dataKey="value"
+          nameKey="name"
+          chartType="donut"
+          colors={["#10b981", "#ef4444"]}
+        />
+        <MiniChartCard
+          title="Property Types"
+          value={typeChartData.reduce((acc, curr) => acc + curr.count, 0)}
+          data={typeChartData}
+          dataKey="count"
+          nameKey="type"
+          chartType="bar"
+          colors={["#8b5cf6"]}
+        />
+        <MiniChartCard
+          title="Properties Added Per Month"
+          value={rentCollectionData.length > 0 ? rentCollectionData[rentCollectionData.length - 1]?.amount : 0}
+          data={rentCollectionData}
+          dataKey="amount"
+          chartType="line"
+          colors={["#3b82f6"]}
+        />
+      </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
