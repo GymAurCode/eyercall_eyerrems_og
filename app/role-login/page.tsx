@@ -209,7 +209,7 @@ export default function RoleLoginPage() {
 
             <Button 
               type="submit" 
-              className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-medium text-base shadow-sm transition-all" 
+              className="w-full h-11 text-white font-medium text-base shadow-sm transition-all" 
               disabled={loading || !username || !password}
             >
               {loading ? (

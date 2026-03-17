@@ -15,7 +15,7 @@ import {
   getOperationById,
   getOperationsByDealId,
 } from '../services/finance-operations-service';
-import { FinancialOperationType, FinancialOperationStatus } from '../generated/prisma/client';
+import { FinancialOperationType, FinancialOperationStatus } from '@prisma/client';
 import logger from '../utils/logger';
 
 const router = (express as any).Router();

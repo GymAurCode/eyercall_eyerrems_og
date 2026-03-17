@@ -199,7 +199,7 @@ export function BulkImport() {
                   Errors ({summary.errors.length})
                 </p>
               </div>
-              <div className="max-h-40 overflow-y-auto rounded bg-red-50 p-2 dark:bg-red-950/20">
+              <div className="max-h-40 overflow-y-auto rounded bg-red-50 p-2 dark:bg-[#0d212c]/20">
                 <ul className="space-y-1 text-xs text-red-700 dark:text-red-400">
                   {summary.errors.slice(0, 10).map((error, index) => (
                     <li key={index} className="list-disc pl-2">{error}</li>

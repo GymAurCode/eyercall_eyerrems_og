@@ -199,7 +199,7 @@ export function BuyersView() {
               </div>
               {buyer.hasPurchased && (
                 <>
-                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="mt-3 p-3 bg-green-50 dark:bg-[#0d212c] rounded-lg border border-green-200 dark:border-green-800">
                     <p className="text-xs font-semibold text-green-700 dark:text-green-300 mb-2">Purchase Information</p>
                     {buyer.purchaseProperty && (
                       <p className="text-sm text-green-900 dark:text-green-100">

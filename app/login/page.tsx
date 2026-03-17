@@ -310,7 +310,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-11 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-medium text-base rounded-lg shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
+              className="w-full h-11 text-white font-medium text-base rounded-lg shadow-lg hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
               disabled={!canSubmit}
               aria-busy={loading}
             >
@@ -328,11 +328,11 @@ export default function LoginPage() {
               <div className="absolute inset-0 flex items-center" aria-hidden>
                 <span className="w-full border-t border-white/10" />
               </div>
-              <div className="relative flex justify-center text-xs uppercase tracking-wider">
+              {/* <div className="relative flex justify-center text-xs uppercase tracking-wider">
                 <span className="bg-[#0f1423] px-3 font-medium text-neutral-500 rounded-full">Or continue with</span>
-              </div>
+              </div> */}
             </div>
-
+            {/* 
             <Button
               type="button"
               variant="outline"
@@ -348,7 +348,7 @@ export default function LoginPage() {
                 <path d="M1 1h22v22H1z" fill="none" />
               </svg>
               Google
-            </Button>
+            </Button> */}
           </form>
 
           <p className="text-center text-sm text-neutral-400 mt-6">

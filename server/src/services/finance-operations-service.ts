@@ -5,7 +5,7 @@
  */
 
 import prisma from '../prisma/client';
-import { FinancialOperationType, FinancialOperationStatus } from '../generated/prisma/client';
+import { FinancialOperationType, FinancialOperationStatus } from '@prisma/client';
 import { VoucherService } from './voucher-service';
 import { writeFinanceOperationLedger } from './finance-operation-ledger-service';
 import { writeLedgerEntry } from './ledger-engine-service';

@@ -135,7 +135,7 @@ export default function AttendanceDetailPage() {
           </div>
         </div>
 
-        <Card className="p-6 space-y-6">
+        <Card className="p-6 space-y-6 stat-card">
           {/* Employee Info */}
           <div className="border-b border-border pb-6">
             <div className="flex items-start justify-between">

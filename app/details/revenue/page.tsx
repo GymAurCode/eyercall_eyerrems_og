@@ -21,6 +21,7 @@ import {
   Legend,
 } from "recharts"
 import { apiService } from "@/lib/api"
+import { MiniChartCard } from "@/components/ui/mini-chart-card"
 
 type RevenueSummary = {
   totalRevenue: number
@@ -308,7 +309,7 @@ export default function RevenueDetailsPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="p-6">
+            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
               <p className="text-3xl font-bold text-foreground mt-2">
                 {formatCurrency(summary.totalRevenue)}
@@ -317,7 +318,7 @@ export default function RevenueDetailsPage() {
                 {summary.transactionCount} transactions recorded
               </p>
             </Card>
-            <Card className="p-6">
+            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <p className="text-sm text-muted-foreground">This Month</p>
               <p className="text-3xl font-bold text-foreground mt-2">
                 {formatCurrency(summary.monthlyRevenue)}
@@ -339,7 +340,7 @@ export default function RevenueDetailsPage() {
                 </span>
               </div>
             </Card>
-            <Card className="p-6">
+            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <p className="text-sm text-muted-foreground">Average / Month</p>
               <p className="text-3xl font-bold text-foreground mt-2">
                 {formatCurrency(summary.averageMonthlyRevenue)}
@@ -348,7 +349,7 @@ export default function RevenueDetailsPage() {
                 Based on recorded revenue months
               </p>
             </Card>
-            <Card className="p-6">
+            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <p className="text-sm text-muted-foreground">Transactions</p>
               <p className="text-3xl font-bold text-foreground mt-2">
                 {summary.transactionCount.toLocaleString()}
@@ -365,6 +366,41 @@ export default function RevenueDetailsPage() {
             {error}
           </Card>
         )}
+        
+        {/* Small Analytics Graphs */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <MiniChartCard
+            title="Revenue Trend"
+            valuePrefix="Rs "
+            value={summary.monthlyRevenue.toLocaleString() || "0"}
+            data={revenueData}
+            dataKey="revenue"
+            chartType="area"
+            colors={["#2563eb"]}
+            loading={loading}
+          />
+          <MiniChartCard
+            title="Category Average"
+            valuePrefix="Rs "
+            value={summary.averageMonthlyRevenue.toLocaleString() || "0"}
+            data={revenueData.map(d => ({ ...d, avg: d.target }))}
+            dataKey="avg"
+            chartType="line"
+            colors={["#10b981"]}
+            loading={loading}
+          />
+          <MiniChartCard
+            title="Top Sources"
+            value=""
+            hideValue
+            data={revenueBreakdown.slice(0, 4).map(d => ({ name: d.source, value: d.amount }))}
+            dataKey="value"
+            nameKey="name"
+            chartType="donut"
+            colors={["#f59e0b", "#ec4899", "#8b5cf6", "#3b82f6"]}
+            loading={loading}
+          />
+        </div>
 
         {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2">

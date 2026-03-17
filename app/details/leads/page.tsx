@@ -62,7 +62,7 @@ export default function LeadsDetailsPage() {
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-4">
+          <Card className="p-4 stat-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Leads</p>
@@ -73,7 +73,7 @@ export default function LeadsDetailsPage() {
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 stat-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">New Leads</p>
@@ -84,7 +84,7 @@ export default function LeadsDetailsPage() {
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 stat-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Qualified</p>
@@ -95,7 +95,7 @@ export default function LeadsDetailsPage() {
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 stat-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Conversion</p>

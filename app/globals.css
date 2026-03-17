@@ -11,7 +11,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.488 0.143 190.474); /* Teal 700 */
+  --primary: #315341;
+  --primary-gradient: linear-gradient(135deg, #315341, #4a7c61);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -21,9 +22,10 @@
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.898 0 0); /* Light Gray */
+  --border: oklch(0.898 0 0);
+  /* Light Gray */
   --input: oklch(0.898 0 0);
-  --ring: oklch(0.488 0.143 190.474); /* Teal 700 */
+  --ring: #315341;
   --chart-1: oklch(0.488 0.143 190.474);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -32,66 +34,61 @@
   --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.488 0.143 190.474);
+  --sidebar-primary: #315341;
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.488 0.143 190.474);
+  --sidebar-ring: #315341;
+  --sidebar-color: #24344c;
 }
 
+.light .stat-card, .stat-card {
+  border-left: 4px solid var(--sidebar-color);
+}
 /* Updated dark mode to use even lighter gray tones for better visibility */
 .dark {
-  --background: oklch(0.25 0 0);
-  --foreground: oklch(0.95 0 0);
-  --card: oklch(0.3 0 0);
-  --card-foreground: oklch(0.95 0 0);
-  --popover: oklch(0.3 0 0);
-  --popover-foreground: oklch(0.95 0 0);
-  --primary: oklch(0.55 0.22 264);
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #0d212c;
+  --card-foreground: #ffffff;
+  --popover: #0d212c;
+  --popover-foreground: #ffffff;
+  --primary: #315341;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.35 0 0);
-  --secondary-foreground: oklch(0.95 0 0);
-  --muted: oklch(0.35 0 0);
-  --muted-foreground: oklch(0.7 0 0);
-  --accent: oklch(0.35 0 0);
-  --accent-foreground: oklch(0.95 0 0);
+  --secondary: #1a3442;
+  --secondary-foreground: #ffffff;
+  --muted: #1a3442;
+  --muted-foreground: #d1d5db;
+  --accent: #1a3442;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.38 0 0);
-  --input: oklch(0.38 0 0);
-  --ring: oklch(0.5 0 0);
+  --border: #1e3a4a;
+  --input: #1e3a4a;
+  --ring: #315341;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.3 0 0);
-  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar: #0d212c;
+  --sidebar-foreground: #ffffff;
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.35 0 0);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.38 0 0);
+  --sidebar-accent: #1a3442;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #1e3a4a;
   --sidebar-ring: oklch(0.5 0 0);
+  --sidebar-dark-color: #0d212c;
 }
 
-/* Added accent color variants */
-[data-accent="blue"] {
-  --primary: oklch(0.55 0.22 264);
+.dark .stat-card {
+  border-left: 4px solid var(--sidebar-dark-color);
 }
 
-[data-accent="green"] {
-  --primary: oklch(0.6 0.18 162);
-}
+/* Removed accent color variants - ERP now uses a consistent global gradient theme */
 
-[data-accent="purple"] {
-  --primary: oklch(0.55 0.22 304);
-}
-
-[data-accent="orange"] {
-  --primary: oklch(0.65 0.22 41);
-}
 
 @theme inline {
   --font-sans: "Inter", system-ui, sans-serif;
@@ -133,6 +130,8 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* Custom Gradient */
+  --background-image-primary-gradient: var(--primary-gradient);
 }
 
 /* Custom scrollbar styling for dark theme */
@@ -142,16 +141,16 @@
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: oklch(0.25 0 0);
+  background: #1e2b3e;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: oklch(0.15 0 0);
+  background: #334155;
   border-radius: 4px;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.2 0 0);
+  background: #475569;
 }
 
 /* Firefox scrollbar styling for dark theme */
@@ -164,6 +163,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -193,6 +193,7 @@ select:focus-visible {
    GLOBAL MOBILE OVERFLOW SAFETY (CRITICAL)
    ============================================ */
 @media (max-width: 767px) {
+
   html,
   body {
     overflow-x: hidden;
@@ -211,6 +212,7 @@ select:focus-visible {
    TABLES - Horizontal Scroll on Mobile/Tablet
    ============================================ */
 @media (max-width: 767px) {
+
   /* Enable horizontal scroll for table containers */
   .table-wrapper,
   [data-slot="table-container"] {
@@ -218,14 +220,14 @@ select:focus-visible {
     -webkit-overflow-scrolling: touch;
     width: 100%;
   }
-  
+
   /* Ensure tables maintain minimum width */
   table,
   [data-slot="table"] {
     min-width: max-content;
     width: 100%;
   }
-  
+
   /* Sticky header for tables (optional enhancement) */
   thead {
     position: sticky;
@@ -233,7 +235,7 @@ select:focus-visible {
     z-index: 10;
     background-color: var(--card);
   }
-  
+
   /* Sticky first column (optional, for wide tables) */
   tbody td:first-child,
   thead th:first-child {
@@ -243,7 +245,7 @@ select:focus-visible {
     background-color: var(--card);
     box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
   }
-  
+
   thead th:first-child {
     z-index: 15;
   }
@@ -253,6 +255,7 @@ select:focus-visible {
    FORMS - Grid Layout Responsive Behavior
    ============================================ */
 @media (max-width: 767px) {
+
   /* Mobile: Single column for all grids */
   .grid.grid-cols-2,
   .grid.grid-cols-3,
@@ -261,24 +264,26 @@ select:focus-visible {
   .grid.grid-cols-6 {
     grid-template-columns: 1fr;
   }
-  
+
   /* Form containers stack vertically */
-  form > .grid,
-  form > div.grid {
+  form>.grid,
+  form>div.grid {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
   }
-  
+
   /* Form items: label above control, full-width controls */
   [data-slot="form-item"] {
     display: flex;
     flex-direction: column;
     align-items: stretch;
   }
+
   [data-slot="form-label"] {
     margin-bottom: 0.25rem;
   }
+
   [data-slot="form-control"],
   form input,
   form select,
@@ -288,6 +293,7 @@ select:focus-visible {
     max-width: 100%;
     min-width: 0;
   }
+
   /* Validation messages wrap naturally */
   [data-slot="form-message"] {
     white-space: normal;
@@ -299,6 +305,7 @@ select:focus-visible {
    MODALS & DIALOGS - Full Screen on Mobile
    ============================================ */
 @media (max-width: 767px) {
+
   /* Full-screen modals on mobile */
   [data-slot="dialog-content"],
   [data-slot="alert-dialog-content"] {
@@ -318,10 +325,10 @@ select:focus-visible {
     overflow-x: hidden !important;
     overflow-y: auto !important;
   }
-  
+
   /* Ensure modal content is scrollable */
-  [data-slot="dialog-content"] > *,
-  [data-slot="alert-dialog-content"] > * {
+  [data-slot="dialog-content"]>*,
+  [data-slot="alert-dialog-content"]>* {
     max-height: calc(100vh - 2rem);
     overflow-y: auto;
     overflow-x: hidden;
@@ -332,14 +339,18 @@ select:focus-visible {
    TYPOGRAPHY - Max 15% Reduction (Mobile only)
    ============================================ */
 @media (max-width: 767px) {
+
   /* Mobile: Max 15% reduction */
   body {
     font-size: clamp(0.85em, 4vw, 0.9em);
     line-height: 1.5;
   }
-  
+
   /* Slight line-height increase for readability */
-  p, span, div, li {
+  p,
+  span,
+  div,
+  li {
     line-height: 1.6;
   }
 }
@@ -348,6 +359,7 @@ select:focus-visible {
    SPACING - Reduced Padding/Margins (Mobile)
    ============================================ */
 @media (max-width: 767px) {
+
   /* Mobile: Reduce container padding */
   main[class*="p-"],
   main.p-4,
@@ -355,9 +367,9 @@ select:focus-visible {
   main.p-8 {
     padding: 0.75rem !important;
   }
-  
+
   /* Reduce section spacing */
-  section + section {
+  section+section {
     margin-top: 1rem;
   }
 }
@@ -366,20 +378,21 @@ select:focus-visible {
    BUTTONS - Touch-Safe Sizes
    ============================================ */
 @media (max-width: 767px) {
+
   /* Mobile: Ensure buttons are touch-safe (min 40px height) */
   button:not([class*="size-"]),
   [role="button"]:not([class*="size-"]) {
     min-height: 40px;
     min-width: 40px;
   }
-  
+
   /* Icon-only buttons need larger touch target */
   button[class*="icon"],
   [role="button"][class*="icon"] {
     min-width: 44px;
     min-height: 44px;
   }
-  
+
   /* Button groups wrap on mobile */
   /* Keep action bars usable without moving buttons */
   [data-slot="dialog-footer"],
@@ -399,6 +412,7 @@ select:focus-visible {
 /* These rules ensure proper behavior at breakpoints */
 
 @media (max-width: 767px) {
+
   /* Mobile: Main content takes full width */
   [data-slot="sidebar-inset"],
   main {
@@ -411,6 +425,7 @@ select:focus-visible {
    LAYOUT - Vertical Stacking on Mobile
    ============================================ */
 @media (max-width: 767px) {
+
   /* Allow wrapping for dense action/filter rows without reordering */
   .flex.gap-2,
   .flex.gap-4 {
@@ -422,6 +437,7 @@ select:focus-visible {
    CARDS - Responsive Wrapping
    ============================================ */
 @media (max-width: 767px) {
+
   /* Mobile: Cards take full width */
   [data-slot="card"] {
     width: 100%;
@@ -436,13 +452,14 @@ select:focus-visible {
 /* CSS ensures readability without enabling creation */
 
 @media (max-width: 767px) {
+
   /* Finance tables: horizontal scroll, slightly smaller font */
   [class*="finance"] table,
   [class*="voucher"] table,
   [class*="ledger"] table {
     font-size: 0.9em;
   }
-  
+
   /* Finance forms stack vertically for readability */
   [class*="finance"] form .grid,
   [class*="voucher"] form .grid {
@@ -473,24 +490,31 @@ select:focus-visible {
    DASHBOARD CARDS - Wrapping & Stacking
    ============================================ */
 @media (max-width: 767px) {
+
   /* Mobile: reduce gaps; grids already collapse via existing responsive classes */
-  .grid.gap-6 { gap: 1rem; }
-  .grid.gap-8 { gap: 1.25rem; }
+  .grid.gap-6 {
+    gap: 1rem;
+  }
+
+  .grid.gap-8 {
+    gap: 1.25rem;
+  }
 }
 
 /* ============================================
    PRINT STYLES - Preserve Layout
    ============================================ */
 @media print {
+
   /* Ensure tables don't break across pages unnecessarily */
   table {
     page-break-inside: avoid;
   }
-  
+
   thead {
     display: table-header-group;
   }
-  
+
   tfoot {
     display: table-footer-group;
   }

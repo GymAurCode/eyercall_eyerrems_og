@@ -306,19 +306,19 @@ export default function ClientDetailPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Total Deal Value</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {totalDealValue > 0 ? formatCurrency(totalDealValue) : "Rs 0"}
             </p>
             <p className="text-sm text-muted-foreground mt-2">Across all recorded deals</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Total Deals</p>
             <p className="text-3xl font-bold text-foreground mt-2">{deals.length}</p>
             <p className="text-sm text-muted-foreground mt-2">Including closed and active</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Active Deals</p>
             <p className="text-3xl font-bold text-foreground mt-2">{activeDealsCount}</p>
             <p className="text-sm text-muted-foreground mt-2">Deals currently in the pipeline</p>

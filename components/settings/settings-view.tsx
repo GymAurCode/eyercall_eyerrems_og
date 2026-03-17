@@ -48,7 +48,7 @@ const updateCurrencySettings = async (payload: {
 }
 
 export function SettingsView() {
-  const { theme, setTheme, accentColor, setAccentColor } = useTheme()
+  const { theme, setTheme } = useTheme()
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -777,45 +777,6 @@ export function SettingsView() {
                 </div>
               </div>
 
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-sm font-semibold text-foreground">Accent Color</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="accentColor">Primary Accent</Label>
-                  <Select value={accentColor} onValueChange={(value: any) => setAccentColor(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="blue">Blue</SelectItem>
-                      <SelectItem value="green">Green</SelectItem>
-                      <SelectItem value="purple">Purple</SelectItem>
-                      <SelectItem value="orange">Orange</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => setAccentColor("blue")}
-                      className="h-10 w-10 rounded-full bg-blue-600 border-2 border-transparent hover:border-foreground transition-colors"
-                      aria-label="Blue accent"
-                    />
-                    <button
-                      onClick={() => setAccentColor("green")}
-                      className="h-10 w-10 rounded-full bg-green-600 border-2 border-transparent hover:border-foreground transition-colors"
-                      aria-label="Green accent"
-                    />
-                    <button
-                      onClick={() => setAccentColor("purple")}
-                      className="h-10 w-10 rounded-full bg-purple-600 border-2 border-transparent hover:border-foreground transition-colors"
-                      aria-label="Purple accent"
-                    />
-                    <button
-                      onClick={() => setAccentColor("orange")}
-                      className="h-10 w-10 rounded-full bg-orange-600 border-2 border-transparent hover:border-foreground transition-colors"
-                      aria-label="Orange accent"
-                    />
-                  </div>
-                </div>
-              </div>
 
               <div className="space-y-4 pt-6 border-t border-border">
                 <h3 className="text-sm font-semibold text-foreground">Display Options</h3>

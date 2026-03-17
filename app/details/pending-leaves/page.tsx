@@ -134,22 +134,22 @@ export default function PendingLeavesPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Pending Requests</p>
             <p className="text-3xl font-bold text-foreground mt-2">{leaveRequests.length}</p>
             <p className="text-sm text-muted-foreground mt-2">Awaiting approval</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Total Days</p>
             <p className="text-3xl font-bold text-foreground mt-2">{totalDays}</p>
             <p className="text-sm text-muted-foreground mt-2">Requested days</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Urgent Requests</p>
             <p className="text-3xl font-bold text-foreground mt-2">{urgentLeaves}</p>
             <p className="text-sm text-muted-foreground mt-2">Within 3 days</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Avg Days per Request</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {leaveRequests.length > 0 ? (totalDays / leaveRequests.length).toFixed(1) : "0"}

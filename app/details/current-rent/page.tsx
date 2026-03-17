@@ -31,22 +31,22 @@ export default function CurrentRentPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Monthly Rent</p>
             <p className="text-3xl font-bold text-foreground mt-2">$2,000</p>
             <p className="text-sm text-muted-foreground mt-2">Fixed rate</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Next Due Date</p>
             <p className="text-3xl font-bold text-foreground mt-2">Feb 1</p>
             <p className="text-sm text-muted-foreground mt-2">5 days remaining</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Security Deposit</p>
             <p className="text-3xl font-bold text-foreground mt-2">$4,000</p>
             <p className="text-sm text-muted-foreground mt-2">2 months rent</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Payment Status</p>
             <p className="text-3xl font-bold text-success mt-2">Current</p>
             <div className="flex items-center gap-1 mt-2 text-success">
@@ -56,7 +56,7 @@ export default function CurrentRentPage() {
           </Card>
         </div>
 
-        <Card className="p-6">
+        <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <h3 className="text-lg font-semibold mb-4">Rent Breakdown</h3>
           <div className="space-y-4">
             <div className="flex items-center justify-between py-3 border-b border-border">

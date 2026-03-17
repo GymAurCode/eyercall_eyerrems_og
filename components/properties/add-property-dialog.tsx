@@ -13,6 +13,12 @@ import { Loader2, Plus, Trash2, Upload, X, FileText, RefreshCw } from "lucide-re
 import { apiService } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { useDropdownOptions } from "@/hooks/use-dropdowns"
+import { useDealers } from "@/hooks/use-dealers"
+import { useAccounts } from "@/hooks/use-accounts"
+import { useAmenities } from "@/hooks/use-amenities"
+import { useLeafLocations } from "@/hooks/use-leaf-locations"
+import { useSubsidiaryOptions } from "@/hooks/use-subsidiary-options"
+import { usePropertyDetails } from "@/hooks/use-property-details"
 
 type PropertyForm = {
   tid: string // Transaction ID - unique across Property, Deal, Client
@@ -337,12 +343,7 @@ function ManagedDropdown({
 export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }: AddPropertyDialogProps) {
   const { toast } = useToast()
   const [form, setForm] = useState<PropertyForm>(DEFAULT_FORM)
-  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [dealers, setDealers] = useState<{ id: string; name: string; tid?: string }[]>([])
-  const [amenities, setAmenities] = useState<{ id: string; name: string }[]>([])
-  const [propertyData, setPropertyData] = useState<any>(null)
-  const [accounts, setAccounts] = useState<any[]>([])
   const [selectedAccountId, setSelectedAccountId] = useState<Record<string, string>>({
     asset: "",
     expense: "",
@@ -351,52 +352,15 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
   })
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
-  const [subsidiaryOptions, setSubsidiaryOptions] = useState<Array<{ id: string; name: string }>>([])
-  const [loadingSubsidiaries, setLoadingSubsidiaries] = useState(false)
-  const [leafLocations, setLeafLocations] = useState<Array<{ id: string; path: string }>>([])
-  const [loadingLocations, setLoadingLocations] = useState(false)
-  const [locationError, setLocationError] = useState<string | null>(null)
-  const [locationLoadTimeout, setLocationLoadTimeout] = useState(false)
+  const { dealers, isLoading: dealersLoading } = useDealers()
+  const { amenities, isLoading: amenitiesLoading } = useAmenities()
+  const { accounts, isLoading: accountsLoading } = useAccounts()
+  const { locations: leafLocations, isLoading: loadingLocations, isError: locationError, isValidating: isValidatingLocations, mutate: refreshLocations } = useLeafLocations(open)
+  const { options: subsidiaryOptions, isLoading: loadingSubsidiaries } = useSubsidiaryOptions(form.locationId)
+  const { propertyData, isLoading: propertyLoading } = usePropertyDetails(propertyId || null, open)
+  
   const isEdit = Boolean(propertyId)
-
-  // Load leaf locations when dialog opens
-  useEffect(() => {
-    if (open) {
-      const loadLeafLocations = async () => {
-        setLoadingLocations(true)
-        setLocationError(null)
-        setLocationLoadTimeout(false)
-
-        try {
-          const response = await apiService.locations.getLeaves()
-          const data = (response.data as any)?.data || response.data || []
-          setLeafLocations(Array.isArray(data) ? data : [])
-        } catch (error: any) {
-          console.error('Failed to load leaf locations:', error)
-          setLocationError('Failed to load locations')
-          setLeafLocations([])
-        } finally {
-          setLoadingLocations(false)
-        }
-      }
-
-      loadLeafLocations()
-
-      // Set a timeout to prevent infinite loading
-      const timeout = setTimeout(() => {
-        if (loadingLocations) {
-          setLocationLoadTimeout(true)
-        }
-      }, 10000) // 10 second timeout
-
-      return () => {
-        clearTimeout(timeout)
-        setLocationLoadTimeout(false)
-      }
-    } else {
-      setLeafLocations([])
-    }
-  }, [open])
+  const loading = isEdit && propertyLoading
 
   useEffect(() => {
     if (!open) {
@@ -408,132 +372,40 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
       })
       setPhotoFile(null)
       setAttachmentFiles([])
+      setForm(DEFAULT_FORM)
       return
     }
+  }, [open])
 
-    // Add a small delay to debounce rapid open/close actions
-    const timeoutId = setTimeout(async () => {
-      try {
-        setLoading(true)
-        const [dealerRes, amenityRes, accountsRes] = await Promise.all([
-          apiService.dealers.getAll(),
-          apiService.advanced.getAmenities(),
-          apiService.accounts.getAll(),
-        ])
-        const dealerPayload = dealerRes.data as any
-        const amenityPayload = amenityRes.data as any
-        const accountsPayload = accountsRes.data as any
-
-        setDealers(
-          Array.isArray(dealerPayload?.data ?? dealerPayload)
-            ? (dealerPayload.data ?? dealerPayload).map((d: any) => ({ id: d.id, name: d.name, tid: d.tid }))
-            : [],
-        )
-        setAmenities(
-          Array.isArray(amenityPayload?.data ?? amenityPayload)
-            ? (amenityPayload.data ?? amenityPayload).map((a: any) => ({ id: a.id, name: a.name }))
-            : [],
-        )
-
-        const accountsData = Array.isArray(accountsPayload?.data ?? accountsPayload)
-          ? (accountsPayload.data ?? accountsPayload)
-          : []
-        setAccounts(accountsData)
-
-        if (propertyId) {
-          const response = await apiService.properties.getById(String(propertyId))
-          const payload = (response.data as any)?.data ?? response.data
-          setPropertyData(payload)
-
-          const documents = typeof payload.documents === "object" ? payload.documents : {}
-          const dealerId = payload.dealerId || payload.dealer?.id || ""
-          const imageUrl = payload.imageUrl || ""
-
-          setForm({
-            tid: payload.tid || "",
-            type: payload.type || "",
-            status: payload.status || "Active",
-            category: payload.category || "",
-            size: payload.size || "",
-            address: payload.address || "",
-            location: payload.location || "",
-            locationId: payload.locationId || null,
-            subsidiaryOptionId: payload.subsidiaryOptionId || null,
-            salePrice: payload.salePrice?.toString() || documents.salePrice?.toString() || "",
-            imageUrl: imageUrl,
-            totalArea: payload.totalArea?.toString() || "",
-            totalUnits: payload.totalUnits?.toString() || "",
-            yearBuilt: payload.yearBuilt?.toString() || "",
-            dealerId: dealerId,
-            amenities: Array.isArray(payload.amenities) ? payload.amenities : documents.amenities || [],
-            description: payload.description || "",
-          })
-
-          // Log for debugging
-          console.log("Property loaded:", {
-            dealerId,
-            dealer: payload.dealer,
-            imageUrl: imageUrl ? `${imageUrl.substring(0, 50)}...` : "none"
-          })
-        } else {
-          setForm(DEFAULT_FORM)
-          setPropertyData(null)
-          setPhotoFile(null)
-          setAttachmentFiles([])
-        }
-      } catch (error: any) {
-        // Don't show toast for rate limit errors, just log
-        if (error.response?.status !== 429) {
-          toast({ title: "Failed to load data", description: error?.message || "Unknown error", variant: "destructive" })
-        }
-      } finally {
-        setLoading(false)
-      }
-    }, 100)
-
-    return () => clearTimeout(timeoutId)
-  }, [open, propertyId, toast])
-
-  // Load subsidiary options when location changes
   useEffect(() => {
-    const loadSubsidiaries = async () => {
-      if (!form.locationId) {
-        setSubsidiaryOptions([])
-        setForm((p) => ({ ...p, subsidiaryOptionId: null }))
-        return
-      }
+    if (open && isEdit && propertyData) {
+      const documents = typeof propertyData.documents === "object" ? propertyData.documents : {}
+      const dealerId = propertyData.dealerId || propertyData.dealer?.id || ""
+      const imageUrl = propertyData.imageUrl || ""
 
-      setLoadingSubsidiaries(true)
-      try {
-        const response = await apiService.subsidiaries.getOptionsByLocation(form.locationId).catch((err) => {
-          console.warn('Failed to load subsidiary options:', err)
-          return { data: { data: [] } }
-        })
-        const data = (response.data as any)?.data || response.data || []
-        // Transform options - ensure it's an array
-        const options = Array.isArray(data)
-          ? data.map((opt: any) => ({
-            id: opt.id,
-            name: opt.name,
-          }))
-          : []
-        setSubsidiaryOptions(options)
-
-        // If current subsidiaryOptionId is not in the options, clear it
-        if (form.subsidiaryOptionId && !options.find((o: any) => o.id === form.subsidiaryOptionId)) {
-          setForm((p) => ({ ...p, subsidiaryOptionId: null }))
-        }
-      } catch (error: any) {
-        // Silently fail - subsidiaries might not exist for this location
-        console.warn('Error loading subsidiary options:', error)
-        setSubsidiaryOptions([])
-      } finally {
-        setLoadingSubsidiaries(false)
-      }
+      setForm({
+        tid: propertyData.tid || "",
+        type: propertyData.type || "",
+        status: propertyData.status || "Active",
+        category: propertyData.category || "",
+        size: propertyData.size || "",
+        address: propertyData.address || "",
+        location: propertyData.location || "",
+        locationId: propertyData.locationId || null,
+        subsidiaryOptionId: propertyData.subsidiaryOptionId || null,
+        salePrice: propertyData.salePrice?.toString() || documents.salePrice?.toString() || "",
+        imageUrl: imageUrl,
+        totalArea: propertyData.totalArea?.toString() || "",
+        totalUnits: propertyData.totalUnits?.toString() || "",
+        yearBuilt: propertyData.yearBuilt?.toString() || "",
+        dealerId: dealerId,
+        amenities: Array.isArray(propertyData.amenities) ? propertyData.amenities : documents.amenities || [],
+        description: propertyData.description || "",
+      })
+    } else if (open && !isEdit) {
+      setForm(DEFAULT_FORM)
     }
-
-    loadSubsidiaries()
-  }, [form.locationId])
+  }, [open, isEdit, propertyData])
 
 
   const handleSave = async () => {
@@ -658,10 +530,10 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
   }
 
   // Filter accounts by type
-  const assetAccounts = useMemo(() => accounts.filter((a) => a.type?.toLowerCase() === "asset"), [accounts])
-  const expenseAccounts = useMemo(() => accounts.filter((a) => a.type?.toLowerCase() === "expense"), [accounts])
-  const incomeAccounts = useMemo(() => accounts.filter((a) => a.type?.toLowerCase() === "revenue" || a.type?.toLowerCase() === "income"), [accounts])
-  const scrapAccounts = useMemo(() => accounts.filter((a) => a.name?.toLowerCase().includes("scrap") || a.code?.includes("scrap")), [accounts])
+  const assetAccounts = useMemo(() => accounts.filter((a: any) => a.type?.toLowerCase() === "asset"), [accounts])
+  const expenseAccounts = useMemo(() => accounts.filter((a: any) => a.type?.toLowerCase() === "expense"), [accounts])
+  const incomeAccounts = useMemo(() => accounts.filter((a: any) => a.type?.toLowerCase() === "revenue" || a.type?.toLowerCase() === "income"), [accounts])
+  const scrapAccounts = useMemo(() => accounts.filter((a: any) => a.name?.toLowerCase().includes("scrap") || a.code?.includes("scrap")), [accounts])
 
 
   return (
@@ -761,13 +633,14 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                                 dealerId: val === "none" ? "" : val,
                               }))
                             }
+                            disabled={dealersLoading}
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Select dealer (optional)" />
+                              <SelectValue placeholder={dealersLoading ? "Loading dealers..." : "Select dealer (optional)"} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">None</SelectItem>
-                              {dealers.map((d) => (
+                              {dealers.map((d: any) => (
                                 <SelectItem key={d.id} value={d.id}>
                                   {d.tid ? `[${d.tid}] ` : ""}{d.name}
                                 </SelectItem>
@@ -832,24 +705,13 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={async () => {
-                              setLocationLoadTimeout(false)
-                              setLoadingLocations(true)
-                              try {
-                                const response = await apiService.locations.getLeaves()
-                                const data = (response.data as any)?.data || response.data || []
-                                setLeafLocations(Array.isArray(data) ? data : [])
-                                setLocationError(null)
-                              } catch (err: any) {
-                                setLocationError('Failed to load locations')
-                              } finally {
-                                setLoadingLocations(false)
-                              }
+                            onClick={() => {
+                              refreshLocations()
                             }}
-                            disabled={loadingLocations && !locationLoadTimeout}
+                            disabled={loadingLocations || isValidatingLocations}
                             className="h-7 text-xs"
                           >
-                            {loadingLocations && !locationLoadTimeout ? (
+                            {(loadingLocations || isValidatingLocations) ? (
                               <Loader2 className="h-3 w-3 animate-spin mr-1" />
                             ) : (
                               <RefreshCw className="h-3 w-3 mr-1" />
@@ -860,7 +722,7 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                         <Select
                           value={form.locationId || "none"}
                           onValueChange={(val) => {
-                            const selectedLocation = leafLocations.find((loc) => loc.id === val)
+                            const selectedLocation = leafLocations.find((loc: any) => loc.id === val)
                             setForm((p) => ({
                               ...p,
                               location: selectedLocation?.path || "",
@@ -868,20 +730,20 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                               subsidiaryOptionId: null, // Reset subsidiary when location changes
                             }))
                           }}
-                          disabled={loadingLocations && !locationLoadTimeout && !locationError}
+                          disabled={loadingLocations || isValidatingLocations || locationError}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder={
-                              loadingLocations && !locationLoadTimeout && !locationError
+                              (loadingLocations || isValidatingLocations)
                                 ? "Loading locations..."
-                                : locationError || locationLoadTimeout
+                                : locationError
                                   ? "Error loading locations - Click Refresh"
                                   : "Select location"
                             } />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>
-                            {locationError || locationLoadTimeout ? (
+                            {locationError ? (
                               <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                                 <p className="mb-2">Failed to load locations.</p>
                                 <Button
@@ -891,35 +753,24 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                                   onClick={async (e) => {
                                     e.preventDefault()
                                     e.stopPropagation()
-                                    setLocationLoadTimeout(false)
-                                    setLoadingLocations(true)
-                                    try {
-                                      const response = await apiService.locations.getLeaves()
-                                      const data = (response.data as any)?.data || response.data || []
-                                      setLeafLocations(Array.isArray(data) ? data : [])
-                                      setLocationError(null)
-                                    } catch (err: any) {
-                                      setLocationError('Failed to load locations')
-                                    } finally {
-                                      setLoadingLocations(false)
-                                    }
+                                    refreshLocations()
                                   }}
                                 >
                                   <RefreshCw className="h-3 w-3 mr-1" />
                                   Retry
                                 </Button>
                               </div>
-                            ) : leafLocations.length === 0 && !loadingLocations ? (
+                            ) : leafLocations.length === 0 && !loadingLocations && !isValidatingLocations ? (
                               <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                                 No locations available. Add locations in Advanced Options &gt; Location & Subsidiary.
                               </div>
-                            ) : loadingLocations && !locationLoadTimeout ? (
+                            ) : loadingLocations || isValidatingLocations ? (
                               <div className="px-2 py-6 text-center text-sm text-muted-foreground">
                                 <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
                                 Loading locations...
                               </div>
                             ) : (
-                              (leafLocations || []).map((loc) => (
+                              (leafLocations || []).map((loc: any) => (
                                 <SelectItem key={loc.id} value={loc.id}>
                                   {loc.path}
                                 </SelectItem>
@@ -927,12 +778,12 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                             )}
                           </SelectContent>
                         </Select>
-                        {(locationError || locationLoadTimeout) && (
+                        {locationError && (
                           <p className="text-xs text-destructive">
                             Error loading locations. Click Refresh to retry.
                           </p>
                         )}
-                        {!locationError && !locationLoadTimeout && (
+                        {!locationError && (
                           <p className="text-xs text-muted-foreground">
                             Select a leaf location (only locations without children can be selected). Add locations in Advanced Options &gt; Location & Subsidiary.
                           </p>
@@ -978,32 +829,40 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
 
                       <div className="space-y-2">
                         <Label>Amenities</Label>
-                        <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded p-2">
-                          {(amenities || []).map((a) => {
-                            const active = amenitySelected.has(a.name)
-                            return (
-                              <Button
-                                key={a.id}
-                                variant={active ? "default" : "outline"}
-                                size="sm"
-                                onClick={() =>
-                                  setForm((p) => ({
-                                    ...p,
-                                    amenities: active
-                                      ? p.amenities.filter((x) => x !== a.name)
-                                      : [...p.amenities, a.name],
-                                  }))
-                                }
-                                className="justify-start"
-                              >
-                                {a.name}
-                              </Button>
-                            )
-                          })}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          Selected: {form.amenities.length ? form.amenities.join(", ") : "None"}
-                        </div>
+                        {amenitiesLoading ? (
+                          <div className="flex items-center justify-center p-4">
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded p-2">
+                              {(amenities || []).map((a: any) => {
+                                const active = amenitySelected.has(a.name)
+                                return (
+                                  <Button
+                                    key={a.id}
+                                    variant={active ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() =>
+                                      setForm((p) => ({
+                                        ...p,
+                                        amenities: active
+                                          ? p.amenities.filter((x) => x !== a.name)
+                                          : [...p.amenities, a.name],
+                                      }))
+                                    }
+                                    className="justify-start"
+                                  >
+                                    {a.name}
+                                  </Button>
+                                )
+                              })}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              Selected: {form.amenities.length ? form.amenities.join(", ") : "None"}
+                            </div>
+                          </>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1018,12 +877,12 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                               }))
                             }
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select asset account (optional)" />
+                            <SelectTrigger disabled={accountsLoading}>
+                              <SelectValue placeholder={accountsLoading ? "Loading..." : "Select asset account (optional)"} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">None</SelectItem>
-                              {(assetAccounts || []).map((account) => (
+                              {(assetAccounts || []).map((account: any) => (
                                 <SelectItem key={account.id} value={account.id}>
                                   {account.code} - {account.name}
                                 </SelectItem>
@@ -1042,12 +901,12 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                               }))
                             }
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select expense account (optional)" />
+                            <SelectTrigger disabled={accountsLoading}>
+                              <SelectValue placeholder={accountsLoading ? "Loading..." : "Select expense account (optional)"} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">None</SelectItem>
-                              {(expenseAccounts || []).map((account) => (
+                              {(expenseAccounts || []).map((account: any) => (
                                 <SelectItem key={account.id} value={account.id}>
                                   {account.code} - {account.name}
                                 </SelectItem>
@@ -1069,12 +928,12 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                               }))
                             }
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select income account (optional)" />
+                            <SelectTrigger disabled={accountsLoading}>
+                              <SelectValue placeholder={accountsLoading ? "Loading..." : "Select income account (optional)"} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">None</SelectItem>
-                              {(incomeAccounts || []).map((account) => (
+                              {(incomeAccounts || []).map((account: any) => (
                                 <SelectItem key={account.id} value={account.id}>
                                   {account.code} - {account.name}
                                 </SelectItem>
@@ -1093,12 +952,12 @@ export function AddPropertyDialog({ open, onOpenChange, propertyId, onSuccess }:
                               }))
                             }
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select scrap account (optional)" />
+                            <SelectTrigger disabled={accountsLoading}>
+                              <SelectValue placeholder={accountsLoading ? "Loading..." : "Select scrap account (optional)"} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="none">None</SelectItem>
-                              {(scrapAccounts || []).map((account) => (
+                              {(scrapAccounts || []).map((account: any) => (
                                 <SelectItem key={account.id} value={account.id}>
                                   {account.code} - {account.name}
                                 </SelectItem>

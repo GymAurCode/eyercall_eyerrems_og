@@ -529,7 +529,7 @@ function AIChatAssistant() {
                   className={`max-w-[80%] rounded-lg p-3 ${
                     message.role === "user"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-card border border-border"
+                      : "bg-card/60 backdrop-blur-md border border-border"
                   }`}
                 >
                   {message.isLoading ? (

@@ -25,7 +25,7 @@ const AddLeadDialog = lazy(() => import("./add-lead-dialog").then(m => ({ defaul
 const AddDealerDialog = lazy(() => import("./add-dealer-dialog").then(m => ({ default: m.AddDealerDialog })))
 const AddClientDialog = lazy(() => import("./add-client-dialog").then(m => ({ default: m.AddClientDialog })))
 
-export function CRMView() {
+export function CRMView({ initialData }: { initialData?: any }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -33,13 +33,63 @@ export function CRMView() {
   const [showAddDealerDialog, setShowAddDealerDialog] = useState(false)
   const [showAddClientDialog, setShowAddClientDialog] = useState(false)
   const [activeTab, setActiveTabState] = useState("leads")
-  const [crmStats, setCrmStats] = useState<any[]>([])
-  const [statsLoading, setStatsLoading] = useState(true)
+  const [crmStats, setCrmStats] = useState<any[]>(() => {
+    if (!initialData) return []
+    const data = initialData
+    return [
+      {
+        name: "Total Leads",
+        value: (data.leadsCount ?? 0).toString(),
+        change: `+0 this week`, // Could calculate this too
+        icon: UserPlus,
+        gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
+        href: "/details/leads",
+      },
+      {
+        name: "Active Clients",
+        value: (data.activeClients ?? 0).toString(),
+        change: `+0 this month`,
+        icon: Users,
+        gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
+        href: "/details/clients",
+      },
+      {
+        name: "Deals in Pipeline",
+        value: (data.dealsCount ?? 0).toString(),
+        change: "Rs 0 value",
+        icon: TrendingUp,
+        gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
+        href: "/details/deals",
+      },
+      {
+        name: "Active Dealers",
+        value: (data.totalDealers ?? 0).toString(),
+        change: "Rs 0 commissions",
+        icon: Briefcase,
+        gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
+        href: "/details/dealers",
+      },
+    ]
+  })
+  const [statsLoading, setStatsLoading] = useState(!initialData)
   const [dealersRefreshKey, setDealersRefreshKey] = useState(0)
   const [hasInitializedTab, setHasInitializedTab] = useState(false)
-  const [pipelineData, setPipelineData] = useState<any[]>([])
-  const [recentActivities, setRecentActivities] = useState<any[]>([])
-  const [leadsChartData, setLeadsChartData] = useState<any[]>([])
+  const [pipelineData, setPipelineData] = useState<any[]>(() => {
+    if (!initialData) return []
+    return initialData.pipelineData || []
+  })
+  const [recentActivities, setRecentActivities] = useState<any[]>(() => {
+    if (!initialData) return []
+    // Map string timestamps back to Date objects if needed, but the UI might handle strings
+    return (initialData.recentActivities || []).map((a: any) => ({
+      ...a,
+      icon: a.icon === "UserPlus" ? UserPlus : a.icon === "Users" ? Users : TrendingUp
+    }))
+  })
+  const [leadsChartData, setLeadsChartData] = useState<any[]>(() => {
+    if (!initialData) return []
+    return initialData.leadsConversionData || []
+  })
   const [dealsClosedData, setDealsClosedData] = useState<any[]>([])
   const tabStorageKey = "crm-active-tab"
 
@@ -105,8 +155,10 @@ export function CRMView() {
   )
 
   useEffect(() => {
-    fetchCRMStats()
-  }, [])
+    if (!initialData) {
+      fetchCRMStats()
+    }
+  }, [initialData])
 
   const fetchCRMStats = async () => {
     try {
@@ -318,7 +370,7 @@ export function CRMView() {
           value: leads.length.toString(),
           change: `+${leadsThisWeek} this week`,
           icon: UserPlus,
-          gradient: "from-violet-600 via-indigo-600 to-sky-500",
+          gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
           href: "/details/leads",
         },
         {
@@ -326,7 +378,7 @@ export function CRMView() {
           value: activeClientsCount.toString(),
           change: `+${clientsThisMonth} this month`,
           icon: Users,
-          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+          gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
           href: "/details/clients",
         },
         {
@@ -334,7 +386,7 @@ export function CRMView() {
           value: pipelineDeals.length.toString(),
           change: pipelineValue > 0 ? `Rs ${(pipelineValue / 1_000_000).toFixed(2)}Cr value` : "Rs 0 value",
           icon: TrendingUp,
-          gradient: "from-amber-500 via-orange-500 to-rose-500",
+          gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
           href: "/details/deals",
         },
         {
@@ -342,7 +394,7 @@ export function CRMView() {
           value: dealers.length.toString(),
           change: totalCommissions > 0 ? `Rs ${(totalCommissions / 1_000).toFixed(0)}K commissions` : "Rs 0 commissions",
           icon: Briefcase,
-          gradient: "from-blue-600 via-indigo-600 to-violet-600",
+          gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
           href: "/details/dealers",
         },
       ])
@@ -403,28 +455,29 @@ export function CRMView() {
             <Card
               key={stat.name}
               className={cn(
-                "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
               )}
               onClick={() => router.push(stat.href)}
             >
-              <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
-              <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
-              <div className="relative p-6 text-white">
+              <div className="relative p-6">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                    <stat.icon className="h-5 w-5 text-white" />
+                  <div className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br",
+                    stat.gradient
+                  )}>
+                    <stat.icon className="h-6 w-6" />
                   </div>
                   <span
                     className={cn(
-                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-slate-200 bg-slate-50 text-slate-600 shadow-sm dark:bg-[#1a3442] dark:text-white dark:ring-white/10",
                     )}
                   >
                     {stat.change}
                   </span>
                 </div>
                 <div className="mt-6">
-                  <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
-                  <p className="mt-1 text-3xl font-bold tracking-tight">
+                  <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.name}</p>
+                  <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                     {stat.value}
                   </p>
                 </div>
@@ -469,32 +522,35 @@ export function CRMView() {
       {/* Pipeline Funnel Chart and Recent Activities */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Pipeline Funnel Chart */}
-        <Card className="p-6">
+        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Sales Pipeline Funnel</h3>
-            <Badge variant="outline">Live</Badge>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Sales Pipeline Funnel</h3>
+            <Badge variant="outline" className="dark:border-slate-700 dark:text-slate-400">Live</Badge>
           </div>
           {pipelineData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={pipelineData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" className="dark:opacity-50" />
                 <XAxis
                   type="number"
-                  stroke="var(--muted-foreground)"
-                  tick={{ fontSize: 12 }}
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
                 />
                 <YAxis
                   dataKey="stage"
                   type="category"
-                  stroke="var(--muted-foreground)"
-                  tick={{ fontSize: 12 }}
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "var(--card)",
-                    border: "1px solid var(--border)",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
                     borderRadius: "8px",
+                    color: "#f8fafc"
                   }}
+                  itemStyle={{ color: "#f8fafc" }}
+                  labelStyle={{ color: "#94a3b8" }}
                   formatter={(value: any) => [`${value}`, "Count"]}
                 />
                 <Bar dataKey="count" radius={[0, 8, 8, 0]}>
@@ -512,10 +568,10 @@ export function CRMView() {
         </Card>
 
         {/* Recent Activities Feed */}
-        <Card className="p-6">
+        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Recent Activities</h3>
-            <Activity className="h-5 w-5 text-muted-foreground" />
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Activities</h3>
+            <Activity className="h-5 w-5 text-slate-500 dark:text-slate-400" />
           </div>
           <ScrollArea className="h-[300px]">
             {recentActivities.length > 0 ? (

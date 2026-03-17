@@ -139,41 +139,41 @@ export default function OccupancyDetailsPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="p-6">
+            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
               </div>
               <p className="text-sm text-muted-foreground">Overall Occupancy</p>
               <p className="text-3xl font-bold text-foreground mt-2">{overallOccupancy.toFixed(1)}%</p>
               <p className="text-sm text-success mt-1">{occupancyChange}</p>
             </Card>
-            <Card className="p-6">
+            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-                  <Home className="h-5 w-5 text-success" />
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#22c55e,#15803d)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <Home className="h-6 w-6 text-white" />
+              </div>
               </div>
               <p className="text-sm text-muted-foreground">Occupied Units</p>
               <p className="text-3xl font-bold text-foreground mt-2">{occupiedUnits.toLocaleString()}</p>
               <p className="text-sm text-muted-foreground mt-1">Out of {totalUnits.toLocaleString()} total</p>
             </Card>
-            <Card className="p-6">
+            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
-                  <Building2 className="h-5 w-5 text-orange-500" />
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#f59e0b,#b45309)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <Building2 className="h-6 w-6 text-white" />
+              </div>
               </div>
               <p className="text-sm text-muted-foreground">Vacant Units</p>
               <p className="text-3xl font-bold text-foreground mt-2">{vacantUnits.toLocaleString()}</p>
               <p className="text-sm text-muted-foreground mt-1">Available for lease</p>
             </Card>
-            <Card className="p-6">
+            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                  <TrendingUp className="h-5 w-5 text-blue-500" />
-                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
               </div>
               <p className="text-sm text-muted-foreground">Target Rate</p>
               <p className="text-3xl font-bold text-foreground mt-2">95%</p>

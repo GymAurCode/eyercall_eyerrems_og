@@ -134,7 +134,7 @@ export default function SaleDetailsPage() {
         </Card>
 
         {/* Financial Details */}
-        <Card className="p-6">
+        <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
             Financial Details

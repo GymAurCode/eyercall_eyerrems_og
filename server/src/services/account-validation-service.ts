@@ -4,7 +4,7 @@
  */
 
 import prisma from '../prisma/client';
-import type { Account } from '../generated/prisma/client';
+import type { Account } from '@prisma/client';
 
 export class AccountValidationService {
   /**

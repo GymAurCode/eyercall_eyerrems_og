@@ -31,7 +31,18 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { MiniChartCard } from "@/components/ui/mini-chart-card"
 
-export function DashboardOverview() {
+interface DashboardStats {
+  propsData: any
+  hrData: any
+  crmData: any
+  financeData: any
+  salesData: any[]
+  leasesData: any[]
+  revenueVsExpense: any[]
+  allProperties: any[]
+}
+
+export function DashboardOverview({ initialData }: { initialData?: DashboardStats }) {
   const [openDialog, setOpenDialog] = useState<string | null>(null)
   const [topStats, setTopStats] = useState<
     Array<{
@@ -42,14 +53,111 @@ export function DashboardOverview() {
       icon: any
       gradient: string
     }>
-  >([])
+  >(() => {
+    if (!initialData) return []
+    const { propsData, hrData, crmData, financeData } = initialData
+    
+    const propertiesChangeStr = propsData.propertiesChange || "+0 this month"
+    const propertiesThisMonth = parseInt(propertiesChangeStr.match(/\+(\d+)/)?.[1] || "0") || 0
 
-  const [revenueData, setRevenueData] = useState<any[]>([])
-  const [propertyTypeData, setPropertyTypeData] = useState<any[]>([])
-  const [occupancyData, setOccupancyData] = useState<any[]>([])
-  const [salesFunnelData, setSalesFunnelData] = useState<any[]>([])
-  const [recentActivities, setRecentActivities] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+    const tenantsChangeStr = propsData.tenantsChange || "+0 this month"
+    const tenantsThisMonth = parseInt(tenantsChangeStr.match(/\+(\d+)/)?.[1] || "0") || 0
+
+    return [
+      {
+        label: "Total Properties",
+        value: Number(propsData.totalProperties) || 0,
+        deltaLabel: propsData.propertiesChange || "+0 this month",
+        deltaType: propertiesThisMonth > 0 ? "positive" : "neutral",
+        icon: Building2,
+        gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
+      },
+      {
+        label: "Total Tenants",
+        value: Number(propsData.totalTenants) || 0,
+        deltaLabel: propsData.tenantsChange || "+0 this month",
+        deltaType: tenantsThisMonth > 0 ? "positive" : "neutral",
+        icon: Users,
+        gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
+      },
+      {
+        label: "Total Revenue",
+        value: Number(financeData.totalRevenue) || 0,
+        deltaLabel: "Rent + Sales",
+        deltaType: financeData.totalRevenue > 0 ? "positive" : "neutral",
+        icon: DollarSign,
+        gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
+      },
+      {
+        label: "Total Maintenance Requests",
+        value: Number(propsData.totalMaintenanceRequests) || 0,
+        deltaLabel: "All requests",
+        deltaType: "neutral",
+        icon: AlertCircle,
+        gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
+      },
+      {
+        label: "Total Staff",
+        value: Number(hrData.totalEmployees) || 0,
+        deltaLabel: "Active employees",
+        deltaType: "neutral",
+        icon: UserCheck,
+        gradient: "bg-[linear-gradient(135deg,#14b8a6,#0f766e)]",
+      }
+    ]
+  })
+
+  const [revenueData, setRevenueData] = useState<any[]>(() => initialData?.revenueVsExpense || [])
+  const [propertyTypeData, setPropertyTypeData] = useState<any[]>(() => {
+    if (!initialData) return []
+    const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
+    return (initialData.propsData.propertyTypeData || []).map((item: any, index: number) => ({
+      name: item.name || 'Unknown',
+      value: item.value || 0,
+      color: COLORS[index % COLORS.length],
+    }))
+  })
+  const [occupancyData, setOccupancyData] = useState<any[]>(() => {
+    if (!initialData) return []
+    const properties = initialData.allProperties || []
+    return Array.isArray(properties)
+      ? properties
+        .filter((p: any) => p.type !== 'house' && (p.units || p._count?.units || 0) > 0)
+        .slice(0, 10)
+        .map((p: any) => {
+          const totalUnits = p.units || p._count?.units || 0
+          const occupied = p.occupied || 0
+          const occupancyRate = totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0
+          return {
+            property: p.name || 'Unknown',
+            occupancy: occupancyRate,
+            totalUnits,
+            occupiedUnits: occupied,
+          }
+        })
+        .sort((a: any, b: any) => b.occupancy - a.occupancy)
+      : []
+  })
+  const [salesFunnelData, setSalesFunnelData] = useState<any[]>(() => {
+    if (!initialData) return []
+    const salesArray = Array.isArray(initialData.salesData) ? initialData.salesData : []
+    return [
+      {
+        stage: "Pending",
+        count: salesArray.filter((s: any) => s.status === "Pending" || s.status === "pending").length,
+      },
+      {
+        stage: "Completed",
+        count: salesArray.filter((s: any) => s.status === "Completed" || s.status === "completed").length,
+      },
+      {
+        stage: "Cancelled",
+        count: salesArray.filter((s: any) => s.status === "Cancelled" || s.status === "cancelled").length,
+      },
+    ]
+  })
+  const [recentActivities, setRecentActivities] = useState<any[]>(() => initialData?.propsData.recentActivities || [])
+  const [loading, setLoading] = useState(!initialData)
   const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
 
@@ -140,7 +248,7 @@ export function DashboardOverview() {
           deltaLabel: propsData.propertiesChange || "+0 this month",
           deltaType: propertiesThisMonth > 0 ? "positive" : "neutral",
           icon: Building2,
-          gradient: "bg-[linear-gradient(135deg,#5b3df5,#3b2dbd)]",
+          gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
         },
         {
           label: "Total Tenants",
@@ -148,7 +256,7 @@ export function DashboardOverview() {
           deltaLabel: propsData.tenantsChange || "+0 this month",
           deltaType: tenantsThisMonth > 0 ? "positive" : "neutral",
           icon: Users,
-          gradient: "bg-[linear-gradient(135deg,#e11d48,#9f1239)]",
+          gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
         },
         {
           label: "Total Revenue",
@@ -156,7 +264,7 @@ export function DashboardOverview() {
           deltaLabel: "Rent + Sales",
           deltaType: totalRevenue > 0 ? "positive" : "neutral",
           icon: DollarSign,
-          gradient: "bg-[linear-gradient(135deg,#ea580c,#b45309)]",
+          gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
         },
         {
           label: "Total Maintenance Requests",
@@ -164,7 +272,7 @@ export function DashboardOverview() {
           deltaLabel: "All requests",
           deltaType: "neutral",
           icon: AlertCircle,
-          gradient: "bg-[linear-gradient(135deg,#0d9488,#115e59)]",
+          gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
         },
         {
           label: "Total Staff",
@@ -172,7 +280,7 @@ export function DashboardOverview() {
           deltaLabel: "Active employees",
           deltaType: "neutral",
           icon: UserCheck,
-          gradient: "bg-[linear-gradient(135deg,#2563eb,#1e3a8a)]",
+          gradient: "bg-[linear-gradient(135deg,#14b8a6,#0f766e)]",
         },
       ])
 
@@ -273,13 +381,15 @@ export function DashboardOverview() {
   }, [])
 
   useEffect(() => {
-    fetchDashboardData()
+    if (!initialData) {
+      fetchDashboardData()
+    }
     // Auto-refresh every 30 seconds
     const interval = setInterval(() => {
       fetchDashboardData(true)
     }, 30000)
     return () => clearInterval(interval)
-  }, [fetchDashboardData])
+  }, [fetchDashboardData, initialData])
 
   return (
     <div className="space-y-6">
@@ -319,46 +429,51 @@ export function DashboardOverview() {
               {topStats.map((s) => (
                 <Card
                   key={s.label}
+                  onClick={() => {
+                    const routeMap: Record<string, string> = {
+                      "Total Properties": "/properties",
+                      "Total Tenants": "/details/tenants",
+                      "Total Revenue": "/finance",
+                      "Total Maintenance Requests": "/details/maintenance-requests",
+                      "Total Staff": "/hr",
+                    }
+                    const route = routeMap[s.label]
+                    if (route) router.push(route)
+                  }}
                   className={cn(
-                    "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:brightness-110 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.65)]",
+                    "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
                   )}
                 >
-                  <div className={cn("absolute inset-0 bg-gradient-to-br", s.gradient)} />
-                  <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2),transparent_60%)]" />
-                  <div className="relative p-6 text-white">
+                  <div className="relative p-6">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                        <s.icon className="h-5 w-5 text-white" />
+                      <div className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br",
+                        s.gradient
+                      )}>
+                        <s.icon className="h-6 w-6" />
                       </div>
                       <span
                         className={cn(
-                          "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
-                          s.deltaType === "positive" && "bg-emerald-400/15",
-                          s.deltaType === "negative" && "bg-rose-400/15",
+                          "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-slate-200 bg-slate-50 text-slate-600 shadow-sm dark:bg-[#1a3442] dark:text-white dark:ring-white/10",
                         )}
                       >
                         {s.deltaLabel}
                       </span>
                     </div>
                     <div className="mt-6">
-                      <p className="text-sm font-semibold/relaxed text-white/85">{s.label}</p>
-                      <p className="mt-1 text-3xl font-bold tracking-tight">
+                      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{s.label}</p>
+                      <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                         {s.label === "Total Revenue" ? (
                           <>
                             Rs{" "}
-                            <AnimatedCounter
-                              value={s.value}
-                              format={(n) => {
-                                const v = Math.round(n)
-                                if (v >= 10000000) return `${(v / 10000000).toFixed(2)}Cr`
-                                if (v >= 100000) return `${(v / 100000).toFixed(1)}L`
-                                if (v >= 1000) return `${(v / 1000).toFixed(1)}K`
-                                return v.toLocaleString()
-                              }}
-                            />
+                            {loading ? (
+                              <Loader2 className="h-4 w-4 animate-spin inline-block" />
+                            ) : (
+                              (s.value as number).toLocaleString("en-IN")
+                            )}
                           </>
                         ) : (
-                          <AnimatedCounter value={s.value} />
+                          loading ? <Loader2 className="h-4 w-4 animate-spin" /> : s.value
                         )}
                       </p>
                     </div>
@@ -418,10 +533,10 @@ export function DashboardOverview() {
 
       {/* Revenue & Profit Trends */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Revenue & Profit Trends (Last 12 Months)</h2>
+        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Revenue & Profit Trends (Last 12 Months)</h2>
           {revenueData.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
               <div className="text-center">
                 <TrendingUp className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No revenue data available</p>
@@ -430,15 +545,15 @@ export function DashboardOverview() {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" className="dark:opacity-50" />
                 <XAxis
                   dataKey="month"
-                  stroke="var(--muted-foreground)"
-                  tick={{ fontSize: 12 }}
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
                 />
                 <YAxis
-                  stroke="var(--muted-foreground)"
-                  tick={{ fontSize: 12 }}
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
                   tickFormatter={(value) => {
                     if (value >= 1000000) return `Rs ${(value / 1000000).toFixed(1)}M`
                     if (value >= 1000) return `Rs ${(value / 1000).toFixed(0)}K`
@@ -447,10 +562,13 @@ export function DashboardOverview() {
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "var(--card)",
-                    border: "1px solid var(--border)",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
                     borderRadius: "8px",
+                    color: "#f8fafc"
                   }}
+                  itemStyle={{ color: "#f8fafc" }}
+                  labelStyle={{ color: "#94a3b8" }}
                   formatter={(value: any) => {
                     const numValue = typeof value === 'number' ? value : parseFloat(value) || 0
                     if (numValue >= 1000000) return `Rs ${(numValue / 1000000).toFixed(2)}M`
@@ -483,10 +601,10 @@ export function DashboardOverview() {
         </Card>
 
         {/* Property Distribution */}
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Property Distribution by Type</h2>
+        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Property Distribution by Type</h2>
           {propertyTypeData.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
               <div className="text-center">
                 <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No properties available</p>
@@ -529,10 +647,10 @@ export function DashboardOverview() {
 
       {/* Occupancy Rates & Sales Funnel */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Occupancy Rates by Property</h2>
+        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Occupancy Rates by Property</h2>
           {occupancyData.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
               <div className="text-center">
                 <Home className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No occupancy data available</p>
@@ -542,27 +660,30 @@ export function DashboardOverview() {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={occupancyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" className="dark:opacity-50" />
                 <XAxis
                   dataKey="property"
-                  stroke="var(--muted-foreground)"
-                  tick={{ fontSize: 11 }}
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 11, fill: "#94a3b8" }}
                   angle={-45}
                   textAnchor="end"
                   height={80}
                 />
                 <YAxis
-                  stroke="var(--muted-foreground)"
-                  tick={{ fontSize: 12 }}
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
                   domain={[0, 100]}
                   tickFormatter={(value) => `${value}%`}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "var(--card)",
-                    border: "1px solid var(--border)",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
                     borderRadius: "8px",
+                    color: "#f8fafc"
                   }}
+                  itemStyle={{ color: "#f8fafc" }}
+                  labelStyle={{ color: "#94a3b8" }}
                   formatter={(value: any, name: string, props: any) => [
                     `${value}% (${props.payload.occupiedUnits || 0}/${props.payload.totalUnits || 0} units)`,
                     "Occupancy"
@@ -579,10 +700,10 @@ export function DashboardOverview() {
           )}
         </Card>
 
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Sales Funnel</h2>
+        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Sales Funnel</h2>
           {salesFunnelData.length === 0 || salesFunnelData.every((s: any) => s.count === 0) ? (
-            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+            <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
               <div className="text-center">
                 <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No sales data available</p>
@@ -592,24 +713,27 @@ export function DashboardOverview() {
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={salesFunnelData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" className="dark:opacity-50" />
                 <XAxis
                   type="number"
-                  stroke="var(--muted-foreground)"
-                  tick={{ fontSize: 12 }}
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
                 />
                 <YAxis
                   dataKey="stage"
                   type="category"
-                  stroke="var(--muted-foreground)"
-                  tick={{ fontSize: 12 }}
+                  stroke="#94a3b8"
+                  tick={{ fontSize: 12, fill: "#94a3b8" }}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "var(--card)",
-                    border: "1px solid var(--border)",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
                     borderRadius: "8px",
+                    color: "#f8fafc"
                   }}
+                  itemStyle={{ color: "#f8fafc" }}
+                  labelStyle={{ color: "#94a3b8" }}
                   formatter={(value: any) => [`${value} sales`, "Count"]}
                 />
                 <Bar

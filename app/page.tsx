@@ -1,10 +1,13 @@
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { DashboardOverview } from "@/components/dashboard-overview"
+import { getDashboardDataServer } from "@/lib/stats-server"
 
-export default function HomePage() {
+export default async function IndexPage() {
+  const dashboardData = await getDashboardDataServer()
+
   return (
     <DashboardLayout>
-      <DashboardOverview />
+      <DashboardOverview initialData={dashboardData} />
     </DashboardLayout>
   )
 }

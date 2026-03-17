@@ -194,10 +194,10 @@ export default function SalesValuePage() {
         )}
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <DollarSign className="h-5 w-5 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <DollarSign className="h-6 w-6 text-white" />
               </div>
             </div>
             <p className="text-sm text-muted-foreground">Total Sales Value</p>
@@ -229,7 +229,7 @@ export default function SalesValuePage() {
             </div>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Average Sale Value</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {loading ? <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /> : formatCurrency(metrics.averageSaleValue)}
@@ -237,7 +237,7 @@ export default function SalesValuePage() {
             <p className="text-sm text-muted-foreground mt-2">Per transaction</p>
           </Card>
 
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Highest Sale</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {loading ? (
@@ -253,7 +253,7 @@ export default function SalesValuePage() {
             </p>
           </Card>
 
-  <Card className="p-6">
+  <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Lowest Sale</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {loading ? (

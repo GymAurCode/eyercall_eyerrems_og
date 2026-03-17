@@ -392,23 +392,23 @@ export default function EmployeeDetailPage() {
         )}
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 mb-2">
-              <DollarSign className="h-5 w-5 text-primary" />
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] text-white shadow-lg transition-transform duration-300 hover:scale-110 mb-2">
+              <DollarSign className="h-6 w-6 text-white" />
             </div>
             <p className="text-sm text-muted-foreground">Total Payroll</p>
             <p className="text-2xl font-bold text-foreground mt-2">{formatCurrency(payrollStats.total)}</p>
           </Card>
-          <Card className="p-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10 mb-2">
-              <DollarSign className="h-5 w-5 text-success" />
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#22c55e,#15803d)] text-white shadow-lg transition-transform duration-300 hover:scale-110 mb-2">
+              <DollarSign className="h-6 w-6 text-white" />
             </div>
             <p className="text-sm text-muted-foreground">Paid</p>
             <p className="text-2xl font-bold text-foreground mt-2">{formatCurrency(payrollStats.paidTotal)}</p>
           </Card>
-          <Card className="p-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10 mb-2">
-              <DollarSign className="h-5 w-5 text-warning" />
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#f59e0b,#b45309)] text-white shadow-lg transition-transform duration-300 hover:scale-110 mb-2">
+              <DollarSign className="h-6 w-6 text-white" />
             </div>
             <p className="text-sm text-muted-foreground">Pending</p>
             <p className="text-2xl font-bold text-foreground mt-2">
@@ -416,9 +416,9 @@ export default function EmployeeDetailPage() {
               <span className="text-sm text-muted-foreground block">{payrollStats.pendingCount} records</span>
             </p>
           </Card>
-          <Card className="p-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10 mb-2">
-              <Clock className="h-5 w-5 text-secondary-foreground" />
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)] text-white shadow-lg transition-transform duration-300 hover:scale-110 mb-2">
+              <Clock className="h-6 w-6 text-white" />
             </div>
             <p className="text-sm text-muted-foreground">Last Attendance</p>
             {lastAttendance ? (

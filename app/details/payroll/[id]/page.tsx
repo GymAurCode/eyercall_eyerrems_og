@@ -335,20 +335,20 @@ export default function PayrollDetailPage() {
 
         {/* Payment Status Summary */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <DollarSign className="h-5 w-5 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <DollarSign className="h-6 w-6 text-white" />
               </div>
             </div>
             <p className="text-sm text-muted-foreground">Total Salary</p>
             <p className="text-2xl font-bold text-foreground mt-2">{formatCurrency(payroll.netPay)}</p>
             {getStatusBadge(payroll.paymentStatus)}
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
-                <CheckCircle className="h-5 w-5 text-success" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#22c55e,#15803d)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <CheckCircle className="h-6 w-6 text-white" />
               </div>
             </div>
             <p className="text-sm text-muted-foreground">Paid Amount</p>
@@ -357,10 +357,10 @@ export default function PayrollDetailPage() {
               {((payroll.paidAmount / payroll.netPay) * 100).toFixed(1)}% paid
             </p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
-                <XCircle className="h-5 w-5 text-warning" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#f59e0b,#b45309)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <XCircle className="h-6 w-6 text-white" />
               </div>
             </div>
             <p className="text-sm text-muted-foreground">Remaining Balance</p>
@@ -369,10 +369,10 @@ export default function PayrollDetailPage() {
               {((payroll.remainingBalance / payroll.netPay) * 100).toFixed(1)}% remaining
             </p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/10">
-                <FileText className="h-5 w-5 text-secondary-foreground" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#64748b,#334155)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
+                <FileText className="h-6 w-6 text-white" />
               </div>
             </div>
             <p className="text-sm text-muted-foreground">Payment Records</p>
@@ -383,7 +383,7 @@ export default function PayrollDetailPage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Employee & Payroll Info */}
-          <Card className="p-6 lg:col-span-2">
+          <Card className="p-6 lg:col-span-2 stat-card">
             <h2 className="text-lg font-semibold text-foreground mb-4">Employee & Payroll Information</h2>
             <Separator className="mb-4" />
             <div className="grid gap-4 md:grid-cols-2">

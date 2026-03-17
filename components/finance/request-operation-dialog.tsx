@@ -385,7 +385,7 @@ export function RequestOperationDialog({
 
         {createdRequestId ? (
           <div className="space-y-4">
-            <Card className="border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-green-950/30">
+            <Card className="border-green-200 bg-green-50/50 dark:border-green-900/50 dark:bg-[#0d212c]">
               <CardContent className="pt-4">
                 <p className="text-sm font-medium text-green-800 dark:text-green-200">
                   Request created successfully

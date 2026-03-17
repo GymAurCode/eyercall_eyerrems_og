@@ -208,16 +208,19 @@ export function MiniChartCard({
     const isNeutral = trend && trend.value === 0
 
     return (
-        <Card className={cn("overflow-hidden shadow-sm transition-all hover:shadow-md", className)}>
+        <Card className={cn(
+            "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]",
+            className
+        )}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+                <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{title}</CardTitle>
                 {trend && (
                     <div
                         className={cn(
-                            "flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
-                            isPositive && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                            isNegative && "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-                            isNeutral && "bg-muted text-muted-foreground"
+                            "flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1",
+                            isPositive && "bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30",
+                            isNegative && "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-900/40 dark:text-rose-400 dark:ring-rose-500/30",
+                            isNeutral && "bg-slate-50 text-slate-600 ring-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700"
                         )}
                     >
                         {isPositive ? "+" : ""}
@@ -228,13 +231,13 @@ export function MiniChartCard({
             <CardContent className="p-4 pt-0">
                 {!hideValue && value !== undefined && (
                     <div className="mb-2 flex items-baseline gap-1">
-                        <span className="text-2xl font-bold tracking-tight">
+                        <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                             {valuePrefix}
                             {value}
                             {valueSuffix}
                         </span>
                         {trend?.label && (
-                            <span className="text-xs text-muted-foreground">vs {trend.label}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">vs {trend.label}</span>
                         )}
                     </div>
                 )}

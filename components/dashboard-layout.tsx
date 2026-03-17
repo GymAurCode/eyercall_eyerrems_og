@@ -42,6 +42,17 @@ import { useTheme } from "@/lib/theme-provider"
 import { useAuth } from "@/lib/auth-context"
 import { ChatDialog } from "@/components/chat/chat-dialog"
 import { AuthToasts } from "@/lib/toast-utils"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // Helper function to check if user has access to a module
 const hasModuleAccess = (permissions: string[] | undefined, module: string): boolean => {
@@ -55,6 +66,7 @@ type NavItem = {
   name: string
   href: string
   icon: React.ComponentType<{ className?: string }>
+  color?: string
 }
 type NavSection = { label: string; items: NavItem[] }
 
@@ -67,27 +79,27 @@ const getNavigationForUser = (role: string, permissions?: string[]): NavSection[
       {
         label: "Core",
         items: [
-          { name: "Dashboard", href: "/", icon: LayoutDashboard },
-          { name: "AI Intelligence", href: "/ai-intelligence", icon: Brain },
-          { name: "Properties", href: "/properties", icon: Building2 },
-          { name: "Tenant Portal", href: "/tenant", icon: Home },
+          { name: "Dashboard", href: "/", icon: LayoutDashboard, color: "#3b82f6" },
+          { name: "AI Intelligence", href: "/ai-intelligence", icon: Brain, color: "#8b5cf6" },
+          { name: "Properties", href: "/properties", icon: Building2, color: "#f59e0b" },
+          { name: "Tenant Portal", href: "/tenant", icon: Home, color: "#22c55e" },
         ],
       },
-      { label: "Financials", items: [{ name: "Finance", href: "/finance", icon: DollarSign }] },
+      { label: "Financials", items: [{ name: "Finance", href: "/finance", icon: DollarSign, color: "#22c55e" }] },
       {
         label: "Operations",
         items: [
-          { name: "Construction", href: "/construction", icon: Hammer },
-          { name: "HR Management", href: "/hr", icon: Users },
+          { name: "Construction", href: "/construction", icon: Hammer, color: "#f59e0b" },
+          { name: "HR Management", href: "/hr", icon: Users, color: "#14b8a6" },
         ],
       },
-      { label: "Sales", items: [{ name: "CRM", href: "/crm", icon: UserCircle }] },
+      { label: "Sales", items: [{ name: "CRM", href: "/crm", icon: UserCircle, color: "#8b5cf6" }] },
       {
         label: "System",
         items: [
-          { name: "Roles & Permissions", href: "/roles", icon: Shield },
-          { name: "Reminder & Notifications", href: "/notifications", icon: Bell },
-          { name: "Settings", href: "/settings", icon: Settings },
+          { name: "Roles & Permissions", href: "/roles", icon: Shield, color: "#64748b" },
+          { name: "Reminder & Notifications", href: "/notifications", icon: Bell, color: "#3b82f6" },
+          { name: "Settings", href: "/settings", icon: Settings, color: "#64748b" },
         ],
       },
     ]
@@ -95,29 +107,29 @@ const getNavigationForUser = (role: string, permissions?: string[]): NavSection[
 
   // For non-admin users, check permissions dynamically
   const core: NavItem[] = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "AI Intelligence", href: "/ai-intelligence", icon: Brain },
+    { name: "Dashboard", href: "/", icon: LayoutDashboard, color: "#3b82f6" },
+    { name: "AI Intelligence", href: "/ai-intelligence", icon: Brain, color: "#8b5cf6" },
   ]
   const financials: NavItem[] = []
   const operations: NavItem[] = []
   const sales: NavItem[] = []
   const system: NavItem[] = []
 
-  if (hasModuleAccess(permissions, "properties")) core.push({ name: "Properties", href: "/properties", icon: Building2 })
-  if (hasModuleAccess(permissions, "tenant")) core.push({ name: "Tenant Portal", href: "/tenant", icon: Home })
+  if (hasModuleAccess(permissions, "properties")) core.push({ name: "Properties", href: "/properties", icon: Building2, color: "#f59e0b" })
+  if (hasModuleAccess(permissions, "tenant")) core.push({ name: "Tenant Portal", href: "/tenant", icon: Home, color: "#22c55e" })
 
-  if (hasModuleAccess(permissions, "finance")) financials.push({ name: "Finance", href: "/finance", icon: DollarSign })
+  if (hasModuleAccess(permissions, "finance")) financials.push({ name: "Finance", href: "/finance", icon: DollarSign, color: "#22c55e" })
 
-  if (hasModuleAccess(permissions, "construction")) operations.push({ name: "Construction", href: "/construction", icon: Hammer })
-  if (hasModuleAccess(permissions, "hr")) operations.push({ name: "HR Management", href: "/hr", icon: Users })
+  if (hasModuleAccess(permissions, "construction")) operations.push({ name: "Construction", href: "/construction", icon: Hammer, color: "#f59e0b" })
+  if (hasModuleAccess(permissions, "hr")) operations.push({ name: "HR Management", href: "/hr", icon: Users, color: "#14b8a6" })
 
-  if (hasModuleAccess(permissions, "crm")) sales.push({ name: "CRM", href: "/crm", icon: UserCircle })
+  if (hasModuleAccess(permissions, "crm")) sales.push({ name: "CRM", href: "/crm", icon: UserCircle, color: "#8b5cf6" })
 
-  if (hasModuleAccess(permissions, "permissions")) system.push({ name: "Roles & Permissions", href: "/roles", icon: Shield })
+  if (hasModuleAccess(permissions, "permissions")) system.push({ name: "Roles & Permissions", href: "/roles", icon: Shield, color: "#64748b" })
   if (hasModuleAccess(permissions, "notification") || hasModuleAccess(permissions, "reminder")) {
-    system.push({ name: "Reminder & Notifications", href: "/notifications", icon: Bell })
+    system.push({ name: "Reminder & Notifications", href: "/notifications", icon: Bell, color: "#3b82f6" })
   }
-  system.push({ name: "Settings", href: "/settings", icon: Settings })
+  system.push({ name: "Settings", href: "/settings", icon: Settings, color: "#64748b" })
 
   const sections: NavSection[] = [{ label: "Core", items: core }]
   if (financials.length) sections.push({ label: "Financials", items: financials })
@@ -271,10 +283,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-4 left-4 z-50 w-64 transform bg-gradient-to-b from-purple-900/95 via-indigo-900/95 to-blue-950/95 text-white backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-auto",
+          "fixed inset-y-4 left-4 z-50 w-64 transform bg-[#24344c] dark:bg-[#0d212c] text-white border border-white/10 rounded-2xl shadow-lg transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-auto",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           sidebarCollapsed ? "lg:w-20" : "lg:w-64",
           sidebarOpen && "w-64",
@@ -284,7 +295,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <div className="flex h-16 items-center justify-center px-6 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <Building2 className="h-8 w-8 text-white/90" />
+              <Building2 className="h-8 w-8 text-indigo-400" />
               {!sidebarCollapsed && <span className="text-xl font-bold text-white tracking-wide">RealEstate ERP</span>}
             </div>
           </div>
@@ -305,13 +316,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     {!sidebarCollapsed ? (
                       <button
                         onClick={() => setOpenSection(isSectionOpen ? "" : section.label)}
-                        className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white/50 hover:text-white/90 transition-colors focus:outline-none"
+                        className="flex items-center justify-between w-full px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-white/50 hover:text-white/80 transition-colors focus:outline-none"
                       >
                         <span>{section.label}</span>
                         <ChevronDown className={cn("h-3 w-3 transition-transform duration-300", isSectionOpen ? "rotate-180" : "")} />
                       </button>
                     ) : (
-                      <div className="px-3 py-2 mb-1 text-[10px] text-center font-bold uppercase tracking-wider text-white/40 border-b border-white/5 pb-2">{section.label.substring(0, 3)}</div>
+                      <div className="px-3 py-2 mb-1 text-[10px] text-center font-bold uppercase tracking-wider text-white/50 border-b border-white/5 pb-2">{section.label.substring(0, 3)}</div>
                     )}
 
                     <div
@@ -334,10 +345,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                               }}
                               className={cn(
                                 "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
-                                "border border-white/5 hover:border-white/20 hover:shadow-[0_8px_16px_rgba(0,0,0,0.2)] hover:-translate-y-0.5",
-                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50",
+                                "border border-transparent",
+                                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
                                 isActive
-                                  ? "bg-white/10 text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)] border-white/20"
+                                  ? "bg-white/10 text-white border-white/5"
                                   : "text-white/70 hover:text-white hover:bg-white/5",
                                 sidebarCollapsed && "justify-center",
                               )}
@@ -346,10 +357,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                               <span
                                 className={cn(
                                   "flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300 shadow-inner shrink-0",
-                                  isActive
-                                    ? "bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]"
-                                    : "bg-white/5 text-white/70 group-hover:bg-white/10 group-hover:text-white group-hover:shadow-[0_0_10px_rgba(255,255,255,0.1)]",
+                                  "text-white shadow-[0_0_10px_rgba(0,0,0,0.1)]",
                                 )}
+                                style={{ backgroundColor: item.color }}
                               >
                                 <item.icon className="h-[14px] w-[14px]" />
                               </span>
@@ -369,23 +379,23 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="p-4 border-t border-white/10">
             {!sidebarCollapsed ? (
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-lg flex-shrink-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-gradient text-white shadow-lg flex-shrink-0">
                   <UserCircle className="h-6 w-6" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{user?.name || "Admin User"}</p>
-                  <p className="text-xs text-white/60 truncate">{user?.email || "admin@realestate.com"}</p>
+                  <p className="text-xs text-white/50 truncate">{user?.email || "admin@realestate.com"}</p>
                 </div>
-                <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white/70 hover:text-white hover:bg-white/10">
+                <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-white/50 hover:text-white hover:bg-white/10">
                   {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-lg">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-gradient text-white shadow-lg">
                   <UserCircle className="h-6 w-6" />
                 </div>
-                <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="text-white/70 hover:text-white hover:bg-white/10">
+                <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="text-white/50 hover:text-white hover:bg-white/10">
                   {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
               </div>
@@ -398,18 +408,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Link
                 href="/support"
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 border border-white/5 hover:bg-white/5 hover:border-white/20 hover:shadow-md hover:-translate-y-0.5",
+                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 border border-transparent hover:bg-slate-50",
                   pathname === "/support"
-                    ? "bg-white/10 text-white shadow-[0_4px_20px_rgba(0,0,0,0.3)] border-white/20"
-                    : "text-white/70 hover:text-white",
+                    ? "bg-indigo-50/50 text-indigo-600 border-indigo-100"
+                    : "text-slate-600 hover:text-indigo-600",
                   sidebarCollapsed && "justify-center",
                 )}
                 title={sidebarCollapsed ? "Support" : undefined}
               >
                 <span className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300 shadow-inner shrink-0",
-                  pathname === "/support" ? "bg-gradient-to-br from-indigo-500 to-purple-500 text-white" : "bg-white/5 text-white/70 group-hover:bg-white/10 group-hover:text-white"
-                )}>
+                  pathname === "/support" ? "bg-primary-gradient text-white" : "bg-white/10 text-white/40 group-hover:bg-white/20 group-hover:text-white/80"
+                )}
+                  style={pathname !== "/support" ? { color: "#868e96" } : undefined}
+                >
                   <HelpCircle className="h-3 w-3 sm:h-[14px] sm:w-[14px]" />
                 </span>
                 {!sidebarCollapsed && "Support"}
@@ -417,42 +429,62 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="px-3 pb-3">
-              {!sidebarCollapsed ? (
-                <Button
-                  variant="outline"
-                  className="w-full bg-white/5 border-red-500/30 text-red-300 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.5)]"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-full bg-white/5 text-red-300 hover:bg-red-500 hover:text-white transition-all duration-300 hover:shadow-[0_0_15px_rgba(239,68,68,0.5)]"
-                  onClick={handleLogout}
-                  title="Sign out"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  {!sidebarCollapsed ? (
+                    <Button
+                      variant="outline"
+                      className="w-full bg-red-500/10 border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all duration-300"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="w-full bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300"
+                      title="Sign out"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  )}
+                </AlertDialogTrigger>
+                <AlertDialogContent className="sm:max-w-md">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Sign Out Confirmation</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to sign out of your account? You will need to log in again to access the dashboard.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white border-transparent focus:ring-red-600">
+                      Sign Out
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
 
             {/* Powered by eyercall */}
             <div className="px-4 pb-4 text-center border-t border-white/10 pt-3">
-              <p className="text-[10px] text-white/40 uppercase tracking-widest font-medium">
-                Powered by <span className="font-bold text-white/70"><a target="_blank" href="https://eyercall.com">eyercall</a></span>
-                t              </p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest font-medium">
+                Powered by <span className="font-bold text-slate-400"><a target="_blank" href="https://eyercall.com">eyercall</a></span>
+              </p>
             </div>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl shadow-lg">
+      <div className="flex flex-1 flex-col overflow-hidden bg-white/60 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-lg relative">
+        {/* Decorative background gradients for glass effect */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+
         {/* Top bar */}
-        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 lg:px-6">
+        <header className="flex h-16 items-center justify-between border-b border-white/20 dark:border-white/10 bg-transparent px-4 lg:px-6 relative z-10">
           <div className="flex items-center gap-4">
             {sidebarOpen ? (
               <Button
@@ -493,7 +525,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <input
                 type="search"
                 placeholder="Search by property code, name..."
-                className="h-9 w-64 rounded-lg border border-input bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 w-64 rounded-lg border border-white/20 dark:border-white/10 bg-white/50 dark:bg-black/50 backdrop-blur-sm pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const query = (e.target as HTMLInputElement).value.trim()
@@ -539,7 +571,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/30">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-transparent relative z-10">{children}</main>
       </div>
 
       {/* Chat Dialog */}

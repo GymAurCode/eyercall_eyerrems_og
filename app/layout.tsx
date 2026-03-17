@@ -66,7 +66,7 @@ export default function RootLayout({
             },
           }}
         >
-          <ThemeProvider defaultTheme="light" defaultAccent="blue">
+          <ThemeProvider defaultTheme="light">
             <ReactQueryProvider>
               <AuthProvider>
                 {children}

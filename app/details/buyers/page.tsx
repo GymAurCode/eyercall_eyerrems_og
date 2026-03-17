@@ -77,7 +77,7 @@ export default function BuyersDetailsPage() {
 
         {/* Stats Overview */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-4">
+          <Card className="p-4 stat-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Buyers</p>
@@ -88,7 +88,7 @@ export default function BuyersDetailsPage() {
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 stat-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active Buyers</p>
@@ -99,7 +99,7 @@ export default function BuyersDetailsPage() {
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 stat-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Spent</p>
@@ -110,7 +110,7 @@ export default function BuyersDetailsPage() {
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 stat-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Avg. Budget</p>

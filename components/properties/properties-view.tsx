@@ -238,7 +238,7 @@ export function PropertiesView() {
           value: data.totalProperties?.toString() || "0",
           change: data.propertiesChange || "+0 this month",
           icon: Building2,
-          gradient: "bg-[linear-gradient(135deg,#5b3df5,#3b2dbd)]",
+          gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
           href: "/details/properties",
         },
         {
@@ -246,7 +246,7 @@ export function PropertiesView() {
           value: data.activeProperties?.toString() || "0",
           change: "Currently active",
           icon: Building2,
-          gradient: "bg-[linear-gradient(135deg,#0d9488,#115e59)]",
+          gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
           href: "/details/properties",
         },
         {
@@ -254,7 +254,7 @@ export function PropertiesView() {
           value: data.propertiesForSale?.toString() || "0",
           change: data.saleValue ? `Rs ${(data.saleValue / 1000000).toFixed(1)}M total value` : "Rs 0 total value",
           icon: ShoppingCart,
-          gradient: "bg-[linear-gradient(135deg,#ea580c,#b45309)]",
+          gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
           href: "/details/properties-for-sale",
         },
         {
@@ -262,7 +262,7 @@ export function PropertiesView() {
           value: data.totalUnits?.toString() || "0",
           change: "Across all properties",
           icon: Home,
-          gradient: "bg-[linear-gradient(135deg,#2563eb,#1e3a8a)]",
+          gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
           href: "/details/units",
         },
         {
@@ -270,7 +270,7 @@ export function PropertiesView() {
           value: data.occupiedUnits?.toString() || "0",
           change: data.occupancyRate ? `${data.occupancyRate}% occupancy` : "0% occupancy",
           icon: KeyRound,
-          gradient: "bg-[linear-gradient(135deg,#e11d48,#9f1239)]",
+          gradient: "bg-[linear-gradient(135deg,#10b981,#059669)]",
           href: "/details/occupied-units",
         },
         {
@@ -278,7 +278,7 @@ export function PropertiesView() {
           value: data.vacantUnits?.toString() || "0",
           change: data.vacancyRate ? `${data.vacancyRate}% vacancy` : "0% vacancy",
           icon: Home,
-          gradient: "bg-[linear-gradient(135deg,#475569,#1e293b)]",
+          gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
           href: "/details/vacant-units",
         },
         {
@@ -286,7 +286,7 @@ export function PropertiesView() {
           value: data.monthlyRevenue ? `Rs ${(data.monthlyRevenue / 1000).toFixed(0)}K` : "Rs 0",
           change: "From occupied units",
           icon: DollarSign,
-          gradient: "bg-[linear-gradient(135deg,#059669,#064e3b)]",
+          gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
           href: "/details/revenue",
         },
         {
@@ -294,7 +294,7 @@ export function PropertiesView() {
           value: data.totalTenants?.toLocaleString() || "0",
           change: data.tenantsChange || "+0 this month",
           icon: Users,
-          gradient: "bg-[linear-gradient(135deg,#0284c7,#1e3a8a)]",
+          gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
           href: "/details/tenants",
         },
       ])
@@ -310,7 +310,7 @@ export function PropertiesView() {
           value: "0",
           change: "+0 this month",
           icon: Building2,
-          gradient: "from-violet-600 via-indigo-600 to-sky-500",
+          gradient: "bg-[linear-gradient(135deg,#315341,#4a7c61)]",
           href: "/details/properties",
         },
         {
@@ -318,7 +318,7 @@ export function PropertiesView() {
           value: "0",
           change: "Currently active",
           icon: Building2,
-          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+          gradient: "bg-[linear-gradient(135deg,#315341,#4a7c61)]",
           href: "/details/properties",
         },
         {
@@ -326,7 +326,7 @@ export function PropertiesView() {
           value: "0",
           change: "Rs 0 total value",
           icon: ShoppingCart,
-          gradient: "from-amber-500 via-orange-500 to-rose-500",
+          gradient: "bg-[linear-gradient(135deg,#315341,#4a7c61)]",
           href: "/details/properties-for-sale",
         },
         {
@@ -334,7 +334,7 @@ export function PropertiesView() {
           value: "0",
           change: "Across all properties",
           icon: Home,
-          gradient: "from-blue-600 via-indigo-600 to-violet-600",
+          gradient: "bg-[linear-gradient(135deg,#315341,#4a7c61)]",
           href: "/details/units",
         },
         {
@@ -342,7 +342,7 @@ export function PropertiesView() {
           value: "0",
           change: "0% occupancy",
           icon: KeyRound,
-          gradient: "from-fuchsia-600 via-pink-600 to-rose-500",
+          gradient: "bg-[linear-gradient(135deg,#315341,#4a7c61)]",
           href: "/details/occupied-units",
         },
         {
@@ -350,7 +350,7 @@ export function PropertiesView() {
           value: "0",
           change: "0% vacancy",
           icon: Home,
-          gradient: "from-slate-600 via-gray-600 to-zinc-600",
+          gradient: "bg-[linear-gradient(135deg,#315341,#4a7c61)]",
           href: "/details/vacant-units",
         },
         {
@@ -358,7 +358,7 @@ export function PropertiesView() {
           value: "Rs 0",
           change: "From occupied units",
           icon: DollarSign,
-          gradient: "from-teal-500 via-emerald-500 to-lime-500",
+          gradient: "bg-[linear-gradient(135deg,#315341,#4a7c61)]",
           href: "/details/revenue",
         },
         {
@@ -366,7 +366,7 @@ export function PropertiesView() {
           value: "0",
           change: "+0 this month",
           icon: Users,
-          gradient: "from-sky-500 via-blue-500 to-indigo-500",
+          gradient: "bg-[linear-gradient(135deg,#315341,#4a7c61)]",
           href: "/details/tenants",
         },
       ])
@@ -582,28 +582,29 @@ export function PropertiesView() {
               <Card
                 key={stat.name}
                 className={cn(
-                  "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:brightness-110 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.65)] cursor-pointer",
+                  "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
                 )}
                 onClick={() => router.push(stat.href)}
               >
-                <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
-                <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2),transparent_60%)]" />
-                <div className="relative p-6 text-white">
+                <div className="relative p-6">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                      <stat.icon className="h-5 w-5 text-white" />
+                    <div className={cn(
+                      "flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br",
+                      stat.gradient
+                    )}>
+                      <stat.icon className="h-6 w-6" />
                     </div>
                     <span
                       className={cn(
-                        "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                        "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-slate-200 bg-slate-50 text-slate-600 shadow-sm dark:bg-[#1a3442] dark:text-white dark:ring-white/10",
                       )}
                     >
                       {stat.change}
                     </span>
                   </div>
                   <div className="mt-6">
-                    <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
-                    <p className="mt-1 text-3xl font-bold tracking-tight">
+                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.name}</p>
+                    <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                       {stat.value}
                     </p>
                   </div>
@@ -613,40 +614,41 @@ export function PropertiesView() {
           ) : (
             // Default boxes if stats array is empty
             [
-              { name: "Total Properties", value: "0", change: "+0 this month", icon: Building2, gradient: "bg-[linear-gradient(135deg,#5b3df5,#3b2dbd)]", href: "/details/properties" },
-              { name: "Active Properties", value: "0", change: "Currently active", icon: Building2, gradient: "bg-[linear-gradient(135deg,#0d9488,#115e59)]", href: "/details/properties" },
-              { name: "Properties for Sale", value: "0", change: "Rs 0 total value", icon: ShoppingCart, gradient: "bg-[linear-gradient(135deg,#ea580c,#b45309)]", href: "/details/properties-for-sale" },
-              { name: "Total Units", value: "0", change: "Across all properties", icon: Home, gradient: "bg-[linear-gradient(135deg,#2563eb,#1e3a8a)]", href: "/details/units" },
-              { name: "Occupied Units", value: "0", change: "0% occupancy", icon: KeyRound, gradient: "bg-[linear-gradient(135deg,#e11d48,#9f1239)]", href: "/details/occupied-units" },
-              { name: "Vacant Units", value: "0", change: "0% vacancy", icon: Home, gradient: "bg-[linear-gradient(135deg,#475569,#1e293b)]", href: "/details/vacant-units" },
-              { name: "Monthly Revenue", value: "Rs 0", change: "From occupied units", icon: DollarSign, gradient: "bg-[linear-gradient(135deg,#059669,#064e3b)]", href: "/details/revenue" },
-              { name: "Total Tenants", value: "0", change: "+0 this month", icon: Users, gradient: "bg-[linear-gradient(135deg,#0284c7,#1e3a8a)]", href: "/details/tenants" },
+              { name: "Total Properties", value: "0", change: "+0 this month", icon: Building2, gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]", href: "/details/properties" },
+              { name: "Active Properties", value: "0", change: "Currently active", icon: Building2, gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]", href: "/details/properties" },
+              { name: "Properties for Sale", value: "0", change: "Rs 0 total value", icon: ShoppingCart, gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]", href: "/details/properties-for-sale" },
+              { name: "Total Units", value: "0", change: "Across all properties", icon: Home, gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]", href: "/details/units" },
+              { name: "Occupied Units", value: "0", change: "0% occupancy", icon: KeyRound, gradient: "bg-[linear-gradient(135deg,#10b981,#059669)]", href: "/details/occupied-units" },
+              { name: "Vacant Units", value: "0", change: "0% vacancy", icon: Home, gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]", href: "/details/vacant-units" },
+              { name: "Monthly Revenue", value: "Rs 0", change: "From occupied units", icon: DollarSign, gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]", href: "/details/revenue" },
+              { name: "Total Tenants", value: "0", change: "+0 this month", icon: Users, gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]", href: "/details/tenants" },
             ].map((stat) => (
               <Card
                 key={stat.name}
                 className={cn(
-                  "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.5)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:brightness-110 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.65)] cursor-pointer",
+                  "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#2e2e2e] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
                 )}
                 onClick={() => router.push(stat.href)}
               >
-                <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
-                <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.2),transparent_60%)]" />
-                <div className="relative p-6 text-white">
+                <div className="relative p-6">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                      <stat.icon className="h-5 w-5 text-white" />
+                    <div className={cn(
+                      "flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br",
+                      stat.gradient
+                    )}>
+                      <stat.icon className="h-6 w-6" />
                     </div>
                     <span
                       className={cn(
-                        "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                        "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-slate-200 bg-slate-50 text-slate-600 shadow-sm",
                       )}
                     >
                       {stat.change}
                     </span>
                   </div>
                   <div className="mt-6">
-                    <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
-                    <p className="mt-1 text-3xl font-bold tracking-tight">
+                    <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.name}</p>
+                    <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                       {stat.value}
                     </p>
                   </div>

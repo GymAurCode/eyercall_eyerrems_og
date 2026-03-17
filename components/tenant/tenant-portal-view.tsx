@@ -303,7 +303,7 @@ export function TenantPortalView() {
       value: stats.currentRent,
       description: stats.currentRentDesc,
       icon: Home,
-      gradient: "from-blue-600 via-indigo-600 to-violet-600",
+      gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
       href: "/details/current-rent",
     },
     {
@@ -311,7 +311,7 @@ export function TenantPortalView() {
       value: stats.nextPayment,
       description: stats.nextPaymentDesc,
       icon: Receipt,
-      gradient: "from-amber-500 via-orange-500 to-rose-500",
+      gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
       href: "/details/next-payment",
     },
     {
@@ -319,7 +319,7 @@ export function TenantPortalView() {
       value: stats.maintenanceCount.toString(),
       description: stats.maintenanceDesc,
       icon: Wrench,
-      gradient: "from-rose-500 via-red-500 to-pink-500",
+      gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
       href: "/details/maintenance-requests",
     },
     {
@@ -327,7 +327,7 @@ export function TenantPortalView() {
       value: stats.leaseExpiry,
       description: stats.leaseExpiryDesc,
       icon: FileText,
-      gradient: "from-teal-500 via-emerald-500 to-lime-500",
+      gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
       href: "/details/lease-expiry",
     },
   ]
@@ -476,32 +476,33 @@ export function TenantPortalView() {
       </div>
 
       {/* Tenant Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         {tenantStats.map((stat) => (
           <Link key={stat.name} href={stat.href}>
             <Card
               className={cn(
-                "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
               )}
             >
-              <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
-              <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
-              <div className="relative p-6 text-white">
+              <div className="relative p-6">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                    <stat.icon className="h-5 w-5 text-white" />
+                  <div className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br",
+                    stat.gradient
+                  )}>
+                    <stat.icon className="h-6 w-6" />
                   </div>
                   <span
                     className={cn(
-                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-slate-200 bg-slate-50 text-slate-600 shadow-sm dark:bg-[#1a3442] dark:text-white dark:ring-white/10",
                     )}
                   >
                     {stat.description}
                   </span>
                 </div>
                 <div className="mt-6">
-                  <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
-                  <p className="mt-1 text-3xl font-bold tracking-tight">
+                  <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.name}</p>
+                  <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                     {stat.value}
                   </p>
                 </div>

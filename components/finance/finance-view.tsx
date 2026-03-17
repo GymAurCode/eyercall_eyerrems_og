@@ -20,17 +20,96 @@ import { AddTransactionDialog } from "./add-transaction-dialog"
 import { cn } from "@/lib/utils"
 import { MiniChartCard } from "@/components/ui/mini-chart-card"
 
-export function FinanceView() {
+export function FinanceView({ initialData }: { initialData?: any }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const [financialStats, setFinancialStats] = useState<any[]>([])
-  const [statsLoading, setStatsLoading] = useState(true)
+  const [financialStats, setFinancialStats] = useState<any[]>(() => {
+    if (!initialData) return []
+    const data = initialData
+    
+    const formatCurrency = (amount: number | null | undefined) => {
+      const numericValue = Number(amount || 0)
+      return `Rs ${numericValue.toLocaleString("en-IN", {
+        minimumFractionDigits: numericValue % 1 === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+      })}`
+    }
+
+    const formatPercentage = (value: number | null | undefined) => {
+      if (value === null || value === undefined) return "—"
+      const rounded = Number.isFinite(value) ? Number(value.toFixed(1)) : value
+      if (!Number.isFinite(rounded)) return "—"
+      const sign = rounded > 0 ? "+" : ""
+      return `${sign}${rounded}%`
+    }
+
+    const getChangeType = (value: number | null | undefined, invert = false) => {
+      if (value === null || value === undefined || !Number.isFinite(value)) return "positive"
+      const effectiveValue = invert ? -value : value
+      return effectiveValue >= 0 ? "positive" : "negative"
+    }
+
+    return [
+      {
+        name: "Total Revenue",
+        value: formatCurrency(data.totalRevenue),
+        change: formatPercentage(data.revenueChangePercent),
+        changeType: getChangeType(data.revenueChangePercent),
+        icon: DollarSign,
+        gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
+        href: "/details/revenue",
+      },
+      {
+        name: "Outstanding Payments",
+        value: formatCurrency(data.outstandingPayments),
+        change: formatPercentage(data.paymentsChangePercent),
+        changeType: getChangeType(data.paymentsChangePercent, true),
+        icon: Receipt,
+        gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
+        href: "/details/outstanding-payments",
+      },
+      {
+        name: "Monthly Expenses",
+        value: formatCurrency(data.monthlyExpenses),
+        change: formatPercentage(data.expensesChangePercent),
+        changeType: getChangeType(data.expensesChangePercent, true),
+        icon: TrendingDown,
+        gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
+        href: "/details/expenses",
+      },
+      {
+        name: "Dealer Commissions",
+        value: formatCurrency(data.dealerCommissions),
+        change: formatPercentage(data.commissionsChangePercent),
+        changeType: getChangeType(data.commissionsChangePercent),
+        icon: Percent,
+        gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
+        href: "/details/commissions",
+      },
+    ]
+  })
+  const [statsLoading, setStatsLoading] = useState(!initialData)
   const [statsError, setStatsError] = useState<string | null>(null)
-  const [incomeVsExpenseData, setIncomeVsExpenseData] = useState<any[]>([])
-  const [cashFlowData, setCashFlowData] = useState<any[]>([])
-  const [outstandingTrendData, setOutstandingTrendData] = useState<any[]>([])
+  const [incomeVsExpenseData, setIncomeVsExpenseData] = useState<any[]>(() => {
+    if (!initialData) return []
+    return initialData.financeTrendData || []
+  })
+  const [cashFlowData, setCashFlowData] = useState<any[]>(() => {
+    if (!initialData) return []
+    return (initialData.financeTrendData || []).map((d: any) => ({
+      month: d.month,
+      cash: d.profit || d.cash || (d.income - d.expense)
+    }))
+  })
+  const [outstandingTrendData, setOutstandingTrendData] = useState<any[]>(() => {
+    if (!initialData) return []
+    return Array.from({ length: 6 }).map((_, i) => ({
+      month: `M${i + 1}`,
+      amount: i === 5 ? (initialData.outstandingPayments || 0) : 0
+    }))
+  })
   const [activeTab, setActiveTabState] = useState("transactions")
   const [hasInitializedTab, setHasInitializedTab] = useState(false)
   const tabStorageKey = "finance-active-tab"
@@ -97,8 +176,10 @@ export function FinanceView() {
   )
 
   useEffect(() => {
-    fetchFinanceStats()
-  }, [])
+    if (!initialData) {
+      fetchFinanceStats()
+    }
+  }, [initialData])
 
   const formatCurrency = (amount: number | null | undefined) => {
     const numericValue = Number(amount || 0)
@@ -162,7 +243,7 @@ export function FinanceView() {
           change: formatPercentage(data.revenueChangePercent),
           changeType: getChangeType(data.revenueChangePercent),
           icon: DollarSign,
-          gradient: "from-teal-500 via-emerald-500 to-lime-500",
+          gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
           href: "/details/revenue",
         },
         {
@@ -171,7 +252,7 @@ export function FinanceView() {
           change: formatPercentage(data.paymentsChangePercent),
           changeType: getChangeType(data.paymentsChangePercent, true),
           icon: Receipt,
-          gradient: "from-amber-500 via-orange-500 to-rose-500",
+          gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
           href: "/details/outstanding-payments",
         },
         {
@@ -180,7 +261,7 @@ export function FinanceView() {
           change: formatPercentage(data.expensesChangePercent),
           changeType: getChangeType(data.expensesChangePercent, true),
           icon: TrendingDown,
-          gradient: "from-rose-500 via-red-500 to-pink-500",
+          gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
           href: "/details/expenses",
         },
         {
@@ -189,7 +270,7 @@ export function FinanceView() {
           change: formatPercentage(data.commissionsChangePercent),
           changeType: getChangeType(data.commissionsChangePercent),
           icon: Percent,
-          gradient: "from-amber-500 via-orange-500 to-rose-500",
+          gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
           href: "/details/commissions",
         },
       ])
@@ -251,30 +332,32 @@ export function FinanceView() {
                 <Card
                   key={stat.name}
                   className={cn(
-                    "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                    "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
                   )}
                   onClick={() => router.push(stat.href)}
                 >
-                  <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
-                  <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
-                  <div className="relative p-6 text-white">
+                  <div className="relative p-6">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                        <stat.icon className="h-5 w-5 text-white" />
+                      <div className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br",
+                        stat.gradient
+                      )}>
+                        <stat.icon className="h-6 w-6" />
                       </div>
                       <span
                         className={cn(
-                          "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
-                          stat.changeType === "positive" && "bg-emerald-400/15",
-                          stat.changeType === "negative" && "bg-rose-400/15",
+                          "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 shadow-sm",
+                          stat.changeType === "positive" 
+                            ? "bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30" 
+                            : "bg-rose-50 text-rose-600 ring-rose-100 dark:bg-rose-900/40 dark:text-rose-400 dark:ring-rose-500/30",
                         )}
                       >
                         {stat.change}
                       </span>
                     </div>
                     <div className="mt-6">
-                      <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
-                      <p className="mt-1 text-3xl font-bold tracking-tight">
+                      <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.name}</p>
+                      <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                         {stat.value}
                       </p>
                     </div>

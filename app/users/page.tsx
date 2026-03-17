@@ -20,7 +20,7 @@ export default function UsersPage() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+        <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-md p-8 text-center">
           <h2 className="text-2xl font-semibold">Authentication required</h2>
           <p className="text-sm text-muted-foreground">Please log in to access this page.</p>
         </div>
@@ -34,7 +34,7 @@ export default function UsersPage() {
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center">
+        <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-md p-8 text-center">
           <h2 className="text-2xl font-semibold">Access restricted</h2>
           <p className="text-sm text-muted-foreground">Only administrators can view this page.</p>
         </div>

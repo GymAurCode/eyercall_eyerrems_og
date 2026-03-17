@@ -191,7 +191,8 @@ export default function WorkHoursPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+
             <p className="text-sm text-muted-foreground">Avg Hours/Day</p>
             <p className="text-3xl font-bold text-foreground mt-2">{avgHoursPerDay}</p>
             <div className="flex items-center gap-1 mt-2 text-success">
@@ -199,17 +200,20 @@ export default function WorkHoursPage() {
               <span className="text-sm font-medium">This week</span>
             </div>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+
             <p className="text-sm text-muted-foreground">Total Hours (Week)</p>
             <p className="text-3xl font-bold text-foreground mt-2">{Math.round(totalHoursThisWeek)}</p>
             <p className="text-sm text-muted-foreground mt-2">All employees</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+
             <p className="text-sm text-muted-foreground">Overtime Hours</p>
             <p className="text-3xl font-bold text-foreground mt-2">{Math.round(overtimeHours)}</p>
             <p className="text-sm text-muted-foreground mt-2">This week</p>
           </Card>
-          <Card className="p-6">
+          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+
             <p className="text-sm text-muted-foreground">Productivity Rate</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {weeklyData.length > 0 && parseFloat(avgHoursPerDay) >= 8 ? "96%" : "N/A"}

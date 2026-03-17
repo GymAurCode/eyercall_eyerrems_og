@@ -15,13 +15,50 @@ import { AddEmployeeDialog } from "./add-employee-dialog"
 import { AttendancePortalView } from "./attendance-portal-view"
 import { cn } from "@/lib/utils"
 
-export function HRView() {
+export function HRView({ initialData }: { initialData?: any }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const [hrStats, setHrStats] = useState<any[]>([])
-  const [statsLoading, setStatsLoading] = useState(true)
+  const [hrStats, setHrStats] = useState<any[]>(() => {
+    if (!initialData) return []
+    const data = initialData
+    return [
+      {
+        name: "Total Employees",
+        value: (data.totalEmployees ?? 0).toString(),
+        change: data.employeesChange || "+0 this month",
+        icon: Users,
+        gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
+        href: "/details/employees",
+      },
+      {
+        name: "Active Today",
+        value: (data.activeToday ?? 0).toString(),
+        change: data.attendanceRate ? `${data.attendanceRate}% attendance` : "0% attendance",
+        icon: UserCheck,
+        gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
+        href: "/details/active-today",
+      },
+      {
+        name: "Pending Leaves",
+        value: (data.pendingLeaves ?? 0).toString(),
+        change: data.urgentLeaves ? `${data.urgentLeaves} urgent` : "0 urgent",
+        icon: Calendar,
+        gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
+        href: "/details/pending-leaves",
+      },
+      {
+        name: "Avg Work Hours",
+        value: (data.avgWorkHours ?? 0).toString(),
+        change: "per week",
+        icon: Clock,
+        gradient: "bg-[linear-gradient(135deg,#14b8a6,#0f766e)]",
+        href: "/details/work-hours",
+      },
+    ]
+  })
+  const [statsLoading, setStatsLoading] = useState(!initialData)
   const [activeTab, setActiveTabState] = useState("employees")
   const [hasInitializedTab, setHasInitializedTab] = useState(false)
   const tabStorageKey = "hr-active-tab"
@@ -88,8 +125,10 @@ export function HRView() {
   )
 
   useEffect(() => {
-    fetchHRStats()
-  }, [])
+    if (!initialData) {
+      fetchHRStats()
+    }
+  }, [initialData])
 
   const fetchHRStats = async () => {
     try {
@@ -107,7 +146,7 @@ export function HRView() {
           value: (data.totalEmployees ?? 0).toString(),
           change: data.employeesChange || "+0 this month",
           icon: Users,
-          gradient: "from-violet-600 via-indigo-600 to-sky-500",
+          gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
           href: "/details/employees",
         },
         {
@@ -115,7 +154,7 @@ export function HRView() {
           value: (data.activeToday ?? 0).toString(),
           change: data.attendanceRate ? `${data.attendanceRate}% attendance` : "0% attendance",
           icon: UserCheck,
-          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+          gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
           href: "/details/active-today",
         },
         {
@@ -123,7 +162,7 @@ export function HRView() {
           value: (data.pendingLeaves ?? 0).toString(),
           change: data.urgentLeaves ? `${data.urgentLeaves} urgent` : "0 urgent",
           icon: Calendar,
-          gradient: "from-rose-500 via-red-500 to-pink-500",
+          gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
           href: "/details/pending-leaves",
         },
         {
@@ -131,7 +170,7 @@ export function HRView() {
           value: (data.avgWorkHours ?? 0).toString(),
           change: "per week",
           icon: Clock,
-          gradient: "from-blue-600 via-indigo-600 to-violet-600",
+          gradient: "bg-[linear-gradient(135deg,#14b8a6,#0f766e)]",
           href: "/details/work-hours",
         },
       ])
@@ -144,7 +183,7 @@ export function HRView() {
           value: "0",
           change: "+0 this month",
           icon: Users,
-          gradient: "from-violet-600 via-indigo-600 to-sky-500",
+          gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
           href: "/details/employees",
         },
         {
@@ -152,7 +191,7 @@ export function HRView() {
           value: "0",
           change: "0% attendance",
           icon: UserCheck,
-          gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+          gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
           href: "/details/active-today",
         },
         {
@@ -160,7 +199,7 @@ export function HRView() {
           value: "0",
           change: "0 urgent",
           icon: Calendar,
-          gradient: "from-rose-500 via-red-500 to-pink-500",
+          gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
           href: "/details/pending-leaves",
         },
         {
@@ -168,7 +207,7 @@ export function HRView() {
           value: "0",
           change: "per week",
           icon: Clock,
-          gradient: "from-blue-600 via-indigo-600 to-violet-600",
+          gradient: "bg-[linear-gradient(135deg,#14b8a6,#0f766e)]",
           href: "/details/work-hours",
         },
       ])
@@ -210,28 +249,29 @@ export function HRView() {
             <Card
               key={stat.name}
               className={cn(
-                "group relative overflow-hidden border-0 p-0 shadow-[0_18px_45px_-25px_rgba(0,0,0,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_24px_60px_-30px_rgba(0,0,0,0.45)] cursor-pointer",
+                "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
               )}
               onClick={() => router.push(stat.href)}
             >
-              <div className={cn("absolute inset-0 bg-gradient-to-br", stat.gradient)} />
-              <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.28),transparent_60%)]" />
-              <div className="relative p-6 text-white">
+              <div className="relative p-6">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-                    <stat.icon className="h-5 w-5 text-white" />
+                  <div className={cn(
+                    "flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110 bg-gradient-to-br",
+                    stat.gradient
+                  )}>
+                    <stat.icon className="h-6 w-6" />
                   </div>
                   <span
                     className={cn(
-                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-white/20 bg-white/10",
+                      "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-slate-200 bg-slate-50 text-slate-600 shadow-sm dark:bg-[#1a3442] dark:text-white dark:ring-white/10",
                     )}
                   >
                     {stat.change}
                   </span>
                 </div>
                 <div className="mt-6">
-                  <p className="text-sm font-semibold/relaxed text-white/85">{stat.name}</p>
-                  <p className="mt-1 text-3xl font-bold tracking-tight">
+                  <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.name}</p>
+                  <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                     {stat.value}
                   </p>
                 </div>
