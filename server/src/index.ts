@@ -53,9 +53,13 @@ import filesRoutes from './routes/files';
 import constructionRoutes from './routes/construction';
 import aiIntelligenceRoutes from './routes/ai-intelligence';
 import aiChatRoutes from './routes/ai-chat';
-import exportRoutes from './routes/export';
 import exportJobRoutes from './routes/export-jobs';
 import financeOperationsRoutes from './routes/finance-operations';
+import settingsRoutes from './routes/settings';
+import currencyRoutes from './routes/currency';
+import mailRoutes from './routes/mail';
+import companyAuthRoutes from './routes/company-auth';
+import companiesRoutes from './routes/companies';
 import { csrfProtection } from './middleware/csrf';
 import { apiLoggingMiddleware } from './middleware/api-logging';
 import path from 'path';
@@ -268,7 +272,9 @@ app.use('/api', (req: Request, res: Response, next: NextFunction) => {
   const isAuthEndpoint = path.includes('/auth/login') ||
     path.includes('/auth/role-login') ||
     path.includes('/auth/invite-login') ||
-    path.includes('/auth/refresh');
+    path.includes('/auth/refresh') ||
+    path.includes('/company-auth/login') ||
+    path.includes('/company-auth/me');
 
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method || '') ||
     isAuthEndpoint ||
@@ -360,8 +366,14 @@ app.use('/api/construction', constructionRoutes);
 app.use('/api/ai-intelligence', aiIntelligenceRoutes);
 app.use('/api/ai-chat', aiChatRoutes);
 app.use('/api/permissions', permissionsRoutes);
-app.use('/api', exportRoutes);
 app.use('/api', exportJobRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/currencies', currencyRoutes);
+app.use('/api/mail', mailRoutes);
+
+// ─── Company Isolation Layer ─────────────────────────────────────────────────
+app.use('/api/company-auth', companyAuthRoutes);
+app.use('/api/companies', companiesRoutes);
 
 // Health check with DB connection test
 app.get('/api/health', async (req: Request, res: Response) => {

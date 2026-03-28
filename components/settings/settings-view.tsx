@@ -9,56 +9,62 @@ import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Settings, Bell, Shield, Palette, Plug, Sliders, Save, Building2, Mail, Phone, MapPin, Download, Upload, AlertTriangle, Loader2, Trash2, RotateCcw } from "lucide-react"
+import { Settings, Bell, Shield, Palette, Plug, Sliders, Save, Building2, Mail, Phone, MapPin, Download, Upload, AlertTriangle, Loader2, Trash2, RotateCcw, Globe, Key, Cloud, CheckCircle2, XCircle, Sun, Moon, LayoutDashboard } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useTheme } from "@/lib/theme-provider"
 import { useToast } from "@/hooks/use-toast"
 import { apiService } from "@/lib/api"
+import { useSettingsStore } from "@/lib/store/settings-store"
+import { formatCurrency, convertAmount, cn } from "@/lib/utils"
 
-type CurrencyCode = "PKR" | "USD"
-
-const USD_TO_PKR_DEFAULT_RATE = 280.75
-const CURRENCY_STORAGE_KEY = "currencySettings"
-
-export const convertCurrency = (amount: number, from: CurrencyCode, to: CurrencyCode, usdToPkrRate: number) => {
-  if (from === to) return amount
-  if (usdToPkrRate <= 0) return amount
-
-  return from === "USD" && to === "PKR" ? amount * usdToPkrRate : amount / usdToPkrRate
-}
-
-const fetchExchangeRate = async (): Promise<number> => {
-  // TODO: Replace with real backend call
-  await new Promise((resolve) => setTimeout(resolve, 300))
-  return USD_TO_PKR_DEFAULT_RATE
-}
-
-const updateCurrencySettings = async (payload: {
-  currency: CurrencyCode
-  rate: number
-  useCustomRate: boolean
-  customRate?: number
-  lastUpdated: string
-}) => {
-  // TODO: Replace with real backend integration
-  await new Promise((resolve) => setTimeout(resolve, 400))
-  localStorage.setItem(CURRENCY_STORAGE_KEY, JSON.stringify(payload))
-}
+const SETTINGS_KEY = "system_config"
+const NOTIFICATIONS_KEY = "notifications"
+const INTEGRATIONS_KEY = "integrations"
 
 export function SettingsView() {
   const { theme, setTheme } = useTheme()
   const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
-  const [exportLoading, setExportLoading] = useState(false)
-  const [importLoading, setImportLoading] = useState(false)
-  const [lastBackupDate, setLastBackupDate] = useState<string | null>(null)
-  const [showBackupWarning, setShowBackupWarning] = useState(false)
-  const [showClearDataDialog, setShowClearDataDialog] = useState(false)
-  const [clearingData, setClearingData] = useState(false)
+  const { 
+    companyName,
+    companyEmail,
+    supportPhone,
+    companyAddress,
+    companyLogo,
+    notificationConfig,
+    integrationConfig,
+    currencies, 
+    activeCurrency, 
+    numberFormat,
+    isLoading,
+    isInitialized,
+    initialize, 
+    setActiveCurrency, 
+    setNumberFormat,
+    updateBranding,
+    updateConfig
+  } = useSettingsStore()
+
+  const [localBranding, setLocalBranding] = useState({
+    companyName: "",
+    companyEmail: "",
+    supportPhone: "",
+    companyAddress: "",
+    companyLogo: null as string | null,
+    selectedCurrency: "PKR"
+  })
+
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
   
+  const [localNotifications, setLocalNotifications] = useState<any>({})
+  const [localIntegrations, setLocalIntegrations] = useState<any>({})
+  
+  const [isSaving, setIsSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState("general")
+
   // Recycle Bin state
   const [recycleBinItems, setRecycleBinItems] = useState<any[]>([])
   const [recycleBinLoading, setRecycleBinLoading] = useState(false)
@@ -66,195 +72,111 @@ export function SettingsView() {
   const [entityTypes, setEntityTypes] = useState<any[]>([])
   const [restoringId, setRestoringId] = useState<string | null>(null)
 
-  const [settings, setSettings] = useState({
-    // General
-    companyName: "RealEstate ERP",
-    companyEmail: "contact@realestate.com",
-    companyPhone: "(555) 123-4567",
-    companyAddress: "123 Business St, Suite 100",
-    timezone: "America/New_York",
-    currency: "PKR",
+  // Advanced state
+  const [exportLoading, setExportLoading] = useState(false)
+  const [importLoading, setImportLoading] = useState(false)
+  const [clearingCache, setClearingCache] = useState(false)
+  const [generatingReport, setGeneratingReport] = useState(false)
+  const [showClearDataDialog, setShowClearDataDialog] = useState(false)
+  const [clearingData, setClearingData] = useState(false)
 
-    // Notifications
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    invoiceReminders: true,
-    leaseExpiryAlerts: true,
-    maintenanceAlerts: true,
-
-    // Security
-    twoFactorAuth: false,
-    sessionTimeout: "30",
-    passwordExpiry: "90",
-
-    // Appearance - now controlled by theme context
-    compactMode: false,
-  })
-
-  const [activeCurrency, setActiveCurrency] = useState<CurrencyCode>("PKR")
-  const [exchangeRate, setExchangeRate] = useState<number>(USD_TO_PKR_DEFAULT_RATE)
-  const [customRateEnabled, setCustomRateEnabled] = useState(false)
-  const [customRateInput, setCustomRateInput] = useState("")
-  const [isRateLoading, setIsRateLoading] = useState(true)
-  const [isSavingCurrency, setIsSavingCurrency] = useState(false)
-
-  const handleSave = () => {}
+  // Initialize store and local state
+  useEffect(() => {
+    initialize()
+  }, [initialize])
 
   useEffect(() => {
-    const initializeCurrencySettings = async () => {
-      try {
-        const stored = localStorage.getItem(CURRENCY_STORAGE_KEY)
-        if (stored) {
-          const parsed = JSON.parse(stored)
-          const storedCurrency = (parsed.currency as CurrencyCode) || "PKR"
-          setActiveCurrency(storedCurrency)
-          setSettings((prev) => ({ ...prev, currency: storedCurrency }))
-
-          if (parsed.useCustomRate && parsed.customRate) {
-            setCustomRateEnabled(true)
-            setCustomRateInput(String(parsed.customRate))
-            setExchangeRate(parsed.rate || parsed.customRate || USD_TO_PKR_DEFAULT_RATE)
-          } else {
-            const rate = parsed.rate || (await fetchExchangeRate())
-            setExchangeRate(rate)
-          }
-        } else {
-          const rate = await fetchExchangeRate()
-          setExchangeRate(rate)
-        }
-      } catch (error) {
-        console.error("Failed to initialize currency settings:", error)
-        setExchangeRate(USD_TO_PKR_DEFAULT_RATE)
-      } finally {
-        setIsRateLoading(false)
-      }
+    if (isInitialized) {
+      setLocalBranding({
+        companyName: companyName || "",
+        companyEmail: companyEmail || "",
+        supportPhone: supportPhone || "",
+        companyAddress: companyAddress || "",
+        companyLogo: companyLogo || null,
+        selectedCurrency: activeCurrency || "PKR"
+      })
+      
+      setLogoPreview(companyLogo || null)
+      
+      setLocalNotifications(notificationConfig || {})
+      setLocalIntegrations(integrationConfig || {})
     }
+  }, [isInitialized, companyName, companyEmail, supportPhone, companyAddress, companyLogo, activeCurrency, notificationConfig, integrationConfig])
 
-    initializeCurrencySettings()
-  }, [setSettings])
-
-  const parsedCustomRate = useMemo(() => {
-    const parsed = parseFloat(customRateInput)
-    return Number.isFinite(parsed) ? parsed : NaN
-  }, [customRateInput])
-
-  const effectiveRate = useMemo(() => {
-    if (customRateEnabled && parsedCustomRate > 0) {
-      return parsedCustomRate
-    }
-    return exchangeRate
-  }, [customRateEnabled, parsedCustomRate, exchangeRate])
-
-  const pricePreview = useMemo(
-    () => [
-      { label: "Example Property Price", amount: 12500000 },
-      { label: "Monthly Rent", amount: 85000 },
-      { label: "Maintenance Fee", amount: 12000 },
-    ],
-    []
-  )
-
-  const convertedPrices = useMemo(
-    () =>
-      pricePreview.map((item) => ({
-        label: item.label,
-        baseAmount: item.amount,
-        value:
-          activeCurrency === "PKR"
-            ? item.amount
-            : convertCurrency(item.amount, "PKR", "USD", effectiveRate),
-      })),
-    [pricePreview, activeCurrency, effectiveRate]
-  )
-
-  const formatAmount = useCallback((amount: number, currencyCode: CurrencyCode) => {
-    const isPKR = currencyCode === "PKR"
-    return new Intl.NumberFormat(isPKR ? "en-PK" : "en-US", {
-      style: "currency",
-      currency: currencyCode,
-      minimumFractionDigits: isPKR ? 0 : 2,
-      maximumFractionDigits: isPKR ? 0 : 2,
-    }).format(amount)
-  }, [])
-
-  const handleCurrencyChange = useCallback(
-    (value: CurrencyCode) => {
-      setActiveCurrency(value)
-      setSettings((prev) => ({ ...prev, currency: value }))
-    },
-    [setSettings]
-  )
-
-  const handleCustomRateToggle = useCallback(
-    (checked: boolean) => {
-      setCustomRateEnabled(checked)
-      if (checked) {
-        setCustomRateInput((prev) => (prev ? prev : String(exchangeRate)))
-      } else {
-        setCustomRateInput("")
-      }
-    },
-    [exchangeRate]
-  )
-
-  const handleRateInputChange = useCallback((value: string) => {
-    const sanitized = value.replace(/[^0-9.]/g, "")
-    setCustomRateInput(sanitized)
-  }, [])
-
-  const handleResetRate = useCallback(() => {
-    setCustomRateEnabled(false)
-    setCustomRateInput("")
-    setExchangeRate(USD_TO_PKR_DEFAULT_RATE)
-  }, [])
-
-  const handleCurrencySave = useCallback(async () => {
+  const handleSave = async () => {
+    setIsSaving(true)
     try {
-      setIsSavingCurrency(true)
-      const normalizedCustomRate =
-        customRateEnabled && parsedCustomRate > 0 ? parsedCustomRate : undefined
-      const payload = {
-        currency: activeCurrency,
-        rate: effectiveRate,
-        useCustomRate: Boolean(normalizedCustomRate),
-        customRate: normalizedCustomRate,
-        lastUpdated: new Date().toISOString(),
+      // Validate Branding - Only Company Name is required
+      if (!localBranding.companyName) {
+        toast({ title: "Validation Error", description: "Company Name is required.", variant: "destructive" })
+        setIsSaving(false)
+        return
       }
 
-      await updateCurrencySettings(payload)
-      setExchangeRate(effectiveRate)
+      const settingsData = {
+        ...localBranding
+      }
 
+      await Promise.all([
+        updateBranding(settingsData),
+        updateConfig('notificationConfig', localNotifications),
+        updateConfig('integrationConfig', localIntegrations)
+      ])
+      
       toast({
-        title: "Currency settings updated",
-        description: `All prices will now reflect ${activeCurrency}.`,
+        title: "Settings Saved",
+        description: "Your configurations have been updated successfully.",
       })
     } catch (error) {
-      console.error("Failed to save currency settings:", error)
       toast({
-        title: "Unable to save currency settings",
-        description: "Please try again or reset to the default rate.",
+        title: "Save Failed",
+        description: "An error occurred while saving settings.",
         variant: "destructive",
       })
     } finally {
-      setIsSavingCurrency(false)
+      setIsSaving(false)
     }
-  }, [activeCurrency, customRateEnabled, parsedCustomRate, effectiveRate, toast])
+  }
 
-  // Check backup reminder on mount
-  useEffect(() => {
-    const lastBackup = localStorage.getItem("lastBackupDate")
-    if (lastBackup) {
-      setLastBackupDate(lastBackup)
-      const backupDate = new Date(lastBackup)
-      const daysSinceBackup = Math.floor((Date.now() - backupDate.getTime()) / (1000 * 60 * 60 * 24))
-      if (daysSinceBackup > 7) {
-        setShowBackupWarning(true)
+  const updateBrandingField = (field: string, value: string) => {
+    setLocalBranding(prev => ({ ...prev, [field]: value }))
+  }
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({ title: "File too large", description: "Logo must be under 2MB.", variant: "destructive" })
+        return
       }
-    } else {
-      setShowBackupWarning(true)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setLogoPreview(base64String)
+        setLocalBranding(prev => ({ ...prev, companyLogo: base64String }))
+      }
+      reader.readAsDataURL(file)
     }
-  }, [])
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoPreview(null)
+    setLocalBranding(prev => ({ ...prev, companyLogo: null }))
+  }
+
+  const updateNotificationField = (field: string, value: any) => {
+    setLocalNotifications((prev: any) => ({ ...prev, [field]: value }))
+  }
+
+  const updateIntegrationField = (category: string, field: string, value: any) => {
+    setLocalIntegrations((prev: any) => ({
+      ...prev,
+      [category]: {
+        ...prev?.[category],
+        [field]: value
+      }
+    }))
+  }
 
   // Recycle bin functions
   const loadRecycleBin = useCallback(async () => {
@@ -306,954 +228,532 @@ export function SettingsView() {
     }
   }
 
-  // Load recycle bin when filter changes
   useEffect(() => {
-    loadRecycleBin()
-  }, [loadRecycleBin])
+    if (activeTab === "recycle-bin") {
+      loadRecycleBin()
+      loadEntityTypes()
+    }
+  }, [activeTab, loadRecycleBin, loadEntityTypes])
 
-  // Load entity types on mount
-  useEffect(() => {
-    loadEntityTypes()
-  }, [loadEntityTypes])
-
-  const handleExportData = async () => {
+  const handleClearCache = async () => {
+    setClearingCache(true)
     try {
-      setExportLoading(true)
-      const response = await apiService.backup.export()
-      
-      // The response.data contains the backup object with version, exportDate, and data
-      const responseData = response.data as any
-      const backupData = responseData || response
-      
-      // Create blob and download
-      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      
-      // Generate filename with timestamp
-      const now = new Date()
-      const timestamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}-${String(now.getHours()).padStart(2, "0")}-${String(now.getMinutes()).padStart(2, "0")}`
-      link.download = `backup-${timestamp}.json`
-      
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-
-      // Update last backup date
-      const backupDate = new Date().toISOString()
-      localStorage.setItem("lastBackupDate", backupDate)
-      setLastBackupDate(backupDate)
-      setShowBackupWarning(false)
-
-      toast({
-        title: "Export Successful",
-        description: "All data has been exported successfully.",
-      })
-    } catch (error: any) {
-      console.error("Export failed:", error)
-      toast({
-        title: "Export Failed",
-        description: error?.response?.data?.message || error?.response?.data?.error || "Failed to export data. Please try again.",
-        variant: "destructive",
-      })
+      await apiService.settings.clearCache()
+      toast({ title: "Cache Cleared", description: "System cache has been successfully purged." })
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to clear cache.", variant: "destructive" })
     } finally {
-      setExportLoading(false)
+      setClearingCache(false)
     }
   }
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click()
+  const handleGenerateReport = async () => {
+    setGeneratingReport(true)
+    try {
+      const response = await apiService.settings.generateReport()
+      toast({ 
+        title: "Report Queued", 
+        description: response.data.message || "System report is being generated." 
+      })
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to generate system report.", variant: "destructive" })
+    } finally {
+      setGeneratingReport(false)
+    }
   }
 
-  const handleImportData = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Confirm before importing
-    const confirmed = window.confirm(
-      "⚠️ WARNING: This will overwrite all existing data. This action cannot be undone. Continue?"
+  if (isLoading || !isInitialized) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     )
-    
-    if (!confirmed) {
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-      return
-    }
-
-    try {
-      setImportLoading(true)
-      
-      // Read file as text
-      const fileContent = await file.text()
-      let backupData: any
-      
-      try {
-        backupData = JSON.parse(fileContent)
-      } catch (parseError) {
-        throw new Error('Invalid JSON file. Please ensure the file is a valid backup file.')
-      }
-
-      // Validate backup file structure
-      if (!backupData || typeof backupData !== 'object') {
-        throw new Error('Invalid backup file format. File must contain a valid backup object.')
-      }
-
-      // If backup has version/data structure, use it; otherwise assume it's the data object itself
-      const dataToImport = backupData.data || backupData
-
-      if (!dataToImport || typeof dataToImport !== 'object') {
-        throw new Error('Invalid backup file format. File must contain a data object.')
-      }
-
-      // Send to backend - wrap in data property as expected by the API
-      await apiService.backup.import({ data: dataToImport })
-
-      toast({
-        title: "Import Successful",
-        description: "All data has been imported successfully. Please refresh the page.",
-      })
-
-      // Update last backup date to now (since we just imported)
-      const backupDate = new Date().toISOString()
-      localStorage.setItem("lastBackupDate", backupDate)
-      setLastBackupDate(backupDate)
-      setShowBackupWarning(false)
-
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-
-      // Optionally reload the page after a delay
-      setTimeout(() => {
-        window.location.reload()
-      }, 2000)
-    } catch (error: any) {
-      console.error("Import failed:", error)
-      
-      // Extract error message
-      let errorMessage = "Failed to import data. Please check the file format."
-      
-      if (error?.message) {
-        errorMessage = error.message
-      } else if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message
-      } else if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error
-      } else if (error?.response?.status === 400) {
-        errorMessage = "Invalid backup file format. Please ensure you're importing a valid backup file."
-      } else if (error?.response?.status === 500) {
-        errorMessage = "Server error during import. Please check the console for details."
-      }
-      
-      toast({
-        title: "Import Failed",
-        description: errorMessage,
-        variant: "destructive",
-      })
-      
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
-    } finally {
-      setImportLoading(false)
-    }
   }
+
+  // Use local state directly
+  const notifications = localNotifications || {}
+  const integrations = localIntegrations || {}
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-6">
+      {/* Top Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2">
         <div>
-          <h1 className="text-3xl font-bold text-foreground text-balance">Settings</h1>
-          <p className="text-muted-foreground mt-1">Manage your application preferences and configurations</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">General Settings</h1>
+          <p className="text-muted-foreground mt-0.5 text-xs">Manage your company profile and preferences.</p>
         </div>
-        <Button onClick={handleSave}>
-          <Save className="h-4 w-4 mr-2" />
+        <Button onClick={handleSave} disabled={isSaving} className="shadow-sm bg-primary hover:bg-primary/90 h-9 px-6 rounded-md">
+          {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           Save Changes
         </Button>
       </div>
 
-      {/* Settings Tabs */}
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
-          <TabsTrigger value="general">
-            <Settings className="h-4 w-4 mr-2" />
-            General
-          </TabsTrigger>
-          <TabsTrigger value="notifications">
-            <Bell className="h-4 w-4 mr-2" />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="security">
-            <Shield className="h-4 w-4 mr-2" />
-            Security
-          </TabsTrigger>
-          <TabsTrigger value="appearance">
-            <Palette className="h-4 w-4 mr-2" />
-            Appearance
-          </TabsTrigger>
-          <TabsTrigger value="integrations">
-            <Plug className="h-4 w-4 mr-2" />
-            Integrations
-          </TabsTrigger>
-          <TabsTrigger value="recycle-bin">
-            <Trash2 className="h-4 w-4 mr-2" />
-            Recycle Bin
-          </TabsTrigger>
-          <TabsTrigger value="advanced">
-            <Sliders className="h-4 w-4 mr-2" />
-            Advanced
-          </TabsTrigger>
-        </TabsList>
-
-        {/* General Settings */}
-        <TabsContent value="general">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">General Settings</h2>
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Company Information
-                </h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name</Label>
-                    <Input
-                      id="companyName"
-                      value={settings.companyName}
-                      onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="companyEmail">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="companyEmail"
-                        type="email"
-                        value={settings.companyEmail}
-                        onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })}
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="companyPhone">Phone</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="companyPhone"
-                        value={settings.companyPhone}
-                        onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })}
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="companyAddress">Address</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="companyAddress"
-                        value={settings.companyAddress}
-                        onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
-                        className="pl-9"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-sm font-semibold text-foreground">Regional Settings</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">Timezone</Label>
-                    <Select
-                      value={settings.timezone}
-                      onValueChange={(value) => setSettings({ ...settings, timezone: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
-                        <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
-                        <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
-                        <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="currency">Currency</Label>
-                    <Select
-                      value={settings.currency}
-                      onValueChange={(value) => setSettings({ ...settings, currency: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">USD - US Dollar</SelectItem>
-                        <SelectItem value="EUR">EUR - Euro</SelectItem>
-                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                        <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Notifications Settings */}
-        <TabsContent value="notifications">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Notification Preferences</h2>
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Notification Channels</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="emailNotifications">Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Receive notifications via email</p>
-                    </div>
-                    <Switch
-                      id="emailNotifications"
-                      checked={settings.emailNotifications}
-                      onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="smsNotifications">SMS Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Receive notifications via SMS</p>
-                    </div>
-                    <Switch
-                      id="smsNotifications"
-                      checked={settings.smsNotifications}
-                      onCheckedChange={(checked) => setSettings({ ...settings, smsNotifications: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="pushNotifications">Push Notifications</Label>
-                      <p className="text-sm text-muted-foreground">Receive browser push notifications</p>
-                    </div>
-                    <Switch
-                      id="pushNotifications"
-                      checked={settings.pushNotifications}
-                      onCheckedChange={(checked) => setSettings({ ...settings, pushNotifications: checked })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-sm font-semibold text-foreground">Alert Types</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="invoiceReminders">Invoice Reminders</Label>
-                      <p className="text-sm text-muted-foreground">Get reminded about upcoming invoice due dates</p>
-                    </div>
-                    <Switch
-                      id="invoiceReminders"
-                      checked={settings.invoiceReminders}
-                      onCheckedChange={(checked) => setSettings({ ...settings, invoiceReminders: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="leaseExpiryAlerts">Lease Expiry Alerts</Label>
-                      <p className="text-sm text-muted-foreground">Notifications when leases are about to expire</p>
-                    </div>
-                    <Switch
-                      id="leaseExpiryAlerts"
-                      checked={settings.leaseExpiryAlerts}
-                      onCheckedChange={(checked) => setSettings({ ...settings, leaseExpiryAlerts: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="maintenanceAlerts">Maintenance Alerts</Label>
-                      <p className="text-sm text-muted-foreground">Get notified about maintenance requests</p>
-                    </div>
-                    <Switch
-                      id="maintenanceAlerts"
-                      checked={settings.maintenanceAlerts}
-                      onCheckedChange={(checked) => setSettings({ ...settings, maintenanceAlerts: checked })}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Security Settings */}
-        <TabsContent value="security">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Security Settings</h2>
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Authentication</h3>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="twoFactorAuth">Two-Factor Authentication</Label>
-                    <p className="text-sm text-muted-foreground">Add an extra layer of security to your account</p>
-                  </div>
-                  <Switch
-                    id="twoFactorAuth"
-                    checked={settings.twoFactorAuth}
-                    onCheckedChange={(checked) => setSettings({ ...settings, twoFactorAuth: checked })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-sm font-semibold text-foreground">Session Management</h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
-                    <Input
-                      id="sessionTimeout"
-                      type="number"
-                      value={settings.sessionTimeout}
-                      onChange={(e) => setSettings({ ...settings, sessionTimeout: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="passwordExpiry">Password Expiry (days)</Label>
-                    <Input
-                      id="passwordExpiry"
-                      type="number"
-                      value={settings.passwordExpiry}
-                      onChange={(e) => setSettings({ ...settings, passwordExpiry: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-sm font-semibold text-foreground">Password Management</h3>
-                <Button variant="outline">Change Password</Button>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Appearance Settings */}
-        <TabsContent value="appearance">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Appearance Settings</h2>
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-foreground">Theme</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="theme">Color Theme</Label>
-                  <Select value={theme} onValueChange={(value: any) => setTheme(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">Light</SelectItem>
-                      <SelectItem value="dark">Dark</SelectItem>
-                      <SelectItem value="system">System</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground">
-                    Choose how the interface looks. System will match your device settings.
-                  </p>
-                </div>
-              </div>
-
-
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-sm font-semibold text-foreground">Display Options</h3>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="compactMode">Compact Mode</Label>
-                    <p className="text-sm text-muted-foreground">Reduce spacing for a more compact interface</p>
-                  </div>
-                  <Switch
-                    id="compactMode"
-                    checked={settings.compactMode}
-                    onCheckedChange={(checked) => setSettings({ ...settings, compactMode: checked })}
-                  />
-                </div>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Integrations Settings */}
-        <TabsContent value="integrations">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Integrations</h2>
-            <div className="space-y-4">
-              <p className="text-muted-foreground">Connect third-party services to enhance your ERP system.</p>
-
-              <div className="space-y-4 pt-4">
-                <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                  <div>
-                    <h3 className="font-semibold text-foreground">Payment Gateway</h3>
-                    <p className="text-sm text-muted-foreground">Connect Stripe for payment processing</p>
-                  </div>
-                  <Button variant="outline">Connect</Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                  <div>
-                    <h3 className="font-semibold text-foreground">Email Service</h3>
-                    <p className="text-sm text-muted-foreground">Connect SendGrid for email notifications</p>
-                  </div>
-                  <Button variant="outline">Connect</Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                  <div>
-                    <h3 className="font-semibold text-foreground">SMS Service</h3>
-                    <p className="text-sm text-muted-foreground">Connect Twilio for SMS notifications</p>
-                  </div>
-                  <Button variant="outline">Connect</Button>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-                  <div>
-                    <h3 className="font-semibold text-foreground">Cloud Storage</h3>
-                    <p className="text-sm text-muted-foreground">Connect AWS S3 for document storage</p>
-                  </div>
-                  <Button variant="outline">Connect</Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </TabsContent>
-
-        {/* Recycle Bin */}
-        <TabsContent value="recycle-bin">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">Recycle Bin</h2>
-                <p className="text-sm text-muted-foreground">
-                  Recently deleted items are kept for 30 days before permanent deletion
-                </p>
-              </div>
-              <Button variant="outline" onClick={loadRecycleBin} disabled={recycleBinLoading}>
-                {recycleBinLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RotateCcw className="h-4 w-4" />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full">
+        {/* Navigation Tabs */}
+        <div className="overflow-x-auto pb-2 no-scrollbar">
+          <TabsList className="inline-flex min-w-full sm:min-w-0 h-auto p-1 bg-slate-100/50 dark:bg-slate-800/50 rounded-lg">
+            {[
+              { id: "general", label: "General Settings", icon: Settings },
+              { id: "branding", label: "Branding", icon: Palette },
+              { id: "notifications", label: "Notifications", icon: Bell },
+              { id: "currency", label: "Currency Settings", icon: Globe },
+              { id: "integrations", label: "Integrations", icon: Plug },
+              { id: "recycle-bin", label: "Recycle Bin", icon: Trash2 },
+              { id: "advanced", label: "Advanced / Reports", icon: Sliders },
+            ].map((tab) => (
+              <TabsTrigger 
+                key={tab.id} 
+                value={tab.id}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all whitespace-nowrap border-none",
+                  "data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm",
+                  "dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-primary/70 dark:data-[state=active]:shadow-none",
+                  "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/50"
                 )}
-                <span className="ml-2">Refresh</span>
-              </Button>
-            </div>
+              >
+                <tab.icon className="h-4 w-4 shrink-0" />
+                <span>{tab.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
-            {/* Filter */}
-            <div className="mb-4">
-              <Label htmlFor="recycleBinFilter">Filter by Type</Label>
-              <Select value={recycleBinFilter} onValueChange={setRecycleBinFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {entityTypes.map((type) => (
-                    <SelectItem key={type.type} value={type.type}>
-                      {type.label} ({type.count})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Content Area */}
+        <div className="w-full">
+          {/* General Settings Tab */}
+              <TabsContent value="general" className="mt-0 space-y-6 focus-visible:outline-none focus-visible:ring-0">
+                <Card className="border shadow-none rounded-xl overflow-hidden p-0 bg-white dark:bg-slate-950">
+                  <div className="p-8 space-y-8">
+                    <div className="space-y-6">
+                      <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Branding</h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="companyName" className="text-xs font-medium text-slate-600">Company Name</Label>
+                            <Input 
+                              id="companyName"
+                              placeholder="Acme Innovations, Inc." 
+                              className="h-10 bg-slate-50/50 border-slate-200 focus:ring-primary"
+                              value={localBranding.companyName}
+                              onChange={(e) => updateBrandingField("companyName", e.target.value)}
+                            />
+                          </div>
 
-            {/* Table */}
-            {recycleBinLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : recycleBinItems.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Trash2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Recycle bin is empty</p>
-                <p className="text-sm">Deleted items will appear here for 30 days</p>
-              </div>
-            ) : (
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Item Name</TableHead>
-                      <TableHead>Module</TableHead>
-                      <TableHead>Deleted By</TableHead>
-                      <TableHead>Deleted Date</TableHead>
-                      <TableHead className="text-right">Remaining Days</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recycleBinItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">{item.entityName}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {item.entityType.charAt(0).toUpperCase() + item.entityType.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{item.deletedByName || "System"}</TableCell>
-                        <TableCell>
-                          {new Date(item.deletedAt).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant={item.remainingDays <= 7 ? "destructive" : "secondary"}>
-                            {item.remainingDays} days
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRestore(item.id, item.entityName)}
-                            disabled={restoringId === item.id}
-                          >
-                            {restoringId === item.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <RotateCcw className="h-4 w-4" />
-                            )}
-                            <span className="ml-2">Restore</span>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </Card>
-        </TabsContent>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="companyEmail" className="text-xs font-medium text-slate-600">Company Email</Label>
+                            <Input 
+                              id="companyEmail"
+                              placeholder="support@acmeinnovations.com" 
+                              className="h-10 bg-slate-50/50 border-slate-200 focus:ring-primary"
+                              value={localBranding.companyEmail || ""}
+                              onChange={(e) => updateBrandingField("companyEmail", e.target.value)}
+                            />
+                          </div>
 
-        {/* Advanced Settings */}
-        <TabsContent value="advanced">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Advanced Settings</h2>
-            
-            {/* Backup Warning */}
-            {showBackupWarning && (
-              <Alert variant="destructive" className="mb-6">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Backup Reminder</AlertTitle>
-                <AlertDescription>
-                  ⚠️ You haven't backed up your data in a while. Please export a backup now to protect your data.
-                  {lastBackupDate && (
-                    <span className="block mt-1 text-xs">
-                      Last backup: {new Date(lastBackupDate).toLocaleDateString()}
-                    </span>
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
+                          <div className="space-y-1.5">
+                            <Label htmlFor="companyPhone" className="text-xs font-medium text-slate-600">Company Phone</Label>
+                            <Input 
+                              id="companyPhone"
+                              placeholder="+1 (555) 123-4567" 
+                              className="h-10 bg-slate-50/50 border-slate-200 focus:ring-primary"
+                              value={localBranding.supportPhone || ""}
+                              onChange={(e) => updateBrandingField("supportPhone", e.target.value)}
+                            />
+                          </div>
+                        </div>
 
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">Currency Configuration</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Choose how monetary values are displayed throughout your workspace.
-                    </p>
+                        <div className="space-y-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="companyAddress" className="text-xs font-medium text-slate-600">Company Address</Label>
+                            <textarea 
+                              id="companyAddress"
+                              rows={5}
+                              placeholder="123 Business Parkway..." 
+                              className="flex min-h-[120px] w-full rounded-md border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                              value={localBranding.companyAddress || ""}
+                              onChange={(e) => updateBrandingField("companyAddress", e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-8 border-t border-slate-100">
+                        <div className="space-y-4">
+                          <Label className="text-xs font-medium text-slate-600 uppercase tracking-wider">Company Logo</Label>
+                          <div className="flex items-center gap-6">
+                            <div className="relative group">
+                              <div className="h-20 w-20 rounded-full bg-slate-100 border-2 border-slate-200 overflow-hidden flex items-center justify-center shadow-inner">
+                                {logoPreview ? (
+                                  <img src={logoPreview} alt="Logo" className="h-full w-full object-cover" />
+                                ) : (
+                                  <span className="text-2xl font-bold text-slate-400 capitalize">{localBranding.companyName?.charAt(0) || "A"}</span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-9 px-4 rounded-md text-xs font-semibold border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors"
+                                  onClick={() => fileInputRef.current?.click()}
+                                >
+                                  Upload New Logo
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-9 px-4 rounded-md text-xs font-semibold border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-red-500"
+                                  onClick={handleRemoveLogo}
+                                  disabled={!logoPreview}
+                                >
+                                  Remove Logo
+                                </Button>
+                                <input 
+                                  type="file" 
+                                  ref={fileInputRef} 
+                                  className="hidden" 
+                                  accept="image/*" 
+                                  onChange={handleLogoUpload} 
+                                />
+                              </div>
+                              <Button 
+                                className="w-fit h-9 bg-primary hover:bg-primary/90 text-white text-xs font-semibold px-6"
+                                onClick={handleSave}
+                                disabled={isSaving}
+                              >
+                                {isSaving ? "Saving..." : "Change app logo"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground sm:mt-0">
-                    Active currency: {activeCurrency}
-                  </span>
-                </div>
+                  
+                  <div className="px-8 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-end">
+                    <Button 
+                      onClick={handleSave} 
+                      disabled={isSaving}
+                      className="bg-primary hover:bg-primary/90 h-9 px-6 rounded-md shadow-sm"
+                    >
+                      {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                      Save Changes
+                    </Button>
+                  </div>
+                </Card>
+              </TabsContent>
 
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              {/* Branding (Theme/Appearance) */}
+              <TabsContent value="branding" className="mt-0 space-y-6 focus-visible:outline-none">
+                <Card className="p-8 border shadow-none rounded-xl">
+                  <div className="flex items-center gap-2 mb-8 text-primary dark:text-primary/70">
+                    <Palette className="h-5 w-5" />
+                    <h3 className="text-lg font-semibold">Appearance & Theme</h3>
+                  </div>
+
+                  <div className="grid gap-10">
+                    <div className="space-y-4">
+                      <Label className="text-sm font-semibold">Display Mode</Label>
+                      <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { id: "light", label: "Light", icon: Sun },
+                          { id: "dark", label: "Dark", icon: Moon },
+                          { id: "system", label: "System", icon: LayoutDashboard },
+                        ].map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => setTheme(t.id as any)}
+                            className={cn(
+                              "flex flex-col items-center gap-3 p-6 rounded-2xl border-2 transition-all duration-300 relative group",
+                              theme === t.id 
+                                ? "border-primary bg-primary/100/5 text-primary shadow-sm" 
+                                : "border-slate-100 bg-white hover:border-primary/30 text-muted-foreground"
+                            )}
+                          >
+                            <t.icon className={cn("h-6 w-6 transition-transform group-hover:scale-110", theme === t.id && "animate-pulse")} />
+                            <span className="text-xs font-bold uppercase tracking-wider">{t.label}</span>
+                            {theme === t.id && <CheckCircle2 className="absolute top-2 right-2 h-3 w-3 text-primary" />}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-semibold">Global Number Formatting</Label>
+                        <Badge variant={numberFormat === "compact" ? "default" : "secondary"} className="rounded-full px-4 text-[10px]">
+                          {numberFormat === "compact" ? "Compact Shorthand" : "Full Display"}
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        {[
+                          { id: "full", title: "Full Format", desc: "1,250,000.00", icon: Sliders },
+                          { id: "compact", title: "Compact Mode", desc: "1.25M / 12.5L", icon: CheckCircle2 }
+                        ].map((fmt) => (
+                          <button 
+                            key={fmt.id}
+                            onClick={() => setNumberFormat(fmt.id as any)}
+                            className={cn(
+                              "group flex items-center gap-4 p-5 rounded-2xl border-2 transition-all text-left",
+                              numberFormat === fmt.id 
+                                ? "border-primary bg-primary/100/5 shadow-sm" 
+                                : "border-slate-100 bg-white hover:border-primary/30"
+                            )}
+                          >
+                            <div className={cn(
+                              "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
+                              numberFormat === fmt.id ? "bg-primary/100 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-primary/20 group-hover:text-primary"
+                            )}>
+                              <fmt.icon className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-xs mb-0.5 uppercase tracking-tight">{fmt.title}</h4>
+                              <p className="font-mono text-[10px] text-primary font-bold">{fmt.desc}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* Notifications */}
+              <TabsContent value="notifications" className="mt-0 space-y-6 focus-visible:outline-none">
+                <Card className="p-8 border shadow-none rounded-xl">
+                  <div className="flex items-center gap-2 mb-8 text-primary dark:text-primary/70">
+                    <Bell className="h-5 w-5" />
+                    <h3 className="text-lg font-semibold">Notification Settings</h3>
+                  </div>
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="activeCurrency">Active Currency</Label>
-                      <Select value={activeCurrency} onValueChange={(value) => handleCurrencyChange(value as CurrencyCode)}>
-                        <SelectTrigger id="activeCurrency">
+                    {[
+                      { id: "emailEnabled", title: "Email Notifications", desc: "System alerts via Resend API" },
+                    ].map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-5 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors">
+                        <div>
+                          <Label className="text-sm font-semibold">{item.title}</Label>
+                          <p className="text-xs text-muted-foreground">{item.desc}</p>
+                        </div>
+                        <Switch 
+                          checked={localNotifications[item.id] || false} 
+                          onCheckedChange={(val) => updateNotificationField(item.id, val)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* Currency */}
+              <TabsContent value="currency" className="mt-0 space-y-6 focus-visible:outline-none">
+                <Card className="p-8 border shadow-none rounded-xl">
+                  <div className="flex items-center gap-2 mb-8 text-primary dark:text-primary/70">
+                    <Globe className="h-5 w-5" />
+                    <h3 className="text-lg font-semibold">System Currency</h3>
+                  </div>
+                  <div className="grid gap-8 md:grid-cols-2">
+                    <div className="space-y-4">
+                      <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Global Identity</Label>
+                      <Select 
+                        value={localBranding.selectedCurrency} 
+                        onValueChange={(val) => updateBrandingField("selectedCurrency", val)}
+                      >
+                        <SelectTrigger className="h-10 bg-slate-50/50">
                           <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PKR">PKR — Pakistani Rupee</SelectItem>
-                          <SelectItem value="USD">USD — United States Dollar</SelectItem>
+                          {[
+                            { code: "USD", name: "US Dollar", symbol: "$" },
+                            { code: "PKR", name: "Pakistani Rupee", symbol: "Rs" },
+                            { code: "EUR", name: "Euro", symbol: "€" },
+                            { code: "GBP", name: "British Pound", symbol: "£" },
+                            ...currencies.slice(0, 10)
+                          ].map(c => (
+                            <SelectItem key={c.code} value={c.code}>{c.code} - {c.symbol}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
+                      <p className="text-[10px] text-muted-foreground">This updates all financial symbols across the system in real-time.</p>
                     </div>
 
-                    <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-4">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                        <Sliders className="h-4 w-4" />
-                        Exchange Rate
+                    <div className="rounded-2xl bg-primary/5 p-6 border border-primary/20 shadow-inner">
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-[10px] text-primary font-bold uppercase tracking-widest">Master Currency</span>
+                        <Badge className="bg-primary text-[10px]">{localBranding.selectedCurrency}</Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {isRateLoading ? (
-                          <span className="flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading rate...
-                          </span>
-                        ) : (
-                          <>1 USD = {effectiveRate.toFixed(2)} PKR</>
-                        )}
-                      </p>
-                      {!customRateEnabled && !isRateLoading && (
-                        <p className="text-xs text-muted-foreground">
-                          Using the system default rate. Enable custom rate to override.
-                        </p>
-                      )}
+                      <div className="text-2xl font-black text-primary-foreground">
+                        {localBranding.selectedCurrency}
+                      </div>
                     </div>
-
-                    <div className="flex items-center justify-between rounded-lg border border-border p-4">
-                      <div>
-                        <h4 className="text-sm font-semibold text-foreground">Custom Rate</h4>
-                        <p className="text-xs text-muted-foreground">
-                          Override the default USD to PKR conversion rate.
-                        </p>
-                      </div>
-                      <Switch checked={customRateEnabled} onCheckedChange={handleCustomRateToggle} />
-                    </div>
-
-                    {customRateEnabled && (
-                      <div className="space-y-2">
-                        <Label htmlFor="customRate">Custom USD to PKR Rate</Label>
-                        <Input
-                          id="customRate"
-                          inputMode="decimal"
-                          placeholder="Enter your USD to PKR rate"
-                          value={customRateInput}
-                          onChange={(event) => handleRateInputChange(event.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Values refresh instantly. Example: 1 USD = 280.75 PKR.
-                        </p>
-                      </div>
-                    )}
                   </div>
+                </Card>
+              </TabsContent>
 
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-semibold text-foreground">Live Preview</h4>
-                      <p className="text-xs text-muted-foreground">
-                        These values update everywhere price data is shown.
-                      </p>
-                    </div>
-                    <div className="space-y-3">
-                      {convertedPrices.map((item) => (
-                        <div
-                          key={item.label}
-                          className="rounded-lg border border-border bg-background/60 px-4 py-3 shadow-sm"
-                        >
-                          <div className="flex items-center justify-between text-sm font-medium text-foreground">
-                            <span>{item.label}</span>
-                            <span>{formatAmount(item.value, activeCurrency)}</span>
+              {/* Integrations */}
+              <TabsContent value="integrations" className="mt-0 space-y-6 focus-visible:outline-none">
+                <Card className="p-8 border shadow-none rounded-xl">
+                  <div className="flex items-center gap-2 mb-8 text-primary dark:text-primary/70">
+                    <Plug className="h-5 w-5" />
+                    <h3 className="text-lg font-semibold">API Integrations</h3>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div className="p-6 border rounded-2xl space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center"><Mail className="h-4 w-4 text-primary" /></div>
+                          <div>
+                            <h4 className="font-bold text-sm">Resend API</h4>
+                            <p className="text-[10px] text-muted-foreground">Modern email delivery configuration</p>
                           </div>
-                          {activeCurrency === "USD" && (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Original: {formatAmount(item.baseAmount, "PKR")}
-                            </p>
-                          )}
                         </div>
-                      ))}
+                        <Switch 
+                          checked={localIntegrations.resend?.enabled || false} 
+                          onCheckedChange={(val) => updateIntegrationField("resend", "enabled", val)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-slate-500">API Key</Label>
+                        <Input 
+                          placeholder="re_..." 
+                          type="password"
+                          value={localIntegrations.resend?.apiKey || ""}
+                          onChange={(e) => updateIntegrationField("resend", "apiKey", e.target.value)}
+                          className="h-9"
+                        />
+                        <p className="text-[10px] text-muted-foreground pt-1">This key is securely stored in your database and partially masked for your protection against exposure.</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </Card>
+              </TabsContent>
 
-                <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    Saving stores your preferences locally and syncs with the backend when connected.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      className="bg-transparent"
-                      onClick={handleResetRate}
-                      disabled={isSavingCurrency}
-                    >
-                      Reset to Default
-                    </Button>
-                    <Button onClick={handleCurrencySave} disabled={isSavingCurrency || isRateLoading}>
-                      {isSavingCurrency ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          Save Currency Settings
-                        </>
-                      )}
-                    </Button>
+              {/* Recycle Bin */}
+              <TabsContent value="recycle-bin" className="mt-0 focus-visible:outline-none">
+                <Card className="p-8 border shadow-none rounded-xl min-h-[500px]">
+                   <div className="flex items-center justify-between mb-8">
+                     <div className="flex items-center gap-2">
+                       <Trash2 className="h-5 w-5 text-red-500" />
+                       <h3 className="text-lg font-semibold">Recycle Bin</h3>
+                     </div>
+                     <Button variant="ghost" size="sm" onClick={loadRecycleBin} className="text-xs h-8"><RotateCcw className="h-3 w-3 mr-1" /> Refresh</Button>
+                   </div>
+                   
+                   <div className="space-y-4">
+                      <Select value={recycleBinFilter} onValueChange={setRecycleBinFilter}>
+                        <SelectTrigger className="w-[180px] h-9 text-xs"><SelectValue placeholder="All Modules" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Modules</SelectItem>
+                          {entityTypes.map((type) => (
+                            <SelectItem key={type.type} value={type.type}>{type.label} ({type.count})</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <div className="border rounded-xl overflow-hidden">
+                        <Table>
+                          <TableHeader className="bg-slate-50/50">
+                            <TableRow>
+                              <TableHead className="text-xs font-bold uppercase tracking-wider">Module</TableHead>
+                              <TableHead className="text-xs font-bold uppercase tracking-wider">Item ID</TableHead>
+                              <TableHead className="text-xs font-bold uppercase tracking-wider">Deleted On</TableHead>
+                              <TableHead className="text-right text-xs font-bold uppercase tracking-wider">Action</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {recycleBinItems.length === 0 ? (
+                              <TableRow><TableCell colSpan={4} className="h-40 text-center text-muted-foreground text-xs italic">No items in recycle bin</TableCell></TableRow>
+                            ) : (
+                              recycleBinItems.map((item) => (
+                                <TableRow key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                                  <TableCell className="font-medium text-xs text-primary">{item.entityType}</TableCell>
+                                  <TableCell className="text-xs font-mono">{item.entityId}</TableCell>
+                                  <TableCell className="text-xs text-muted-foreground">{new Date(item.deletedAt).toLocaleDateString()}</TableCell>
+                                  <TableCell className="text-right">
+                                    <Button size="sm" variant="ghost" className="h-7 px-3 text-[10px] font-bold text-primary hover:text-primary/90 hover:bg-primary/10" onClick={() => handleRestore(item.id, item.entityId)} disabled={restoringId === item.id}>
+                                      {restoringId === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : "RESTORE"}
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                   </div>
+                </Card>
+              </TabsContent>
+
+              {/* Advanced Controls */}
+              <TabsContent value="advanced" className="mt-0 space-y-6 focus-visible:outline-none">
+                <Card className="p-8 border shadow-none rounded-xl">
+                  <div className="flex items-center gap-2 mb-8 text-primary dark:text-primary/70">
+                    <Sliders className="h-5 w-5" />
+                    <h3 className="text-lg font-semibold">Advanced Controls</h3>
                   </div>
-                </div>
-              </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-foreground">Data Management</h3>
-                  {lastBackupDate && !showBackupWarning && (
-                    <span className="text-xs text-muted-foreground">
-                      Last backup: {new Date(lastBackupDate).toLocaleDateString()}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Button 
-                    variant="outline" 
-                    className="bg-transparent"
-                    onClick={handleExportData}
-                    disabled={exportLoading}
-                  >
-                    {exportLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Exporting...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        Export All Data
-                      </>
-                    )}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="bg-transparent"
-                    onClick={handleImportClick}
-                    disabled={importLoading}
-                  >
-                    {importLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Importing...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Import Data
-                      </>
-                    )}
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportData}
-                    className="hidden"
-                  />
-                </div>
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="p-6 border rounded-2xl space-y-4 hover:bg-slate-50 transition-colors cursor-pointer group" onClick={handleGenerateReport}>
+                      <div className="h-10 w-10 rounded-xl bg-green-50 flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform"><Download className="h-5 w-5" /></div>
+                      <div>
+                        <h4 className="font-bold text-sm">System Report</h4>
+                        <p className="text-[10px] text-muted-foreground">Generate configuration analysis</p>
+                      </div>
+                    </div>
 
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-sm font-semibold text-foreground">System Maintenance</h3>
-                <div className="space-y-3">
-                  <Button variant="outline" className="w-full sm:w-auto bg-transparent">
-                    Clear Cache
-                  </Button>
-                  <Button variant="outline" className="w-full sm:w-auto bg-transparent">
-                    Reset to Defaults
-                  </Button>
-                </div>
-              </div>
+                    <div className="p-6 border rounded-2xl space-y-4 hover:bg-slate-50 transition-colors cursor-pointer group" onClick={handleClearCache}>
+                      <div className="h-10 w-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform"><RotateCcw className="h-5 w-5" /></div>
+                      <div>
+                        <h4 className="font-bold text-sm">Clear Cache</h4>
+                        <p className="text-[10px] text-muted-foreground">Force refresh statistics</p>
+                      </div>
+                    </div>
 
-              <div className="space-y-4 pt-6 border-t border-border">
-                <h3 className="text-sm font-semibold text-foreground text-destructive">Danger Zone</h3>
-                <div className="space-y-3">
-                  <Button 
-                    variant="destructive" 
-                    className="w-full sm:w-auto"
-                    onClick={() => setShowClearDataDialog(true)}
-                  >
-                    Delete All Data
-                  </Button>
-                </div>
-              </div>
+                    <div className="p-6 border rounded-2xl space-y-4 hover:bg-red-50 border-red-100 transition-colors cursor-pointer md:col-span-2 group" onClick={() => setShowClearDataDialog(true)}>
+                      <div className="h-10 w-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600 group-hover:scale-110 transition-transform"><AlertTriangle className="h-5 w-5" /></div>
+                      <div>
+                        <h4 className="font-bold text-sm text-red-600">Factory Reset</h4>
+                        <p className="text-[10px] text-red-400">Purge ALL system data (Irreversible)</p>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </TabsContent>
             </div>
-          </Card>
-        </TabsContent>
       </Tabs>
 
-      {/* Clear All Data Confirmation Dialog */}
+      {/* Wipe Data Dialog */}
       <AlertDialog open={showClearDataDialog} onOpenChange={setShowClearDataDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Clear All Data
+              CRITICAL: Delete All System Data?
             </AlertDialogTitle>
-            <AlertDialogDescription className="pt-2">
-              Are you sure you want to delete all data? This action cannot be undone.
-              <br />
-              <br />
-              <span className="font-semibold text-foreground">This will permanently delete:</span>
-              <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
-                <li>All properties, units, and blocks</li>
-                <li>All tenants and leases</li>
-                <li>All invoices and payments</li>
-                <li>All transactions and journal entries</li>
-                <li>All CRM data (leads, clients, deals)</li>
-                <li>All HR data (employees, payroll, attendance)</li>
-                <li>All accounts and financial records</li>
-              </ul>
-              <br />
-              <span className="text-destructive font-semibold">Note: Users and roles will NOT be deleted.</span>
+            <AlertDialogDescription>
+              This will permanently delete ALL properties, tenants, invoices, transactions and records.
+              This action is irreversible. Users and core roles will be preserved.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={clearingData}>No, Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                setClearingData(true)
-                try {
-                  await apiService.backup.clearAll()
-                  toast({
-                    title: "All data cleared successfully",
-                    description: "All data has been permanently deleted from the system.",
-                  })
-                  setShowClearDataDialog(false)
-                  // Optionally reload the page to reflect the cleared state
-                  setTimeout(() => {
-                    window.location.reload()
-                  }, 2000)
-                } catch (error: any) {
-                  const errorMessage = error?.response?.data?.error || error?.response?.data?.message || "Failed to clear data"
-                  toast({
-                    title: "Error clearing data",
-                    description: errorMessage,
-                    variant: "destructive",
-                  })
-                } finally {
-                  setClearingData(false)
-                }
-              }}
-              disabled={clearingData}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {clearingData ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Clearing...
-                </>
-              ) : (
-                "Yes, Delete All"
-              )}
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-white" onClick={async () => {
+              setClearingData(true)
+              try {
+                await apiService.backup?.clearAll()
+                toast({ title: "System Wiped", description: "All data has been deleted." })
+                window.location.reload()
+              } catch (e) {
+                toast({ title: "Error", description: "Wipe failed.", variant: "destructive" })
+              } finally {
+                setClearingData(false)
+              }
+            }}>
+              {clearingData ? "Clearing..." : "Yes, Purge Everything"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

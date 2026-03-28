@@ -209,7 +209,7 @@ export function MiniChartCard({
 
     return (
         <Card className={cn(
-            "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]",
+            "group relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]",
             className
         )}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">

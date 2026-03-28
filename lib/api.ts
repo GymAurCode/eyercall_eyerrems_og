@@ -1366,6 +1366,23 @@ export const apiService = {
     },
   },
 
+  // Settings
+  settings: {
+    getAll: () => api.get('/settings'),
+    update: (key: string, value: any) => api.put(`/settings/${key}`, { value }),
+    clearCache: () => api.post('/settings/clear-cache'),
+    generateReport: () => api.post('/settings/generate-report'),
+  },
+
+  // Currencies
+  currencies: {
+    getAllActive: () => api.get('/currencies'),
+    getAll: () => api.get('/currencies/all'),
+    updateRate: (code: string, rate: number) => api.put(`/currencies/${code}/rate`, { rate }),
+    upsert: (data: any) => api.post('/currencies', data),
+    delete: (code: string) => api.delete(`/currencies/${code}`),
+  },
+
   // AI Intelligence
   aiIntelligence: {
     getOverview: () => api.get('/ai-intelligence/overview'),

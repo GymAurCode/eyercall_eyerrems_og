@@ -121,7 +121,7 @@ export default function AttendancePage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#22c55e,#15803d)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <CheckCircle className="h-6 w-6 text-white" />
@@ -130,7 +130,7 @@ export default function AttendancePage() {
             <p className="text-sm text-muted-foreground">Present</p>
             <p className="text-3xl font-bold text-foreground mt-2">{presentCount}</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#ef4444,#b91c1c)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <XCircle className="h-6 w-6 text-white" />
@@ -139,7 +139,7 @@ export default function AttendancePage() {
             <p className="text-sm text-muted-foreground">Absent</p>
             <p className="text-3xl font-bold text-foreground mt-2">{absentCount}</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#f59e0b,#b45309)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <Clock className="h-6 w-6 text-white" />
@@ -148,7 +148,7 @@ export default function AttendancePage() {
             <p className="text-sm text-muted-foreground">Late</p>
             <p className="text-3xl font-bold text-foreground mt-2">{lateCount}</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl px-0 bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <Calendar className="h-6 w-6 text-white" />

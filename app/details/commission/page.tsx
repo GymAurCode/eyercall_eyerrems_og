@@ -218,7 +218,7 @@ export default function CommissionPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <Percent className="h-6 w-6 text-white" />
@@ -233,7 +233,7 @@ export default function CommissionPage() {
             </p>
           </Card>
 
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Average Commission Rate</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {metrics.averageRate.toFixed(2)}%
@@ -241,7 +241,7 @@ export default function CommissionPage() {
             <p className="text-sm text-muted-foreground mt-2">Weighted average across deals</p>
           </Card>
 
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Linked Sales Value</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {formatCurrency(metrics.totalSalesValue)}
@@ -254,7 +254,7 @@ export default function CommissionPage() {
             </div>
           </Card>
 
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Commission Records</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {metrics.commissionCount.toLocaleString()}

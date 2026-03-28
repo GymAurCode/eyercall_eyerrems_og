@@ -10,7 +10,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { apiService } from "@/lib/api"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { MiniChartCard } from "@/components/ui/mini-chart-card"
 
 // Lazy load heavy components to reduce initial chunk size
@@ -385,7 +385,7 @@ export function CRMView({ initialData }: { initialData?: any }) {
         {
           name: "Deals in Pipeline",
           value: pipelineDeals.length.toString(),
-          change: pipelineValue > 0 ? `Rs ${(pipelineValue / 1_000_000).toFixed(2)}Cr value` : "Rs 0 value",
+          change: pipelineValue > 0 ? `${formatCurrency(pipelineValue, undefined, 'compact')} value` : `${formatCurrency(0)} value`,
           icon: TrendingUp,
           gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
           href: "/details/deals",
@@ -393,7 +393,7 @@ export function CRMView({ initialData }: { initialData?: any }) {
         {
           name: "Active Dealers",
           value: dealers.length.toString(),
-          change: totalCommissions > 0 ? `Rs ${(totalCommissions / 1_000).toFixed(0)}K commissions` : "Rs 0 commissions",
+          change: totalCommissions > 0 ? `${formatCurrency(totalCommissions, undefined, 'compact')} commissions` : `${formatCurrency(0)} commissions`,
           icon: Briefcase,
           gradient: "bg-[linear-gradient(135deg,#8b5cf6,#6d28d9)]",
           href: "/details/dealers",
@@ -456,7 +456,7 @@ export function CRMView({ initialData }: { initialData?: any }) {
             <Card
               key={stat.name}
               className={cn(
-                "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
+                "group relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
               )}
               onClick={() => router.push(stat.href)}
             >
@@ -523,7 +523,7 @@ export function CRMView({ initialData }: { initialData?: any }) {
       {/* Pipeline Funnel Chart and Recent Activities */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Pipeline Funnel Chart */}
-        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+        <Card className="p-6 bg-white dark:bg-[#0d212c] border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Sales Pipeline Funnel</h3>
             <Badge variant="outline" className="dark:border-slate-700 dark:text-slate-400">Live</Badge>
@@ -569,7 +569,7 @@ export function CRMView({ initialData }: { initialData?: any }) {
         </Card>
 
         {/* Recent Activities Feed */}
-        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+        <Card className="p-6 bg-white dark:bg-[#0d212c] border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Recent Activities</h3>
             <Activity className="h-5 w-5 text-slate-500 dark:text-slate-400" />

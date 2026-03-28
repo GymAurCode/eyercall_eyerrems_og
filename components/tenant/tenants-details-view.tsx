@@ -175,7 +175,7 @@ export function TenantsDetailsView({ initialData }: { initialData?: any }) {
 
         {/* Summary Cards */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <Users className="h-6 w-6 text-white" />
@@ -184,7 +184,7 @@ export function TenantsDetailsView({ initialData }: { initialData?: any }) {
             <p className="text-sm text-muted-foreground">Total Active Tenants</p>
             <p className="text-3xl font-bold text-foreground mt-2">{stats.totalTenants}</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#22c55e,#15803d)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <UserCheck className="h-6 w-6 text-white" />
@@ -193,7 +193,7 @@ export function TenantsDetailsView({ initialData }: { initialData?: any }) {
             <p className="text-sm text-muted-foreground">Active Tenants</p>
             <p className="text-3xl font-bold text-foreground mt-2">{stats.activeTenants}</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#ef4444,#b91c1c)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <UserX className="h-6 w-6 text-white" />
@@ -202,7 +202,7 @@ export function TenantsDetailsView({ initialData }: { initialData?: any }) {
             <p className="text-sm text-muted-foreground">Inactive Tenants</p>
             <p className="text-3xl font-bold text-foreground mt-2">{stats.totalTenants - stats.activeTenants}</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#f59e0b,#b45309)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <Clock className="h-6 w-6 text-white" />

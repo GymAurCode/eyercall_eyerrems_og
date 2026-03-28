@@ -441,7 +441,7 @@ export function DashboardOverview({ initialData }: { initialData?: DashboardStat
                     if (route) router.push(route)
                   }}
                   className={cn(
-                    "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
+                    "group relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
                   )}
                 >
                   <div className="relative p-6">
@@ -533,7 +533,7 @@ export function DashboardOverview({ initialData }: { initialData?: DashboardStat
 
       {/* Revenue & Profit Trends */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+        <Card className="p-6 bg-white dark:bg-[#0d212c] border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Revenue & Profit Trends (Last 12 Months)</h2>
           {revenueData.length === 0 ? (
             <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
@@ -601,7 +601,7 @@ export function DashboardOverview({ initialData }: { initialData?: DashboardStat
         </Card>
 
         {/* Property Distribution */}
-        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+        <Card className="p-6 bg-white dark:bg-[#0d212c] border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Property Distribution by Type</h2>
           {propertyTypeData.length === 0 ? (
             <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
@@ -647,7 +647,7 @@ export function DashboardOverview({ initialData }: { initialData?: DashboardStat
 
       {/* Occupancy Rates & Sales Funnel */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+        <Card className="p-6 bg-white dark:bg-[#0d212c] border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Occupancy Rates by Property</h2>
           {occupancyData.length === 0 ? (
             <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">
@@ -700,7 +700,7 @@ export function DashboardOverview({ initialData }: { initialData?: DashboardStat
           )}
         </Card>
 
-        <Card className="p-6 bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+        <Card className="p-6 bg-white dark:bg-[#0d212c] border rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Sales Funnel</h2>
           {salesFunnelData.length === 0 || salesFunnelData.every((s: any) => s.count === 0) ? (
             <div className="flex items-center justify-center h-[300px] text-slate-500 dark:text-slate-400">

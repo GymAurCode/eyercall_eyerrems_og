@@ -1,5 +1,7 @@
 "use client"
 
+import { useSettingsStore } from "@/lib/store/settings-store"
+
 interface Invoice {
   invoiceNumber: string
   tenant: string | { name?: string; id?: string } | null
@@ -11,6 +13,20 @@ interface Invoice {
 }
 
 export function generateInvoicePDF(invoice: Invoice) {
+  const { 
+    companyName, 
+    companyEmail, 
+    supportPhone, 
+    companyAddress,
+    currencies,
+    activeCurrency 
+  } = useSettingsStore.getState()
+
+  const currencySymbol = currencies.find(c => c.code === activeCurrency)?.symbol || "Rs"
+  const displayName = companyName || "RealEstate ERP"
+  const displayEmail = companyEmail || "contact@realestate.com"
+  const displayPhone = supportPhone || "(555) 123-4567"
+
   // Create a simple HTML template for the invoice
   const invoiceHTML = `
     <!DOCTYPE html>
@@ -19,63 +35,69 @@ export function generateInvoicePDF(invoice: Invoice) {
       <meta charset="utf-8">
       <title>Invoice ${invoice.invoiceNumber}</title>
       <style>
-        body { font-family: Arial, sans-serif; padding: 40px; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .company-name { font-size: 24px; font-weight: bold; color: #2563eb; }
-        .invoice-title { font-size: 20px; margin-top: 10px; }
-        .info-section { margin: 30px 0; }
-        .info-row { display: flex; justify-content: space-between; margin: 10px 0; }
-        .label { font-weight: bold; }
-        .amount-section { margin-top: 40px; padding: 20px; background: #f3f4f6; border-radius: 8px; }
-        .total { font-size: 24px; font-weight: bold; text-align: right; }
-        .footer { margin-top: 60px; text-align: center; color: #6b7280; font-size: 12px; }
+        body { font-family: Arial, sans-serif; padding: 40px; color: #1f2937; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 2px solid #f3f4f6; padding-bottom: 20px; }
+        .company-info { text-align: left; }
+        .company-name { font-size: 28px; font-weight: 800; color: #315341; margin-bottom: 5px; }
+        .company-address { font-size: 12px; color: #6b7280; max-width: 250px; }
+        .invoice-title-box { text-align: right; }
+        .invoice-title { font-size: 32px; font-weight: 900; color: #111827; letter-spacing: -0.5px; }
+        .info-section { margin: 30px 0; display: grid; grid-template-cols: 1fr 1fr; gap: 40px; }
+        .info-card { background: #fafafa; padding: 20px; border-radius: 12px; border: 1px solid #f3f4f6; }
+        .info-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
+        .label { font-weight: 600; color: #4b5563; }
+        .value { color: #111827; }
+        .amount-section { margin-top: 40px; padding: 30px; background: #315341; border-radius: 16px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .total-label { font-size: 16px; font-weight: 500; opacity: 0.9; }
+        .total-value { font-size: 36px; font-weight: 800; }
+        .footer { margin-top: 80px; text-align: center; border-top: 1px solid #f3f4f6; padding-top: 20px; color: #9ca3af; font-size: 11px; }
+        .footer-branding { font-weight: 600; color: #6b7280; margin-bottom: 4px; }
       </style>
     </head>
     <body>
       <div class="header">
-        <div class="company-name">RealEstate ERP</div>
-        <div class="invoice-title">INVOICE</div>
+        <div class="company-info">
+          <div class="company-name">${displayName}</div>
+          <div class="company-address">${companyAddress || ""}</div>
+        </div>
+        <div class="invoice-title-box">
+          <div class="invoice-title">INVOICE</div>
+          <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">#${invoice.invoiceNumber}</div>
+        </div>
       </div>
       
       <div class="info-section">
-        <div class="info-row">
-          <span class="label">Invoice Number:</span>
-          <span>${invoice.invoiceNumber}</span>
+        <div class="info-card">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; color: #9ca3af; margin-bottom: 15px;">Billing Details</div>
+          <div class="info-row">
+            <span class="label">Issue Date:</span>
+            <span class="value">${new Date(invoice.issueDate).toLocaleDateString()}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Due Date:</span>
+            <span class="value">${new Date(invoice.dueDate).toLocaleDateString()}</span>
+          </div>
         </div>
-        <div class="info-row">
-          <span class="label">Issue Date:</span>
-          <span>${new Date(invoice.issueDate).toLocaleDateString()}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Due Date:</span>
-          <span>${new Date(invoice.dueDate).toLocaleDateString()}</span>
-        </div>
-      </div>
 
-      <div class="info-section">
-        <div class="info-row">
-          <span class="label">Bill To:</span>
-          <span>${typeof invoice.tenant === 'object' && invoice.tenant ? invoice.tenant.name : invoice.tenant || 'N/A'}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Property:</span>
-          <span>${typeof invoice.property === 'object' && invoice.property ? (invoice.property.name || invoice.property.address) : invoice.property || 'N/A'}</span>
+        <div class="info-card">
+          <div style="font-weight: 700; font-size: 12px; text-transform: uppercase; color: #9ca3af; margin-bottom: 15px;">Bill To</div>
+          <div style="font-weight: 600; font-size: 16px; color: #111827; margin-bottom: 5px;">
+            ${typeof invoice.tenant === 'object' && invoice.tenant ? invoice.tenant.name : invoice.tenant || 'N/A'}
+          </div>
+          <div style="font-size: 13px; color: #6b7280;">
+            Property: ${typeof invoice.property === 'object' && invoice.property ? (invoice.property.name || invoice.property.address) : invoice.property || 'N/A'}
+          </div>
         </div>
       </div>
 
       <div class="amount-section">
-        <div class="info-row">
-          <span class="label">Description:</span>
-          <span>Monthly Rent</span>
-        </div>
-        <div class="total">
-          Total: Rs ${invoice.amount.toLocaleString("en-IN")}
-        </div>
+        <div class="total-label">Amount Due</div>
+        <div class="total-value">${currencySymbol} ${invoice.amount.toLocaleString()}</div>
       </div>
 
       <div class="footer">
-        <p>Thank you for your business!</p>
-        <p>RealEstate ERP | contact@realestate.com | (555) 123-4567</p>
+        <div class="footer-branding">${displayName} | ${displayEmail} | ${displayPhone}</div>
+        <div>Thank you for choosing our services! Generated by ${displayName} Property Management System.</div>
       </div>
     </body>
     </html>

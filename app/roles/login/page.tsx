@@ -13,8 +13,10 @@ import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { apiService } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { useSettingsStore } from "@/lib/store/settings-store"
 
 function RoleLoginForm() {
+  const { companyName, companyLogo, initialize } = useSettingsStore()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
@@ -23,7 +25,6 @@ function RoleLoginForm() {
   const [token, setToken] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { roleLogin, inviteLogin, useAuth } = require("@/lib/auth-context") // Using require to avoid hook issues if not needed, but destructuring below is safer. Wait, useAuth is imported above.
   const authContext = useAuth()
   const { toast } = useToast()
 
@@ -37,14 +38,18 @@ function RoleLoginForm() {
       buttonLink: "https://eyercall.com"
     },
     {
-      title: "EyerREMS",
-      description: "EyerREMS is a real estate management system created by Eyercall that helps manage properties, tenants, finances, and operations efficiently."
+      title: companyName || "EyerREMS",
+      description: `${companyName || "EyerREMS"} is a real estate management system created by Eyercall that helps manage properties, tenants, finances, and operations efficiently.`
     },
     {
       title: "Smart Property Management",
       description: "Our platform helps you manage properties, tenants, finances, and operations from one powerful dashboard."
     }
   ]
+
+  useEffect(() => {
+    initialize()
+  }, [initialize])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -177,9 +182,13 @@ function RoleLoginForm() {
           <div>
             <div className="flex items-center gap-3 mb-[20vh]">
               <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-lg">
-                <Building2 className="w-6 h-6 text-white" />
+                {companyLogo ? (
+                  <img src={companyLogo} alt="Logo" className="w-8 h-8 object-contain" />
+                ) : (
+                  <Building2 className="w-6 h-6 text-white" />
+                )}
               </div>
-              <span className="text-2xl font-bold tracking-wide text-white">EyerREMS</span>
+              <span className="text-2xl font-bold tracking-wide text-white">{companyName || "EyerREMS"}</span>
             </div>
 
             <div className="relative h-64">

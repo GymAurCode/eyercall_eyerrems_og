@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { HelpCircle, MessageSquare, Book, Video, Mail, Phone, Search, ChevronRight, FileText } from "lucide-react"
+import { useSettingsStore } from "@/lib/store/settings-store"
 
 const faqs = [
   {
@@ -63,6 +63,7 @@ const faqs = [
 ]
 
 export function SupportView() {
+  const { companyName, companyEmail, supportPhone } = useSettingsStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [ticketForm, setTicketForm] = useState({
     subject: "",
@@ -73,15 +74,19 @@ export function SupportView() {
 
   const handleSubmitTicket = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Support ticket submitted:", ticketForm)
+    console.log("Support ticket submitted:", ticketForm)
   }
+
+  const displayName = companyName || "RealEstate ERP"
+  const displayEmail = companyEmail || "support@realestate.com"
+  const displayPhone = supportPhone || "(555) 123-4567"
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground text-balance">Help & Support</h1>
-        <p className="text-muted-foreground mt-1">Get help with RealEstate ERP</p>
+        <p className="text-muted-foreground mt-1">Get help with {displayName}</p>
       </div>
 
       {/* Quick Contact Cards */}
@@ -93,7 +98,7 @@ export function SupportView() {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Email Support</h3>
-              <p className="text-sm text-muted-foreground">support@realestate.com</p>
+              <p className="text-sm text-muted-foreground">{displayEmail}</p>
             </div>
           </div>
         </Card>
@@ -104,7 +109,7 @@ export function SupportView() {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">Phone Support</h3>
-              <p className="text-sm text-muted-foreground">(555) 123-4567</p>
+              <p className="text-sm text-muted-foreground">{displayPhone}</p>
             </div>
           </div>
         </Card>
@@ -142,9 +147,7 @@ export function SupportView() {
           </TabsTrigger>
         </TabsList>
 
-        {/* FAQ Tab */}
         <TabsContent value="faq" className="space-y-4">
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -155,7 +158,6 @@ export function SupportView() {
             />
           </div>
 
-          {/* FAQ Categories */}
           {faqs.map((category, idx) => (
             <Card key={idx} className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-4">{category.category}</h3>
@@ -176,92 +178,42 @@ export function SupportView() {
           ))}
         </TabsContent>
 
-        {/* Documentation Tab */}
         <TabsContent value="documentation" className="space-y-4">
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4">Documentation</h3>
             <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-between bg-transparent">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  User Guide
-                </span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="w-full justify-between bg-transparent">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Property Management Guide
-                </span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="w-full justify-between bg-transparent">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Financial Module Guide
-                </span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="w-full justify-between bg-transparent">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  HR Management Guide
-                </span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="w-full justify-between bg-transparent">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  CRM Guide
-                </span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" className="w-full justify-between bg-transparent">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  API Documentation
-                </span>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+              {["User Guide", "Property Management Guide", "Financial Module Guide", "HR Management Guide", "CRM Guide", "API Documentation"].map((guide) => (
+                <Button key={guide} variant="outline" className="w-full justify-between bg-transparent">
+                  <span className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {guide}
+                  </span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              ))}
             </div>
           </Card>
         </TabsContent>
 
-        {/* Video Tutorials Tab */}
         <TabsContent value="videos" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="p-6">
-              <div className="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center">
-                <Video className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground">Getting Started with RealEstate ERP</h3>
-              <p className="text-sm text-muted-foreground mt-1">Learn the basics in 10 minutes</p>
-            </Card>
-            <Card className="p-6">
-              <div className="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center">
-                <Video className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground">Property Management Tutorial</h3>
-              <p className="text-sm text-muted-foreground mt-1">Complete property management walkthrough</p>
-            </Card>
-            <Card className="p-6">
-              <div className="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center">
-                <Video className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground">Financial Management</h3>
-              <p className="text-sm text-muted-foreground mt-1">Managing invoices and payments</p>
-            </Card>
-            <Card className="p-6">
-              <div className="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center">
-                <Video className="h-12 w-12 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-foreground">Advanced Features</h3>
-              <p className="text-sm text-muted-foreground mt-1">Unlock the full potential of the system</p>
-            </Card>
+            {[
+              { title: `Getting Started with ${displayName}`, desc: "Learn the basics in 10 minutes" },
+              { title: "Property Management Tutorial", desc: "Complete property management walkthrough" },
+              { title: "Financial Management", desc: "Managing invoices and payments" },
+              { title: "Advanced Features", desc: "Unlock the full potential of the system" },
+            ].map((video) => (
+              <Card key={video.title} className="p-6">
+                <div className="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center">
+                  <Video className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-foreground">{video.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{video.desc}</p>
+              </Card>
+            ))}
           </div>
         </TabsContent>
 
-        {/* Submit Ticket Tab */}
         <TabsContent value="ticket">
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4">Submit Support Ticket</h3>
@@ -305,7 +257,7 @@ export function SupportView() {
                   rows={6}
                 />
               </div>
-              <Button type="submit" className="w-full sm:w-auto">
+              <Button type="submit" className="w-full sm:w-auto text-white bg-[#315341] hover:bg-[#2a4738]">
                 Submit Ticket
               </Button>
             </form>

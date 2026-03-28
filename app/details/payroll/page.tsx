@@ -149,7 +149,7 @@ export default function PayrollPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)] text-white shadow-lg transition-transform duration-300 hover:scale-110">
                 <DollarSign className="h-6 w-6 text-white" />
@@ -161,21 +161,21 @@ export default function PayrollPage() {
               {records.length} {records.length === 1 ? "record" : "records"}
             </p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Paid</p>
             <p className="text-3xl font-bold text-foreground mt-2">{formatCurrency(summary.paidAmount)}</p>
             <p className="text-sm text-muted-foreground mt-2">
               {summary.paidCount} {summary.paidCount === 1 ? "employee" : "employees"}
             </p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Pending</p>
             <p className="text-3xl font-bold text-foreground mt-2">{formatCurrency(summary.pendingAmount)}</p>
             <p className="text-sm text-muted-foreground mt-2">
               {summary.pendingCount} {summary.pendingCount === 1 ? "employee" : "employees"}
             </p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Average Net Pay</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {formatCurrency(Number.isFinite(summary.averageSalary) ? summary.averageSalary : 0)}

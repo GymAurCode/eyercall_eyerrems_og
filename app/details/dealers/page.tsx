@@ -140,7 +140,7 @@ export default function DealersPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Total Dealers</p>
             <p className="text-3xl font-bold text-foreground mt-2">{totalDealers}</p>
             <div className="flex items-center gap-1 mt-2 text-muted-foreground text-sm">
@@ -148,19 +148,19 @@ export default function DealersPage() {
               <span>{new Date().toLocaleDateString()}</span>
             </div>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Total Deals</p>
             <p className="text-3xl font-bold text-foreground mt-2">{totalSales}</p>
             <p className="text-sm text-muted-foreground mt-2">Across all dealers</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Total Commission</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {totalCommission === 0 ? "$0" : `$${totalCommission.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
             </p>
             <p className="text-sm text-muted-foreground mt-2">Sum of recorded commissions</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Average Rating</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {averageRating === null ? "—" : averageRating.toFixed(1)}

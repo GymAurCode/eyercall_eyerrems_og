@@ -124,7 +124,7 @@ export default function DealsPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Total Deals</p>
             <p className="text-3xl font-bold text-foreground mt-2">{totalDeals}</p>
             <div className="flex items-center gap-1 mt-2 text-muted-foreground text-sm">
@@ -132,21 +132,21 @@ export default function DealsPage() {
               <span>{new Date().toLocaleDateString()}</span>
             </div>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Total Deal Value</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {totalValue === 0 ? "Rs 0" : `Rs ${totalValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
             </p>
             <p className="text-sm text-muted-foreground mt-2">Current pipeline value</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Average Deal Size</p>
             <p className="text-3xl font-bold text-foreground mt-2">
               {averageValue === 0 ? "$0" : `$${averageValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
             </p>
             <p className="text-sm text-muted-foreground mt-2">Across all deals</p>
           </Card>
-          <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+          <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
             <p className="text-sm text-muted-foreground">Win Rate</p>
             <p className="text-3xl font-bold text-foreground mt-2">{winRate.toFixed(1)}%</p>
             <p className="text-sm text-muted-foreground mt-2">Closed-won deals</p>
