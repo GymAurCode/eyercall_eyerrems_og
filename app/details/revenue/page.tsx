@@ -309,7 +309,7 @@ export default function RevenueDetailsPage() {
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-4">
-            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+            <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
               <p className="text-3xl font-bold text-foreground mt-2">
                 {formatCurrency(summary.totalRevenue)}
@@ -318,7 +318,7 @@ export default function RevenueDetailsPage() {
                 {summary.transactionCount} transactions recorded
               </p>
             </Card>
-            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+            <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <p className="text-sm text-muted-foreground">This Month</p>
               <p className="text-3xl font-bold text-foreground mt-2">
                 {formatCurrency(summary.monthlyRevenue)}
@@ -340,7 +340,7 @@ export default function RevenueDetailsPage() {
                 </span>
               </div>
             </Card>
-            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+            <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <p className="text-sm text-muted-foreground">Average / Month</p>
               <p className="text-3xl font-bold text-foreground mt-2">
                 {formatCurrency(summary.averageMonthlyRevenue)}
@@ -349,7 +349,7 @@ export default function RevenueDetailsPage() {
                 Based on recorded revenue months
               </p>
             </Card>
-            <Card className="p-6 relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
+            <Card className="p-6 relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)]">
               <p className="text-sm text-muted-foreground">Transactions</p>
               <p className="text-3xl font-bold text-foreground mt-2">
                 {summary.transactionCount.toLocaleString()}

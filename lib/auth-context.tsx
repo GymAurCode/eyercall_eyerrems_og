@@ -14,6 +14,16 @@ type User = {
   roleId?: string
   permissions?: string[] // Permissions array from role
   avatar?: string
+  // Company isolation fields (populated for company users)
+  isSuperAdmin?: boolean
+  companyId?: string
+  companyRole?: string
+  company?: {
+    id: string
+    companyName: string
+    companyCode: string
+    status: string
+  }
 }
 
 // Generate or retrieve unique deviceId for this tab/session
@@ -34,6 +44,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>
   roleLogin: (username: string, password: string) => Promise<void>
   inviteLogin: (token: string, password: string, username?: string) => Promise<{ message: string }>
+  companyLogin: (email: string, password: string) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
   loading: boolean
@@ -406,6 +417,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const companyLogin = async (email: string, password: string) => {
+    try {
+      if (typeof window === "undefined") {
+        throw new Error("Login can only be performed on client-side")
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/company-auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        }
+      )
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed")
+      }
+
+      const { token, user: userData } = data
+
+      localStorage.setItem("token", token)
+      localStorage.setItem("loginTime", Date.now().toString())
+      sessionStorage.setItem("lastActivity", Date.now().toString())
+
+      const userObj: User = {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        isSuperAdmin: userData.isSuperAdmin,
+        companyId: userData.companyId,
+        companyRole: userData.role,
+        company: userData.company,
+        // Mark this as a company auth session
+        username: userData.email,
+      }
+      setUser(userObj)
+      localStorage.setItem("erp-user", JSON.stringify(userObj))
+      // Flag so logout knows to redirect to /company-login
+      localStorage.setItem("auth-type", "company")
+    } catch (error: any) {
+      throw error
+    }
+  }
+
   const logout = () => {
     // Clear localStorage and sessionStorage (only on client-side)
     if (typeof window !== "undefined") {
@@ -413,12 +470,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("token")
       localStorage.removeItem("erp-user")
       localStorage.removeItem("loginTime")
+      const authType = localStorage.getItem("auth-type")
+      localStorage.removeItem("auth-type")
       sessionStorage.removeItem("deviceId")
       sessionStorage.removeItem("lastActivity")
       setUser(null)
       
-      // Redirect based on user role - role-based users go to /roles/login, admin goes to /login
-      if (currentUser && currentUser.role?.toLowerCase() !== "admin") {
+      // Redirect based on auth type
+      if (authType === "company") {
+        window.location.href = "/company-login"
+      } else if (currentUser && currentUser.role?.toLowerCase() !== "admin") {
         window.location.href = "/roles/login"
       } else {
         window.location.href = "/login"
@@ -435,6 +496,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         roleLogin,
         inviteLogin,
+        companyLogin,
         logout,
         isAuthenticated: !!user,
         loading,

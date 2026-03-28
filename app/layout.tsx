@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { ReactQueryProvider } from "@/components/providers/react-query-provider"
 import { useEffect } from "react"
 import { SWRConfig } from "swr"
+import { useSettingsStore } from "@/lib/store/settings-store"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -17,6 +18,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const { initialize } = useSettingsStore()
+
+  useEffect(() => {
+    initialize()
+  }, [initialize])
+
   useEffect(() => {
     // Track user activity (mouse movements, clicks, keyboard input) to update lastActivity
     const updateActivity = () => {

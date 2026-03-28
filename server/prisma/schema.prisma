@@ -3092,3 +3092,117 @@ model LedgerEngineEntry {
   @@index([entryDate])
   @@index([status])
 }
+
+model AppSettings {
+  id               String   @id @default(cuid())
+  companyName      String   // Required
+  companyEmail     String?  // Optional
+  supportPhone     String?  // Optional
+  companyAddress   String?  // Optional
+  companyLogo      String?  // Optional
+  selectedCurrency String   @default("PKR")
+  
+  // Mail configuration
+  smtpHost         String?
+  smtpPort         Int?
+  smtpUser         String?
+  smtpPass         String?
+  imapHost         String?
+  imapPort         Int?
+  imapUser         String?
+  imapPass         String?
+
+  notificationConfig Json?
+  integrationConfig  Json?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Currency {
+  id           String   @id @default(uuid())
+  code         String   @unique // e.g., "USD", "PKR", "AED"
+  symbol       String   // e.g., "$", "Rs", "د.إ"
+  exchangeRate Float    @default(1.0) // Relative to base currency (USD)
+  isBase       Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([code])
+}
+
+model EmailMessage {
+  id          String   @id @default(uuid())
+  to          String
+  subject     String
+  body        String   @db.Text
+  status      String   @default("sent")
+  senderEmail String
+  senderName  String?
+  direction   String   @default("sent") // "sent" or "received"
+  isRead      Boolean  @default(false)
+  sentAt      DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([sentAt])
+  @@index([isRead])
+  @@index([direction])
+}
+
+// ─── Multi-Company SaaS Isolation Layer ────────────────────────────────────
+// These three models are NEW and completely independent of the existing
+// User / Role / Tenant tables. They implement a separate company isolation
+// system for running multiple client companies on the same deployment.
+
+model Company {
+  id             String           @id @default(uuid())
+  companyName    String
+  companyCode    String           @unique
+  companyEmail   String?
+  companyPhone   String?
+  companyAddress String?
+  status         String           @default("active") // active | suspended
+  createdBy      String?          // CompanyUser ID of the super admin who created it
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  settings       CompanySettings?
+  users          CompanyUser[]
+
+  @@index([companyCode])
+  @@index([status])
+}
+
+model CompanySettings {
+  id             String   @id @default(uuid())
+  companyId      String   @unique
+  currencyCode   String   @default("PKR")
+  currencySymbol String   @default("Rs")
+  timezone       String   @default("Asia/Karachi")
+  invoicePrefix  String   @default("INV")
+  logo           String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  company        Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+}
+
+model CompanyUser {
+  id           String    @id @default(uuid())
+  companyId    String
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         String    @default("owner") // super_admin | owner | admin | staff
+  isSuperAdmin Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  company      Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([companyId])
+  @@index([isSuperAdmin])
+}

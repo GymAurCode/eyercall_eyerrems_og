@@ -14,7 +14,10 @@ import { useAuth } from "@/lib/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
+import { useSettingsStore } from "@/lib/store/settings-store"
+
 export default function RoleLoginPage() {
+  const { companyName, companyLogo, initialize } = useSettingsStore()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [rememberMe, setRememberMe] = useState(false)
@@ -23,6 +26,10 @@ export default function RoleLoginPage() {
   const router = useRouter()
   const { roleLogin } = useAuth()
   const { toast } = useToast()
+
+  useEffect(() => {
+    initialize()
+  }, [initialize])
 
   useEffect(() => {
     // Load remembered username and password from localStorage
@@ -100,9 +107,13 @@ export default function RoleLoginPage() {
       <div className="hidden lg:flex lg:w-1/2 relative bg-neutral-50 border-r border-neutral-200">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center">
           <div className="bg-white p-4 rounded-2xl shadow-sm border border-neutral-100 mb-8">
-            <Building2 className="h-12 w-12 text-primary" />
+            {companyLogo ? (
+              <img src={companyLogo} alt="Logo" className="h-12 w-12 object-contain" />
+            ) : (
+              <Building2 className="h-12 w-12 text-primary" />
+            )}
           </div>
-          <h2 className="text-3xl font-bold text-neutral-900 mb-4">Enterprise Real Estate ERP</h2>
+          <h2 className="text-3xl font-bold text-neutral-900 mb-4">{companyName || "Real Estate ERP"}</h2>
           <p className="text-neutral-600 max-w-md text-lg leading-relaxed">
             Streamline your property management, payroll, and HR operations with our comprehensive enterprise solution.
           </p>

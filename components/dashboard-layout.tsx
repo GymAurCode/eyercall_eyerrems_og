@@ -31,6 +31,8 @@ import {
   Shield,
   Hammer,
   ChevronDown,
+  Hash,
+  Mail,
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import type { NotificationUiState } from "@/frontend/src/modules/notifications/store/notificationStore"
@@ -38,10 +40,12 @@ const NotificationBell = dynamic(
   () => import("@/frontend/src/modules/notifications/components/NotificationBell").then(m => m.NotificationBell),
   { ssr: false }
 )
+import { useSettingsStore } from "@/lib/store/settings-store"
 import { useTheme } from "@/lib/theme-provider"
 import { useAuth } from "@/lib/auth-context"
 import { ChatDialog } from "@/components/chat/chat-dialog"
 import { AuthToasts } from "@/lib/toast-utils"
+import { apiService } from "@/lib/api"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -99,6 +103,8 @@ const getNavigationForUser = (role: string, permissions?: string[]): NavSection[
         items: [
           { name: "Roles & Permissions", href: "/roles", icon: Shield, color: "#64748b" },
           { name: "Reminder & Notifications", href: "/notifications", icon: Bell, color: "#3b82f6" },
+          { name: "Internal Mail", href: "/mail", icon: Mail, color: "#f43f5e" },
+          { name: "Support", href: "/support", icon: HelpCircle, color: "#10b981" },
           { name: "Settings", href: "/settings", icon: Settings, color: "#64748b" },
         ],
       },
@@ -129,6 +135,8 @@ const getNavigationForUser = (role: string, permissions?: string[]): NavSection[
   if (hasModuleAccess(permissions, "notification") || hasModuleAccess(permissions, "reminder")) {
     system.push({ name: "Reminder & Notifications", href: "/notifications", icon: Bell, color: "#3b82f6" })
   }
+  system.push({ name: "Internal Mail", href: "/mail", icon: Mail, color: "#f43f5e" })
+  system.push({ name: "Support", href: "/support", icon: HelpCircle, color: "#10b981" })
   system.push({ name: "Settings", href: "/settings", icon: Settings, color: "#64748b" })
 
   const sections: NavSection[] = [{ label: "Core", items: core }]
@@ -158,11 +166,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   })
   const [chatOpen, setChatOpen] = useState(false)
   const [unreadMessages, setUnreadMessages] = useState(0)
+  const [unreadMail, setUnreadMail] = useState(0)
   const pathname = usePathname()
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const { numberFormat, setNumberFormat, companyName, companyLogo, initialize } = useSettingsStore()
   const { user, logout, loading, isAuthenticated } = useAuth()
   const [openSection, setOpenSection] = useState<string>("Core")
+
+  // Initialize settings on mount
+  useEffect(() => {
+    initialize()
+  }, [initialize])
 
   // Set initial open section based on pathname
   useEffect(() => {
@@ -175,6 +190,22 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       setOpenSection(currentSection.label)
     }
   }, [pathname, user])
+
+  // Poll for unread mail
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+    const fetchUnreadMail = async () => {
+      try {
+        const response = await apiService.get('/mail/unread-count');
+        setUnreadMail(response.data?.count || 0);
+      } catch (err) {
+        console.error("Failed to fetch unread mail", err);
+      }
+    };
+    fetchUnreadMail();
+    const interval = setInterval(fetchUnreadMail, 60000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user]);
 
   // Save sidebar state to localStorage when it changes
   useEffect(() => {
@@ -295,8 +326,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           {/* Logo */}
           <div className="flex h-16 items-center justify-center px-6 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <Building2 className="h-8 w-8 text-indigo-400" />
-              {!sidebarCollapsed && <span className="text-xl font-bold text-white tracking-wide">RealEstate ERP</span>}
+              {companyLogo ? (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white overflow-hidden shrink-0 border-2 border-white/20">
+                  <img src={companyLogo} alt="Logo" className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500/20 overflow-hidden shrink-0 border-2 border-indigo-500/30">
+                  <Building2 className="h-5 w-5 text-indigo-400" />
+                </div>
+              )}
+              {!sidebarCollapsed && <span className="text-xl font-bold text-white tracking-wide truncate max-w-[160px]">
+                {companyName || "RealEstate ERP"}
+              </span>}
             </div>
           </div>
 
@@ -402,32 +443,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          {/* Settings and Support */}
-          <div className="border-t border-white/10">
-            <div className="space-y-1 px-3 py-3">
-              <Link
-                href="/support"
-                className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 border border-transparent hover:bg-slate-50",
-                  pathname === "/support"
-                    ? "bg-indigo-50/50 text-indigo-600 border-indigo-100"
-                    : "text-slate-600 hover:text-indigo-600",
-                  sidebarCollapsed && "justify-center",
-                )}
-                title={sidebarCollapsed ? "Support" : undefined}
-              >
-                <span className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300 shadow-inner shrink-0",
-                  pathname === "/support" ? "bg-primary-gradient text-white" : "bg-white/10 text-white/40 group-hover:bg-white/20 group-hover:text-white/80"
-                )}
-                  style={pathname !== "/support" ? { color: "#868e96" } : undefined}
-                >
-                  <HelpCircle className="h-3 w-3 sm:h-[14px] sm:w-[14px]" />
-                </span>
-                {!sidebarCollapsed && "Support"}
-              </Link>
-            </div>
-
+          <div className="border-t border-white/10 pt-3">
             <div className="px-3 pb-3">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -478,13 +494,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col overflow-hidden bg-white/60 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl shadow-lg relative">
-        {/* Decorative background gradients for glass effect */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none -z-10" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+      <div className="flex flex-1 flex-col overflow-hidden bg-card border border-border rounded-2xl shadow-lg">
 
         {/* Top bar */}
-        <header className="flex h-16 items-center justify-between border-b border-white/20 dark:border-white/10 bg-transparent px-4 lg:px-6 relative z-10">
+        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-4 lg:px-6">
           <div className="flex items-center gap-4">
             {sidebarOpen ? (
               <Button
@@ -525,7 +538,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <input
                 type="search"
                 placeholder="Search by property code, name..."
-                className="h-9 w-64 rounded-lg border border-white/20 dark:border-white/10 bg-white/50 dark:bg-black/50 backdrop-blur-sm pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="h-9 w-64 rounded-lg border border-input bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const query = (e.target as HTMLInputElement).value.trim()
@@ -550,6 +563,32 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 Advanced Options
               </Button>
             )}
+            <Button
+              variant="ghost"
+              size="icon"
+              title={numberFormat === "compact" ? "Show Full Numbers" : "Show Compact Numbers"}
+              onClick={() => setNumberFormat(numberFormat === "compact" ? "full" : "compact")}
+              className={cn(
+                "rounded-lg transition-all duration-200 border border-transparent hover:bg-indigo-500/10 hover:text-indigo-500 hover:border-indigo-500/20",
+                numberFormat === "compact" && "text-indigo-500 bg-indigo-500/10 border-indigo-500/20"
+              )}
+            >
+              <Hash className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
+              title="Internal Mail"
+              onClick={() => router.push('/mail')}
+            >
+              <Mail className="h-5 w-5" />
+              {unreadMail > 0 && (
+                <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[10px] font-bold text-white shadow-sm border-2 border-background">
+                  {unreadMail > 9 ? '9+' : unreadMail}
+                </span>
+              )}
+            </Button>
             <NotificationBell />
             <Button
               variant="ghost"
@@ -571,7 +610,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-transparent relative z-10">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/30">{children}</main>
       </div>
 
       {/* Chat Dialog */}

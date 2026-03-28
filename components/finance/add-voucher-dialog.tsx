@@ -22,7 +22,7 @@ import { SearchableSelect } from "@/components/common/searchable-select"
 import { VoucherAccountSelect } from "@/components/finance/voucher-account-select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { cn, formatCurrency } from "@/lib/utils"
 import { HelpCircle } from "lucide-react"
 import {
   type VoucherTypeCode,
@@ -498,16 +498,16 @@ export function AddVoucherDialog({
                     <span className="text-muted-foreground">Debit:</span>{" "}
                     <span className="font-semibold">
                       {systemDebit > 0
-                        ? `Rs ${systemDebit.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                        : "Rs 0.00"}
+                        ? formatCurrency(systemDebit)
+                        : formatCurrency(0)}
                     </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Credit:</span>{" "}
                     <span className="font-semibold">
                       {systemCredit > 0
-                        ? `Rs ${systemCredit.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                        : "Rs 0.00"}
+                        ? formatCurrency(systemCredit)
+                        : formatCurrency(0)}
                     </span>
                   </div>
                 </div>
@@ -608,13 +608,13 @@ export function AddVoucherDialog({
                 <div>
                   <span className="text-muted-foreground">Total Debit:</span>{" "}
                   <span className="font-semibold">
-                    Rs {(totalDebit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatCurrency(totalDebit || 0)}
                   </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Total Credit:</span>{" "}
                   <span className="font-semibold">
-                    Rs {(totalCredit || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatCurrency(totalCredit || 0)}
                   </span>
                 </div>
               </div>
@@ -622,7 +622,7 @@ export function AddVoucherDialog({
                 <Alert variant="destructive" className="mt-2">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Out of balance: {balanceDiff.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. Debit must equal Credit.
+                    Out of balance: {formatCurrency(balanceDiff)}. Debit must equal Credit.
                   </AlertDescription>
                 </Alert>
               )}

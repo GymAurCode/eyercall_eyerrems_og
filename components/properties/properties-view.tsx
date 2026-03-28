@@ -249,14 +249,14 @@ export function PropertiesView() {
           gradient: "bg-[linear-gradient(135deg,#3b82f6,#1d4ed8)]",
           href: "/details/properties",
         },
-        {
-          name: "Properties for Sale",
-          value: data.propertiesForSale?.toString() || "0",
-          change: data.saleValue ? `Rs ${(data.saleValue / 1000000).toFixed(1)}M total value` : "Rs 0 total value",
-          icon: ShoppingCart,
-          gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
-          href: "/details/properties-for-sale",
-        },
+          {
+            name: "Properties for Sale",
+            value: data.propertiesForSale?.toString() || "0",
+            change: data.saleValue ? `${formatCurrency(data.saleValue, undefined, 'compact')} total value` : `${formatCurrency(0)} total value`,
+            icon: ShoppingCart,
+            gradient: "bg-[linear-gradient(135deg,#f59e0b,#b45309)]",
+            href: "/details/properties-for-sale",
+          },
         {
           name: "Total Units",
           value: data.totalUnits?.toString() || "0",
@@ -283,7 +283,7 @@ export function PropertiesView() {
         },
         {
           name: "Monthly Revenue",
-          value: data.monthlyRevenue ? `Rs ${(data.monthlyRevenue / 1000).toFixed(0)}K` : "Rs 0",
+          value: data.monthlyRevenue ? formatCurrency(data.monthlyRevenue, undefined, 'compact') : formatCurrency(0),
           change: "From occupied units",
           icon: DollarSign,
           gradient: "bg-[linear-gradient(135deg,#22c55e,#15803d)]",
@@ -582,7 +582,7 @@ export function PropertiesView() {
               <Card
                 key={stat.name}
                 className={cn(
-                  "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
+                  "group relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#24344c] dark:border-l-[#0d212c] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
                 )}
                 onClick={() => router.push(stat.href)}
               >
@@ -626,7 +626,7 @@ export function PropertiesView() {
               <Card
                 key={stat.name}
                 className={cn(
-                  "group relative overflow-hidden bg-white/60 dark:bg-[#0d212c]/60 backdrop-blur-md rounded-xl border-l-4 border-l-[#2e2e2e] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
+                  "group relative overflow-hidden bg-white dark:bg-[#0d212c] rounded-xl border-l-4 border-l-[#2e2e2e] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_12px_40px_rgb(0,0,0,0.08)] cursor-pointer p-0",
                 )}
                 onClick={() => router.push(stat.href)}
               >
@@ -761,8 +761,8 @@ export function PropertiesView() {
                     if (col.key === "address") return <div className="flex items-center gap-1 text-sm text-muted-foreground max-w-[200px]"><MapPin className="h-3 w-3 flex-shrink-0" /><span className="truncate">{row.address || row.location || "—"}</span></div>
                     if (col.key === "unitsDisplay") return <div className="flex items-center gap-1"><Home className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{row.occupied ?? 0}/{row.units ?? row._count?.units ?? 0}</span></div>
                     if (col.key === "occupiedDisplay") { const u = row.units ?? row._count?.units ?? 0; const o = row.occupied ?? 0; return <div className="flex items-center gap-1"><Users className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{u > 0 ? `${Math.round((o / u) * 100)}%` : "—"}</span></div> }
-                    if (col.key === "salePrice") return row.salePrice != null ? <span className="font-semibold">Rs {Number(row.salePrice).toLocaleString("en-IN")}</span> : "—"
-                    if (col.key === "revenue") return <div className="flex items-center gap-1"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{row.revenue || "Rs 0"}</span></div>
+                    if (col.key === "salePrice") return row.salePrice != null ? <span className="font-semibold">{formatCurrency(row.salePrice)}</span> : "—"
+                    if (col.key === "revenue") return <div className="flex items-center gap-1"><DollarSign className="h-4 w-4 text-muted-foreground" /><span className="font-semibold">{formatCurrency(row.revenue || 0)}</span></div>
                     if (col.key === "tid") return <span className="font-mono text-xs">{row.tid || "—"}</span>
                     if (col.key === "type") return row.type || "—"
                     return undefined

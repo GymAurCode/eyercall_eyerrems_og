@@ -22,6 +22,8 @@ import { useToast } from "@/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 
+import { useSettingsStore } from "@/lib/store/settings-store"
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function isValidEmail(s: string): boolean {
@@ -32,6 +34,8 @@ export default function LoginPage() {
   const router = useRouter()
   const { user, loading: authLoading, login } = useAuth()
   const { toast } = useToast()
+  const { companyName, companyLogo, initialize } = useSettingsStore()
+  
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -41,7 +45,8 @@ export default function LoginPage() {
 
   // Carousel logic
   const [currentSlide, setCurrentSlide] = useState(0)
-  const slides = [
+  
+  const slides = useMemo(() => [
     {
       title: "Eyercall",
       description: "Eyercall is a web conferencing platform for online meetings, collaboration, and virtual communication.",
@@ -49,20 +54,26 @@ export default function LoginPage() {
       buttonLink: "https://eyercall.com"
     },
     {
-      title: "EyerREMS",
-      description: "EyerREMS is a real estate management system created by Eyercall that helps manage properties, tenants, finances, and operations efficiently."
+      title: companyName || "EyerREMS",
+      description: `${companyName || "EyerREMS"} is a real estate management system created by Eyercall that helps manage properties, tenants, finances, and operations efficiently.`
     },
     {
       title: "Smart Property Management",
       description: "Our platform helps you manage properties, tenants, finances, and operations from one powerful dashboard."
     }
-  ]
+  ], [companyName])
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length)
-    }, 5000)
-    return () => clearInterval(timer)
+    initialize()
+  }, [initialize])
+
+  useEffect(() => {
+    if (slides.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % slides.length)
+      }, 5000)
+      return () => clearInterval(timer)
+    }
   }, [slides.length])
 
   const canSubmit = useMemo(
@@ -133,9 +144,13 @@ export default function LoginPage() {
           <div>
             <div className="flex items-center gap-3 mb-[20vh]">
               <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-lg">
-                <Building2 className="w-6 h-6 text-white" />
+                {companyLogo ? (
+                  <img src={companyLogo} alt="Logo" className="w-8 h-8 object-contain" />
+                ) : (
+                  <Building2 className="w-6 h-6 text-white" />
+                )}
               </div>
-              <span className="text-2xl font-bold tracking-wide text-white">EyerREMS</span>
+              <span className="text-2xl font-bold tracking-wide text-white">{companyName || "EyerREMS"}</span>
             </div>
 
             <div className="relative h-64">
@@ -195,8 +210,15 @@ export default function LoginPage() {
 
         <div className="w-full max-w-[400px] space-y-8 bg-white/5 backdrop-blur-xl border border-white/10 p-8 sm:p-10 rounded-2xl shadow-2xl relative z-10">
           <div className="flex justify-center lg:hidden mb-6">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-lg">
-              <Building2 className="w-6 h-6 text-white" />
+            <div className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg",
+              companyLogo ? "bg-white/10 border border-white/20" : "bg-gradient-to-br from-indigo-500 to-purple-500"
+            )}>
+              {companyLogo ? (
+                <img src={companyLogo} alt="Logo" className="w-8 h-8 object-contain" />
+              ) : (
+                <Building2 className="w-6 h-6 text-white" />
+              )}
             </div>
           </div>
 
