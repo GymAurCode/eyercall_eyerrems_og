@@ -138,7 +138,7 @@ export class DealerLedgerService {
   ): Promise<any> {
     const entryDate = payload.date || new Date();
     let ledgerEntryId: string | null = null;
-    
+
     // Calculate new balance
     const previousEntries = await client.dealerLedger.findMany({
       where: { dealerId: payload.dealerId },
@@ -157,107 +157,107 @@ export class DealerLedgerService {
 
     // Create ledger entries based on entry type
     if (payload.entryType === 'commission') {
-        // Commission entry: Debit Commission Expense, Credit Dealer Payable
-        const expenseEntry = await LedgerService.createLedgerEntry(
-          {
-            dealId: payload.dealId || '',
-            debitAccountId: accounts.commissionExpenseAccountId,
-            amount: payload.amount,
-            remarks: payload.description || `Commission for dealer`,
-            date: entryDate,
-          },
-          client
-        );
+      // Commission entry: Debit Commission Expense, Credit Dealer Payable
+      const expenseEntry = await LedgerService.createLedgerEntry(
+        {
+          dealId: payload.dealId || '',
+          debitAccountId: accounts.commissionExpenseAccountId,
+          amount: payload.amount,
+          remarks: payload.description || `Commission for dealer`,
+          date: entryDate,
+        },
+        client
+      );
 
-        const payableEntry = await LedgerService.createLedgerEntry(
-          {
-            dealId: payload.dealId || '',
-            creditAccountId: accounts.dealerPayableAccountId,
-            amount: payload.amount,
-            remarks: payload.description || `Commission payable to dealer`,
-            date: entryDate,
-          },
-          client
-        );
+      const payableEntry = await LedgerService.createLedgerEntry(
+        {
+          dealId: payload.dealId || '',
+          creditAccountId: accounts.dealerPayableAccountId,
+          amount: payload.amount,
+          remarks: payload.description || `Commission payable to dealer`,
+          date: entryDate,
+        },
+        client
+      );
 
-        ledgerEntryId = payableEntry.id; // Use payable entry as reference
+      ledgerEntryId = payableEntry.id; // Use payable entry as reference
 
-        // Mirror into Ledger Engine for dealer entity (Commission Payable)
-        await writeLedgerEntry(
-          {
-            transactionUuid: payableEntry.id,
-            entryDate,
-            accountId: accounts.dealerPayableAccountId,
-            entityType: 'dealer',
-            entityId: payload.dealerId,
-            debitAmount: 0,
-            creditAmount: payload.amount,
-            narration: payload.description || 'Commission payable to dealer',
-            sourceType: 'payment',
-          },
-          client
-        );
-      } else if (payload.entryType === 'payment') {
-        // Payment entry: Debit Dealer Payable, Credit Cash/Bank
-        const paymentAccountId = payload.referenceType === 'cash' ? accounts.cashAccountId : accounts.bankAccountId;
+      // Mirror into Ledger Engine for dealer entity (Commission Payable)
+      await writeLedgerEntry(
+        {
+          transactionUuid: payableEntry.id,
+          entryDate,
+          accountId: accounts.dealerPayableAccountId,
+          entityType: 'dealer',
+          entityId: payload.dealerId,
+          debitAmount: 0,
+          creditAmount: payload.amount,
+          narration: payload.description || 'Commission payable to dealer',
+          sourceType: 'payment',
+        },
+        client
+      );
+    } else if (payload.entryType === 'payment') {
+      // Payment entry: Debit Dealer Payable, Credit Cash/Bank
+      const paymentAccountId = payload.referenceType === 'cash' ? accounts.cashAccountId : accounts.bankAccountId;
 
-        const payableEntry = await LedgerService.createLedgerEntry(
-          {
-            dealId: payload.dealId || '',
-            debitAccountId: accounts.dealerPayableAccountId,
-            amount: payload.amount,
-            remarks: payload.description || `Payment to dealer`,
-            date: entryDate,
-          },
-          client
-        );
+      const payableEntry = await LedgerService.createLedgerEntry(
+        {
+          dealId: payload.dealId || '',
+          debitAccountId: accounts.dealerPayableAccountId,
+          amount: payload.amount,
+          remarks: payload.description || `Payment to dealer`,
+          date: entryDate,
+        },
+        client
+      );
 
-        const cashEntry = await LedgerService.createLedgerEntry(
-          {
-            dealId: payload.dealId || '',
-            creditAccountId: paymentAccountId,
-            amount: payload.amount,
-            remarks: payload.description || `Payment to dealer`,
-            date: entryDate,
-          },
-          client
-        );
+      const cashEntry = await LedgerService.createLedgerEntry(
+        {
+          dealId: payload.dealId || '',
+          creditAccountId: paymentAccountId,
+          amount: payload.amount,
+          remarks: payload.description || `Payment to dealer`,
+          date: entryDate,
+        },
+        client
+      );
 
-        ledgerEntryId = payableEntry.id;
+      ledgerEntryId = payableEntry.id;
 
-        // Mirror into Ledger Engine for dealer entity (Payment made)
-        await writeLedgerEntry(
-          {
-            transactionUuid: payableEntry.id,
-            entryDate,
-            accountId: accounts.dealerPayableAccountId,
-            entityType: 'dealer',
-            entityId: payload.dealerId,
-            debitAmount: payload.amount,
-            creditAmount: 0,
-            narration: payload.description || 'Payment to dealer',
-            sourceType: 'payment',
-          },
-          client
-        );
+      // Mirror into Ledger Engine for dealer entity (Payment made)
+      await writeLedgerEntry(
+        {
+          transactionUuid: payableEntry.id,
+          entryDate,
+          accountId: accounts.dealerPayableAccountId,
+          entityType: 'dealer',
+          entityId: payload.dealerId,
+          debitAmount: payload.amount,
+          creditAmount: 0,
+          narration: payload.description || 'Payment to dealer',
+          sourceType: 'payment',
+        },
+        client
+      );
     }
 
     // Create dealer ledger entry
     const dealerLedgerEntry = await client.dealerLedger.create({
-        data: {
-          dealerId: payload.dealerId,
-          dealId: payload.dealId || null,
-          clientId: payload.clientId || null,
-          entryType: payload.entryType,
-          amount: payload.amount,
-          balance: Math.round(newBalance * 100) / 100,
-          description: payload.description,
-          referenceId: payload.referenceId,
-          referenceType: payload.referenceType,
-          ledgerEntryId,
-          date: entryDate,
-        },
-      });
+      data: {
+        dealerId: payload.dealerId,
+        dealId: payload.dealId || null,
+        clientId: payload.clientId || null,
+        entryType: payload.entryType,
+        amount: payload.amount,
+        balance: Math.round(newBalance * 100) / 100,
+        description: payload.description,
+        referenceId: payload.referenceId,
+        referenceType: payload.referenceType,
+        ledgerEntryId,
+        date: entryDate,
+      },
+    });
 
     // Update dealer's total commission earned
     if (payload.entryType === 'commission') {

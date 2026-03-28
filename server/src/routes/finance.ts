@@ -8,6 +8,7 @@ import { AccountValidationService } from '../services/account-validation-service
 import logger from '../utils/logger';
 import { parsePaginationQuery, calculatePagination } from '../utils/pagination';
 import { successResponse } from '../utils/error-handler';
+import { TransactionIdentityEngine } from '../services/transactionIdentity.service';
 
 const router = (express as any).Router();
 
@@ -753,6 +754,19 @@ router.post('/invoices', authenticate, async (req: AuthRequest, res: Response) =
       dealId,
     });
 
+    // Inherit T-ID
+    let tid = null;
+    if (dealId) {
+      const deal = await prisma.deal.findUnique({ where: { id: dealId } });
+      tid = deal?.tid || null;
+    } else if (propertyId) {
+      const property = await prisma.property.findUnique({ where: { id: propertyId } });
+      tid = property?.tid || null;
+    }
+    if (!tid) {
+      tid = await TransactionIdentityEngine.generateTransactionID();
+    }
+
     // Validate duplicate invoice number
     const invoiceNumber = req.body.invoiceNumber || generateInvoiceNumber();
     await AccountingSafetyService.validateDuplicateInvoiceNumber(invoiceNumber);
@@ -765,6 +779,7 @@ router.post('/invoices', authenticate, async (req: AuthRequest, res: Response) =
       const invoice = await tx.invoice.create({
         data: {
           invoiceNumber,
+          tid,
           tenantId: tenantId || null,
           propertyId: propertyId || null,
           billingDate: preparedDate,
@@ -838,6 +853,11 @@ router.post('/invoices', authenticate, async (req: AuthRequest, res: Response) =
 
       return updatedInvoice;
     });
+
+    // Attach T-ID to Identity Engine Registry
+    if (tid) {
+      await TransactionIdentityEngine.attachTid(tid, 'invoice', created.id, 'Finance');
+    }
 
     // Auto-sync to Finance Ledger
     await syncInvoiceToFinanceLedger(created.id);

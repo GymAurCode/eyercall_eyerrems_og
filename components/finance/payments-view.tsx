@@ -17,6 +17,9 @@ import { toExportFilters } from "@/lib/filter-transform"
 import { countActiveFilters } from "@/lib/filter-config-registry"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { TransactionHeader } from "@/components/shared/transaction-header"
+import { TransactionTimeline } from "@/components/shared/transaction-timeline"
 
 export function PaymentsView() {
   const { toast } = useToast()
@@ -32,6 +35,8 @@ export function PaymentsView() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [editingPayment, setEditingPayment] = useState<any | null>(null)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [timelineTarget, setTimelineTarget] = useState<any | null>(null)
+  const [showTimelineDialog, setShowTimelineDialog] = useState(false)
 
   useEffect(() => {
     fetchPayments()
@@ -128,6 +133,7 @@ export function PaymentsView() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => handlePrintReceipt(payment)}><Printer className="mr-2 h-4 w-4" />Print Receipt</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => { setEditingPayment(payment); setShowEditDialog(true) }}><Pencil className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setTimelineTarget(payment); setShowTimelineDialog(true) }}><Search className="mr-2 h-4 w-4" />View Lifecycle</DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive" onClick={() => { setDeleteTarget(payment); setShowDeleteDialog(true) }}><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -153,6 +159,18 @@ export function PaymentsView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showTimelineDialog} onOpenChange={setShowTimelineDialog}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Global Transaction Lifecycle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <TransactionHeader tid={timelineTarget?.tid} />
+            <TransactionTimeline tid={timelineTarget?.tid} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

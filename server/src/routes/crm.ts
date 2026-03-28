@@ -9,6 +9,7 @@ import { generateSystemId, validateManualUniqueId, validateTID, generatePrefixed
 import { generateSequenceNumber } from '../services/id-generation-service';
 import { parsePaginationQuery, calculatePagination } from '../utils/pagination';
 import { successResponse, errorResponse } from '../utils/error-handler';
+import { TransactionIdentityEngine } from '../services/transactionIdentity.service';
 
 const router = (express as any).Router();
 
@@ -86,7 +87,7 @@ const createLeadSchema = z.object({
   address: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   manualUniqueId: z.string().optional().nullable(),
-  tid: z.string().min(1, "TID is required"),
+  tid: z.string().optional().nullable(),
   status: z.string().optional().default('new'),
   notes: z.string().optional().nullable(),
   temperature: z.enum(['cold', 'warm', 'hot']).optional().default('cold'),
@@ -130,8 +131,15 @@ router.post('/leads', authenticate, upload.any(), async (req: AuthRequest, res: 
       await validateManualUniqueId(manualUniqueId, 'lead');
     }
 
-    // Validate TID
-    await validateTID(tid);
+    // Handle TID - generate if missing
+    let finalTid = tid;
+    if (!finalTid) {
+      // Use TransactionIdentityEngine for global TID
+      finalTid = await TransactionIdentityEngine.generateTransactionID();
+    }
+
+    // Validate TID (ensures uniqueness)
+    await validateTID(finalTid);
 
     // Generate system ID: lead-YY-####
     const leadCode = await generateSystemId('lead');
@@ -141,12 +149,17 @@ router.post('/leads', authenticate, upload.any(), async (req: AuthRequest, res: 
         data: {
           ...leadData,
           leadCode,
-          tid,
+          tid: finalTid,
           manualUniqueId: manualUniqueId?.trim() || null,
           createdBy: req.user?.id,
         }
       });
     });
+
+    // Attach T-ID to Identity Engine Registry
+    if (finalTid) {
+      await TransactionIdentityEngine.attachTid(finalTid, 'lead', lead.id, 'CRM');
+    }
 
     logger.info(`Lead created: ${lead.id}, name: ${lead.name}, isDeleted: ${lead.isDeleted}`);
 
@@ -188,17 +201,12 @@ router.post('/leads/:id/convert', authenticate, async (req: AuthRequest, res: Re
       return res.status(400).json({ error: 'Lead has already been converted to a client' });
     }
 
-    // Generate unique TID
-    let tid = '';
-    let isUnique = false;
-    while (!isUnique) {
-      tid = await generatePrefixedId('L-CLI', 'cli');
-      try {
-        await validateTID(tid);
-        isUnique = true;
-      } catch (error) {
-        // If TID exists, loop will continue and generate next sequence number
-      }
+    // Inherit TID from Lead (Do NOT generate a new T-ID)
+    let tid = lead.tid;
+    
+    // If for some reason the lead has no tid (backward compatibility), generate one
+    if (!tid) {
+      tid = await TransactionIdentityEngine.generateTransactionID();
     }
 
     // Generate system ID: cli-YY-####
@@ -231,6 +239,11 @@ router.post('/leads/:id/convert', authenticate, async (req: AuthRequest, res: Re
         },
       });
     });
+
+    // Attach T-ID to Identity Engine Registry
+    if (tid) {
+      await TransactionIdentityEngine.attachTid(tid, 'client', client.id, 'CRM');
+    }
 
     // Update lead status
     await prisma.lead.update({
@@ -2021,8 +2034,25 @@ router.get('/communications/:id', authenticate, async (req: AuthRequest, res: Re
 
 router.post('/communications', authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    const { leadId, clientId, dealId, assignedAgentId, ...rest } = req.body;
+    // Whitelist only valid Communication scalar fields to prevent Prisma "Unknown argument" errors
+    const COMM_SCALAR_FIELDS = new Set([
+      'channel', 'content', 'activityDate', 'activityOutcome', 'activityType',
+      'attachments', 'contactPersonId', 'contactPersonName', 'createdBy',
+      'isDeleted', 'nextFollowUpDate', 'recurrence', 'recurrenceEndDate',
+      'reminderDate', 'reminderEnabled', 'subject', 'tags', 'voiceNoteUrl',
+    ]);
+    const safeRest = Object.fromEntries(
+      Object.entries(rest).filter(([key]) => COMM_SCALAR_FIELDS.has(key))
+    );
     const item = await prisma.communication.create({
-      data: req.body,
+      data: {
+        ...safeRest,
+        ...(leadId ? { lead: { connect: { id: leadId } } } : {}),
+        ...(clientId ? { client: { connect: { id: clientId } } } : {}),
+        ...(dealId ? { deal: { connect: { id: dealId } } } : {}),
+        ...(assignedAgentId ? { assignedAgent: { connect: { id: assignedAgentId } } } : {}),
+      } as any,
       include: {
         client: {
           select: {
@@ -2060,9 +2090,26 @@ router.post('/communications', authenticate, async (req: AuthRequest, res: Respo
 
 router.put('/communications/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    const { leadId, clientId, dealId, assignedAgentId, ...rest } = req.body;
+    // Whitelist only valid Communication scalar fields
+    const COMM_SCALAR_FIELDS = new Set([
+      'channel', 'content', 'activityDate', 'activityOutcome', 'activityType',
+      'attachments', 'contactPersonId', 'contactPersonName', 'createdBy',
+      'isDeleted', 'nextFollowUpDate', 'recurrence', 'recurrenceEndDate',
+      'reminderDate', 'reminderEnabled', 'subject', 'tags', 'voiceNoteUrl',
+    ]);
+    const safeRest = Object.fromEntries(
+      Object.entries(rest).filter(([key]) => COMM_SCALAR_FIELDS.has(key))
+    );
     const item = await prisma.communication.update({
       where: { id: req.params.id },
-      data: req.body,
+      data: {
+        ...safeRest,
+        ...(leadId !== undefined ? { lead: leadId ? { connect: { id: leadId } } : { disconnect: true } } : {}),
+        ...(clientId !== undefined ? { client: clientId ? { connect: { id: clientId } } : { disconnect: true } } : {}),
+        ...(dealId !== undefined ? { deal: dealId ? { connect: { id: dealId } } : { disconnect: true } } : {}),
+        ...(assignedAgentId !== undefined ? { assignedAgent: assignedAgentId ? { connect: { id: assignedAgentId } } : { disconnect: true } } : {}),
+      } as any,
       include: {
         client: {
           select: {

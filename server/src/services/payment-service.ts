@@ -8,6 +8,7 @@ import prisma from '../prisma/client';
 import { DealService } from './deal-service';
 import { PaymentPlanService } from './payment-plan-service';
 import { generateSystemId, validateManualUniqueId } from './id-generation-service';
+import { TransactionIdentityEngine } from './transactionIdentity.service';
 
 export interface CreatePaymentPayload {
   dealId: string;
@@ -176,6 +177,12 @@ export class PaymentService {
       throw new Error('Cannot create payment for deleted deal');
     }
 
+    // Inherit T-ID from Deal (or generate for backward compatibility)
+    let tid = deal.tid;
+    if (!tid) {
+      tid = await TransactionIdentityEngine.generateTransactionID();
+    }
+
     // Validate amount
     if (payload.amount <= 0) {
       throw new Error('Payment amount must be greater than zero');
@@ -194,7 +201,7 @@ export class PaymentService {
       : (await this.getPaymentAccounts(payload.paymentMode)).creditAccountId;
 
     const paymentDate = payload.date || new Date();
-    
+
     // Validate manual unique ID if provided
     const { manualUniqueId } = payload as any;
     if (manualUniqueId) {
@@ -205,11 +212,12 @@ export class PaymentService {
     const paymentCode = payload.paymentId || await generateSystemId('pay');
 
     // Atomic transaction
-    return await prisma.$transaction(async (tx) => {
+    const finalPaymentResult = await prisma.$transaction(async (tx) => {
       // Create payment record
       const payment = await tx.payment.create({
         data: {
           paymentId: paymentCode,
+          tid,
           dealId: payload.dealId,
           amount: payload.amount,
           paymentType: payload.paymentType,
@@ -228,7 +236,7 @@ export class PaymentService {
 
       // Create double-entry ledger entries
       const remarks = `${payload.paymentType} payment via ${payload.paymentMode}${payload.remarks ? ` - ${payload.remarks}` : ''}`;
-      
+
       // Get account names for legacy compatibility
       const debitAccount = await tx.account.findUnique({ where: { id: debitAccountId } });
       const creditAccount = await tx.account.findUnique({ where: { id: creditAccountId } });
@@ -319,8 +327,8 @@ export class PaymentService {
         if (deal && deal.clientId && paymentResult) {
           // Determine payment method (Cash or Bank) from paymentMode
           // paymentMode is lowercase: 'cash' | 'bank' | 'online_transfer' | 'card'
-          const paymentMethod = payload.paymentMode === 'cash' 
-            ? 'Cash' 
+          const paymentMethod = payload.paymentMode === 'cash'
+            ? 'Cash'
             : 'Bank';
 
           // Create receipt with FIFO allocation to installments
@@ -347,6 +355,13 @@ export class PaymentService {
 
       return paymentResult;
     });
+
+    // Attach T-ID to Identity Engine Registry
+    if (tid && finalPaymentResult) {
+      await TransactionIdentityEngine.attachTid(tid, 'payment', finalPaymentResult.id, 'Finance');
+    }
+
+    return finalPaymentResult;
   }
 
   /**
@@ -409,7 +424,7 @@ export class PaymentService {
 
       // Create reversed ledger entries (opposite of original)
       const remarks = `Refund of ${originalPayment.paymentId}: ${payload.reason || 'No reason provided'}`;
-      
+
       // Get account names for legacy compatibility
       const debitAccount = await tx.account.findUnique({ where: { id: debitAccountId } });
       const creditAccount = await tx.account.findUnique({ where: { id: creditAccountId } });
@@ -540,7 +555,7 @@ export class PaymentService {
         // First, reverse the old amount, then apply the new amount
         // We'll recalculate from scratch using syncPaymentPlanAfterPayment with the difference
         const { PaymentPlanService } = await import('./payment-plan-service');
-        
+
         // If amount increased, add the difference
         // If amount decreased, subtract the difference (negative)
         await PaymentPlanService.syncPaymentPlanAfterPayment(
@@ -597,7 +612,7 @@ export class PaymentService {
     const paymentName = `Payment ${payment.paymentId} - ${payment.deal?.client?.name || 'Unknown'} - ${payment.deal?.property?.name || 'Unknown'}`;
 
     const now = new Date();
-    
+
     await prisma.$transaction(async (tx) => {
       // Soft delete payment
       await tx.payment.update({

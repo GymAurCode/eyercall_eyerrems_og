@@ -16,6 +16,11 @@ import { useToast } from "@/hooks/use-toast"
 import { saveFilters, loadFilters } from "@/lib/filter-store"
 import { toExportFilters } from "@/lib/filter-transform"
 import { countActiveFilters } from "@/lib/filter-config-registry"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { TransactionHeader } from "@/components/shared/transaction-header"
+import { TransactionTimeline } from "@/components/shared/transaction-timeline"
+import { MoreVertical, Search } from "lucide-react"
 
 export function InvoicesView() {
   const { toast } = useToast()
@@ -27,6 +32,8 @@ export function InvoicesView() {
   const [invoices, setInvoices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [timelineTarget, setTimelineTarget] = useState<any | null>(null)
+  const [showTimelineDialog, setShowTimelineDialog] = useState(false)
 
   useEffect(() => {
     fetchInvoices()
@@ -92,10 +99,16 @@ export function InvoicesView() {
               return undefined
             }}
             renderActions={(inv) => (
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => generateInvoicePDF(inv)} title="Download PDF"><Download className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" title="Send Invoice"><Send className="h-4 w-4" /></Button>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => generateInvoicePDF(inv)}><Download className="mr-2 h-4 w-4" />Download PDF</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {}}><Send className="mr-2 h-4 w-4" />Send Invoice</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setTimelineTarget(inv); setShowTimelineDialog(true) }}><Search className="mr-2 h-4 w-4" />View Lifecycle</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           />
         </div>
@@ -104,6 +117,18 @@ export function InvoicesView() {
       <AddInvoiceDialog open={showAddDialog} onOpenChange={setShowAddDialog} onSuccess={fetchInvoices} />
       <DownloadReportDialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog} entity="invoice" module="invoices" entityDisplayName="Invoices" filters={toExportFilters(activeFilters, "finance")} search={searchQuery || undefined} />
       <UnifiedFilterDrawer open={showFilterDrawer} onOpenChange={setShowFilterDrawer} entity="finance" tab="invoices" initialFilters={activeFilters} onApply={(filters) => { setActiveFilters(filters); saveFilters("finance", "invoices", filters); toast({ title: "Filters applied" }) }} />
+
+      <Dialog open={showTimelineDialog} onOpenChange={setShowTimelineDialog}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Global Transaction Lifecycle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <TransactionHeader tid={timelineTarget?.tid} />
+            <TransactionTimeline tid={timelineTarget?.tid} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, lazy, Suspense } from "react"
+import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -19,7 +20,7 @@ import {
   UserCheck,
   UploadCloud,
 } from "lucide-react"
-import { AddLeadDialog } from "./add-lead-dialog"
+import { LeadCreationController } from "./lead-creation-controller"
 import { LeadImportDialog } from "./lead-import-dialog"
 import { ListToolbar } from "@/components/shared/list-toolbar"
 import { UnifiedFilterDrawer } from "@/components/shared/unified-filter-drawer"
@@ -29,6 +30,8 @@ import { toLeadsFilterPayload, toExportFilters } from "@/lib/filter-transform"
 import { countActiveFilters } from "@/lib/filter-config-registry"
 import { apiService } from "@/lib/api"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+const CRMDealPipeline = lazy(() => import("./crm-deal-pipeline").then(m => ({ default: m.CRMDealPipeline })))
+import { LeadSideDrawer } from "./lead-side-drawer"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -54,6 +57,10 @@ export function LeadsView() {
   const [showFilterDrawer, setShowFilterDrawer] = useState(false)
   const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>(loadFilters("leads", undefined) || {})
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0 })
+  const [viewMode, setViewMode] = useState<"table" | "pipeline">("table")
+  const [selectedLead, setSelectedLead] = useState<any | null>(null)
+  const [showSideDrawer, setShowSideDrawer] = useState(false)
+  const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -109,6 +116,22 @@ export function LeadsView() {
     }
   }
 
+  const handleStatusChange = async (leadId: string, newStatus: string) => {
+    try {
+      // Optimistic update
+      const oldLeads = [...leads]
+      setLeads(leads.map(l => l.id === leadId ? { ...l, status: newStatus } : l))
+
+      await apiService.leads.update(leadId, { status: newStatus })
+      toast({ title: "Lead status updated" })
+      fetchLeads() // Refresh to ensure synchronization
+    } catch (err: any) {
+      console.error("Failed to update lead status", err)
+      toast({ title: "Failed to update lead status", variant: "destructive" })
+      fetchLeads() // Revert on failure
+    }
+  }
+
   const openEditLead = (lead: any) => {
     setEditingLead(lead)
     setShowAddDialog(true)
@@ -144,6 +167,24 @@ export function LeadsView() {
         onDownloadClick={() => setShowDownloadDialog(true)}
         extraActions={
           <>
+            <div className="flex items-center gap-1 bg-muted p-1 rounded-md mr-2">
+              <Button
+                variant={viewMode === "table" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs px-3"
+                onClick={() => setViewMode("table")}
+              >
+                Table View
+              </Button>
+              <Button
+                variant={viewMode === "pipeline" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 text-xs px-3"
+                onClick={() => setViewMode("pipeline")}
+              >
+                Pipeline View
+              </Button>
+            </div>
             <Button variant="outline" onClick={() => setShowImportDialog(true)}>
               <UploadCloud className="h-4 w-4 mr-2" />
               Import Leads
@@ -158,7 +199,7 @@ export function LeadsView() {
         }
       />
 
-      {/* Leads Table */}
+      {/* Leads Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -185,6 +226,21 @@ export function LeadsView() {
             )}
           </div>
         </Card>
+      ) : viewMode === "pipeline" ? (
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        }>
+          <CRMDealPipeline 
+            leads={filteredLeads} 
+            onLeadClick={(lead) => {
+              setSelectedLead(lead)
+              setShowSideDrawer(true)
+            }} 
+            onStatusChange={handleStatusChange}
+          />
+        </Suspense>
       ) : (
         <Card className="p-0">
           <div className="p-4 border-b">
@@ -344,8 +400,8 @@ export function LeadsView() {
         </Card>
       )}
 
-      {/* Add Lead Dialog */}
-      <AddLeadDialog
+      {/* Add Lead Dialog controlled by LeadCreationController */}
+      <LeadCreationController
         open={showAddDialog}
         onOpenChange={(open) => {
           if (!open) {
@@ -401,6 +457,17 @@ export function LeadsView() {
           saveFilters("leads", undefined, filters)
           toast({ title: "Filters applied" })
         }}
+      />
+
+      <LeadSideDrawer
+        lead={selectedLead}
+        open={showSideDrawer}
+        onOpenChange={setShowSideDrawer}
+        onOpenFullProfile={(lead) => {
+          setShowSideDrawer(false)
+          router.push(`/details/leads?id=${lead.id}`)
+        }}
+        onStatusChange={handleStatusChange}
       />
     </div>
   )

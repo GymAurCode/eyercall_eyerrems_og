@@ -6,6 +6,7 @@
 import prisma, { Prisma } from '../prisma/client';
 import { DealFinanceService, CommissionType, CommissionConfig } from './deal-finance-service';
 import { generateSystemId, validateTID } from './id-generation-service';
+import { TransactionIdentityEngine } from './transactionIdentity.service';
 
 export interface CreateDealPayload {
   title: string;
@@ -201,13 +202,12 @@ export class DealService {
 
     // Generate deal code: dl-YY-####
     const dealCode = await this.generateDealCode();
-    
-    // Validate TID
-    if (!payload.tid) {
-      throw new Error('TID is required');
+
+    // Inherit TID from Client (or generate if missing for backward compatibility)
+    let tid = client.tid;
+    if (!tid) {
+      tid = await TransactionIdentityEngine.generateTransactionID();
     }
-    await validateTID(payload.tid);
-    const tid = payload.tid;
 
     // Validate dealer is required if commission is specified
     if ((payload.commissionType && payload.commissionType !== 'none') && !payload.dealerId) {
@@ -330,6 +330,11 @@ export class DealService {
           changedBy: payload.createdBy,
         },
       });
+
+      // Attach T-ID to Identity Engine Registry
+      if (tid) {
+        await TransactionIdentityEngine.attachTid(tid, 'deal', deal.id, 'Properties');
+      }
 
       return deal;
     });

@@ -83,7 +83,7 @@ export class PaymentPlanService {
       // Auto-generate installments based on type
       const monthsPerInstallment = this.getMonthsPerInstallment(installmentType);
       const remainingInstallments = numberOfInstallments - (downPayment > 0 ? 1 : 0);
-      
+
       if (remainingInstallments <= 0) {
         throw new Error('Number of installments must be greater than 0 (or 1 if down payment is provided)');
       }
@@ -94,10 +94,10 @@ export class PaymentPlanService {
 
       for (let i = 0; i < remainingInstallments; i++) {
         const isLast = i === remainingInstallments - 1;
-        const amount = isLast 
+        const amount = isLast
           ? Math.round((remainingAmount - totalAllocated) * 100) / 100 // Round last to account for precision
           : Math.round(baseAmount * 100) / 100;
-        
+
         totalAllocated += amount;
 
         // Calculate due date
@@ -460,8 +460,8 @@ export class PaymentPlanService {
       newPaidAmount >= installment.amount
         ? 'paid'
         : newPaidAmount > 0
-        ? 'partial'
-        : 'unpaid';
+          ? 'partial'
+          : 'unpaid';
 
     const updatedInstallment = await client.dealInstallment.update({
       where: { id: installmentId },
@@ -654,12 +654,12 @@ export class PaymentPlanService {
       // Process downpayment first if it exists and is not fully paid
       if (downPaymentInstallment && remainingPayment > 0) {
         const installmentRemaining = downPaymentInstallment.amount - (downPaymentInstallment.paidAmount || 0);
-        
+
         if (installmentRemaining > 0) {
           const paymentForThisInstallment = Math.min(remainingPayment, installmentRemaining);
           const newPaidAmount = (downPaymentInstallment.paidAmount || 0) + paymentForThisInstallment;
           const newRemaining = downPaymentInstallment.amount - newPaidAmount;
-          
+
           // Determine status using utility function
           const { calculateInstallmentStatus } = await import('../utils/payment-plan-utils');
           const status = calculateInstallmentStatus(
@@ -725,7 +725,7 @@ export class PaymentPlanService {
         if (remainingPayment <= 0) break;
 
         const installmentRemaining = installment.amount - (installment.paidAmount || 0);
-        
+
         if (installmentRemaining <= 0) {
           // Already fully paid, skip
           continue;
@@ -734,7 +734,7 @@ export class PaymentPlanService {
         const paymentForThisInstallment = Math.min(remainingPayment, installmentRemaining);
         const newPaidAmount = (installment.paidAmount || 0) + paymentForThisInstallment;
         const newRemaining = installment.amount - newPaidAmount;
-        
+
         // Determine status using utility function
         const { calculateInstallmentStatus } = await import('../utils/payment-plan-utils');
         const status = calculateInstallmentStatus(

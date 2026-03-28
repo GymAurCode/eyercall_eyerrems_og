@@ -14,6 +14,8 @@ import { apiService } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { DealTimeline } from "./deal-timeline"
+import { TransactionHeader } from "@/components/shared/transaction-header"
+import { TransactionTimeline } from "@/components/shared/transaction-timeline"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DocumentViewer } from "@/components/shared/document-viewer"
 import { DealFinancialHistoryPanel } from "./deal-financial-history-panel"
@@ -325,6 +327,9 @@ export function DealDetailRefactored({ dealId }: DealDetailRefactoredProps) {
             <p className="text-muted-foreground">
               Manage and view deal information
             </p>
+            <div className="mt-3">
+              <TransactionHeader tid={deal.tid} />
+            </div>
           </div>
         </div>
 
@@ -347,12 +352,16 @@ export function DealDetailRefactored({ dealId }: DealDetailRefactoredProps) {
       
       {/* Other existing sections can be preserved below in tabs or stacked */}
       <div className="mt-8">
-          <Tabs defaultValue="timeline">
+          <Tabs defaultValue="lifecycle">
             <TabsList>
-              <TabsTrigger value="timeline">Timeline</TabsTrigger>
+              <TabsTrigger value="lifecycle">Global Lifecycle</TabsTrigger>
+              <TabsTrigger value="timeline">Activity</TabsTrigger>
               <TabsTrigger value="financial">Financial History</TabsTrigger>
               <TabsTrigger value="attachments">Attachments</TabsTrigger>
             </TabsList>
+            <TabsContent value="lifecycle" className="mt-4">
+                 <TransactionTimeline tid={deal.tid} />
+            </TabsContent>
             <TabsContent value="timeline" className="mt-4">
                 <Card>
                     <CardHeader>
