@@ -1494,10 +1494,12 @@ model Invoice {
   tenantAccount      Account?        @relation("InvoiceTenantAccount", fields: [tenantAccountId], references: [id])
   tenant             Tenant?         @relation(fields: [tenantId], references: [id])
   tenantPayments     TenantPayment[] @relation("InvoiceTenantPayments")
+  tid                String?         @unique
 
   @@index([tenantId])
   @@index([status])
   @@index([billingDate])
+  @@index([tid])
 }
 
 model Payment {
@@ -1531,6 +1533,7 @@ model Payment {
   installment       DealInstallment? @relation("InstallmentPayments", fields: [installmentId], references: [id])
   refundOf          Payment?         @relation("PaymentRefunds", fields: [refundOfPaymentId], references: [id])
   refunds           Payment[]        @relation("PaymentRefunds")
+  tid               String?          @unique
 
   @@index([dealId])
   @@index([paymentId])
@@ -1540,6 +1543,7 @@ model Payment {
   @@index([date])
   @@index([refundOfPaymentId])
   @@index([deletedAt])
+  @@index([tid])
 }
 
 model TenantPayment {
@@ -3093,6 +3097,132 @@ model LedgerEngineEntry {
   @@index([status])
 }
 
+<<<<<<< HEAD
+model TransactionIdentityRegistry {
+  id         String   @id @default(uuid())
+  tid        String   @unique
+  entityType String   // 'lead', 'client', 'deal', 'invoice', 'payment'
+  entityId   String
+  moduleName String   // 'CRM', 'Properties', 'Finance'
+  createdAt  DateTime @default(now())
+
+  @@index([tid])
+  @@index([entityType, entityId])
+}
+
+// ============================================
+// STRICT FINANCIAL LAYER EXTENSION MODELS
+// ============================================
+
+model FinChartOfAccount {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  type        String   // Asset, Liability, Equity, Revenue, Expense
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  ledgerEntries FinLedgerEntry[]
+  voucherLines  FinVoucherLine[]
+
+  @@map("fin_chart_of_accounts")
+}
+
+model FinVoucher {
+  id          String   @id @default(uuid())
+  voucherNo   String   @unique
+  date        DateTime
+  type        String   // Receipt, Payment, Journal, Contra
+  referenceId String?  // Optional relation to operational event like Deal/Payment
+  referenceType String?
+  narration   String?
+  totalAmount Float
+  status      String   @default("Draft") // Draft, Posted, Cancelled
+  createdBy   String 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lines         FinVoucherLine[]
+  ledgerEntries FinLedgerEntry[]
+
+  @@index([referenceId])
+  @@map("fin_vouchers")
+}
+
+model FinVoucherLine {
+  id          String   @id @default(uuid())
+  voucherId   String
+  accountId   String
+  debit       Float    @default(0)
+  credit      Float    @default(0)
+  description String?
+  entityId    String?  // Polymorphic ID for Deal, Property, Client, etc.
+  entityType  String?
+  createdAt   DateTime @default(now())
+  
+  voucher     FinVoucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  account     FinChartOfAccount @relation(fields: [accountId], references: [id])
+
+  @@index([entityId])
+  @@index([voucherId])
+  @@map("fin_voucher_lines")
+}
+
+model FinLedgerEntry {
+  id          String   @id @default(uuid())
+  voucherId   String
+  accountId   String
+  debit       Float    @default(0)
+  credit      Float    @default(0)
+  date        DateTime
+  entityId    String?
+  entityType  String?
+  description String?
+  isReversed  Boolean  @default(false)
+  createdBy   String
+  createdAt   DateTime @default(now())
+  
+  voucher     FinVoucher  @relation(fields: [voucherId], references: [id])
+  account     FinChartOfAccount @relation(fields: [accountId], references: [id])
+  
+  @@index([entityId])
+  @@index([voucherId])
+  @@index([createdAt])
+  @@index([accountId])
+  @@map("fin_ledger_entries")
+}
+
+model FinPaymentAllocation {
+  id            String   @id @default(uuid())
+  paymentId     String
+  installmentId String?  
+  dealId        String?  
+  amount        Float
+  allocatedAt   DateTime @default(now())
+  allocatedBy   String
+  
+  installment   FinInstallmentSchedule? @relation(fields: [installmentId], references: [id])
+
+  @@index([paymentId])
+  @@index([dealId])
+  @@map("fin_payment_allocations")
+}
+
+model FinInstallmentSchedule {
+  id          String   @id @default(uuid())
+  dealId      String   
+  amount      Float
+  dueDate     DateTime
+  status      String   @default("Pending") // Pending, PartiallyPaid, Paid
+  description String?
+  
+  allocations FinPaymentAllocation[]
+  
+  @@index([dealId])
+  @@map("fin_installment_schedules")
+=======
 model AppSettings {
   id               String   @id @default(cuid())
   companyName      String   // Required
@@ -3205,4 +3335,5 @@ model CompanyUser {
   @@index([email])
   @@index([companyId])
   @@index([isSuperAdmin])
+>>>>>>> 63865f5ee8e8d67c214b87c3f61989005c159ed4
 }

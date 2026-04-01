@@ -6,12 +6,15 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Mail, Phone, Building2, Loader2, Plus, MoreVertical, Pencil, Trash, Users, FileText, Eye } from "lucide-react"
+import { Mail, Phone, Building2, Loader2, Plus, MoreVertical, Pencil, Trash, Users, FileText, Eye, Search } from "lucide-react"
 import { apiService } from "@/lib/api"
 import { AddClientDialog } from "./add-client-dialog"
 import { ListToolbar } from "@/components/shared/list-toolbar"
 import { UnifiedFilterDrawer } from "@/components/shared/unified-filter-drawer"
 import { DownloadReportDialog } from "@/components/ui/download-report-dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { TransactionHeader } from "@/components/shared/transaction-header"
+import { TransactionTimeline } from "@/components/shared/transaction-timeline"
 import { saveFilters, loadFilters } from "@/lib/filter-store"
 import { toSimpleFilters, toExportFilters } from "@/lib/filter-transform"
 import { countActiveFilters } from "@/lib/filter-config-registry"
@@ -40,6 +43,8 @@ export function ClientsView() {
   const [showDownloadDialog, setShowDownloadDialog] = useState(false)
   const [showFilterDrawer, setShowFilterDrawer] = useState(false)
   const [activeFilters, setActiveFilters] = useState<Record<string, unknown>>(loadFilters("clients", undefined) || {})
+  const [timelineTarget, setTimelineTarget] = useState<any | null>(null)
+  const [showTimelineDialog, setShowTimelineDialog] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -300,6 +305,16 @@ export function ClientsView() {
                         <DropdownMenuItem
                           onSelect={(event) => {
                             event.preventDefault()
+                            setTimelineTarget(client)
+                            setShowTimelineDialog(true)
+                          }}
+                        >
+                          <Search className="mr-2 h-4 w-4" />
+                          View Lifecycle
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={(event) => {
+                            event.preventDefault()
                             confirmDeleteClient(client)
                           }}
                         >
@@ -364,6 +379,18 @@ export function ClientsView() {
           toast({ title: "Filters applied" })
         }}
       />
+
+      <Dialog open={showTimelineDialog} onOpenChange={setShowTimelineDialog}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Global Transaction Lifecycle</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <TransactionHeader tid={timelineTarget?.tid} />
+            <TransactionTimeline tid={timelineTarget?.tid} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

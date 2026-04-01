@@ -1495,10 +1495,12 @@ model Invoice {
   tenantAccount      Account?        @relation("InvoiceTenantAccount", fields: [tenantAccountId], references: [id])
   tenant             Tenant?         @relation(fields: [tenantId], references: [id])
   tenantPayments     TenantPayment[] @relation("InvoiceTenantPayments")
+  tid                String?         @unique
 
   @@index([tenantId])
   @@index([status])
   @@index([billingDate])
+  @@index([tid])
 }
 
 model Payment {
@@ -1533,6 +1535,7 @@ model Payment {
   installment       DealInstallment? @relation("InstallmentPayments", fields: [installmentId], references: [id])
   refundOf          Payment?         @relation("PaymentRefunds", fields: [refundOfPaymentId], references: [id])
   refunds           Payment[]        @relation("PaymentRefunds")
+  tid               String?          @unique
 
   @@index([dealId])
   @@index([paymentId])
@@ -3111,4 +3114,16 @@ model LedgerEngineEntry {
   @@index([sourceType])
   @@index([entryDate])
   @@index([status])
+}
+
+model TransactionIdentityRegistry {
+  id         String   @id @default(uuid())
+  tid        String   @unique
+  entityType String   // 'lead', 'client', 'deal', 'invoice', 'payment'
+  entityId   String
+  moduleName String   // 'CRM', 'Properties', 'Finance'
+  createdAt  DateTime @default(now())
+
+  @@index([tid])
+  @@index([entityType, entityId])
 }

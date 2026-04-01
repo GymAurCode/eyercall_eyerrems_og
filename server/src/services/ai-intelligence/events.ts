@@ -42,13 +42,13 @@ class AIEventEmitter extends EventEmitter {
    */
   emit(event: AIEventType, ...args: any[]): boolean {
     logger.debug(`AI Event: ${event}`);
-    
+
     // Invalidate relevant cache entries
     this.invalidateCacheForEvent(event);
-    
+
     return super.emit(event, ...args);
   }
-  
+
   /**
    * Invalidate cache based on event type
    */
@@ -57,27 +57,27 @@ class AIEventEmitter extends EventEmitter {
       aiCache.invalidatePattern('^financial-intelligence:');
       aiCache.invalidatePattern('^transaction-risk:');
     }
-    
+
     if (event.startsWith('property.')) {
       aiCache.invalidatePattern('^asset-intelligence:');
     }
-    
+
     if (event.startsWith('construction.')) {
       aiCache.invalidatePattern('^construction-intelligence:');
     }
-    
+
     if (event.startsWith('hr.')) {
       aiCache.invalidatePattern('^workforce-intelligence:');
     }
-    
+
     if (event.startsWith('crm.')) {
       aiCache.invalidatePattern('^crm-revenue-intelligence:');
     }
-    
+
     if (event.startsWith('tenant.')) {
       aiCache.invalidatePattern('^tenant-intelligence:');
     }
-    
+
     // Operational anomalies depend on all modules
     aiCache.invalidatePattern('^operational-anomaly:');
   }

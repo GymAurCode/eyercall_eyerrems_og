@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Users, UserPlus, TrendingUp, Plus, Briefcase, Loader2, Activity, MessageSquare } from "lucide-react"
+import { Users, UserPlus, TrendingUp, Plus, Briefcase, Loader2, Activity, MessageSquare, Zap } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
@@ -21,9 +21,10 @@ const ClientsView = lazy(() => import("./clients-view").then(m => ({ default: m.
 const DealsView = lazy(() => import("./deals-view").then(m => ({ default: m.DealsView })))
 const CommunicationsView = lazy(() => import("./communications-view").then(m => ({ default: m.CommunicationsView })))
 const DealersView = lazy(() => import("./dealers-view").then(m => ({ default: m.DealersView })))
+const CRMQuickActionsHub = lazy(() => import("@/components/crm/crm-quick-actions-hub"))
 
 // Lazy load dialog components to reduce initial chunk size
-const AddLeadDialog = lazy(() => import("./add-lead-dialog").then(m => ({ default: m.AddLeadDialog })))
+const LeadCreationController = lazy(() => import("./lead-creation-controller").then(m => ({ default: m.LeadCreationController })))
 const AddDealerDialog = lazy(() => import("./add-dealer-dialog").then(m => ({ default: m.AddDealerDialog })))
 const AddClientDialog = lazy(() => import("./add-client-dialog").then(m => ({ default: m.AddClientDialog })))
 
@@ -620,6 +621,10 @@ export function CRMView({ initialData }: { initialData?: any }) {
           <TabsTrigger value="deals">Deals</TabsTrigger>
           <TabsTrigger value="dealers">Dealers</TabsTrigger>
           <TabsTrigger value="communications">Communications</TabsTrigger>
+          <TabsTrigger value="quick-actions" className="gap-2">
+            <Zap className="h-4 w-4 text-amber-500 fill-amber-500" />
+            Quick Actions
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="leads">
@@ -651,11 +656,17 @@ export function CRMView({ initialData }: { initialData?: any }) {
             <CommunicationsView />
           </Suspense>
         </TabsContent>
+
+        <TabsContent value="quick-actions">
+          <Suspense fallback={<div className="flex items-center justify-center h-64"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+            <CRMQuickActionsHub />
+          </Suspense>
+        </TabsContent>
       </Tabs>
 
       {/* Dialogs */}
       <Suspense fallback={null}>
-        <AddLeadDialog open={showAddDialog} onOpenChange={setShowAddDialog} />
+        <LeadCreationController open={showAddDialog} onOpenChange={setShowAddDialog} />
       </Suspense>
       <Suspense fallback={null}>
         <AddDealerDialog
