@@ -15,16 +15,11 @@ const createCompanySchema = z.object({
   companyCode: z.string().min(2, 'Company code must be at least 2 characters')
     .max(20, 'Company code must be at most 20 characters')
     .regex(/^[A-Za-z0-9_-]+$/, 'Company code may only contain letters, numbers, - and _'),
-  companyEmail: z.string().email('Invalid email').optional().or(z.literal('')),
+  companyEmail: z.string().email('Company email is required'),
+  companyPassword: z.string().min(6, 'Company password must be at least 6 characters'),
   companyPhone: z.string().optional(),
   companyAddress: z.string().optional(),
   status: z.enum(['active', 'suspended']).default('active'),
-
-  // Initial owner/admin user
-  ownerName: z.string().min(1, 'Owner name is required'),
-  ownerEmail: z.string().email('Owner email is required'),
-  ownerPassword: z.string().min(6, 'Password must be at least 6 characters'),
-  ownerRole: z.enum(['owner', 'admin']).default('owner'),
 
   // Company settings
   currencyCode: z.string().default('PKR'),
@@ -56,16 +51,16 @@ router.post('/', requireSuperAdmin, async (req: CompanyAuthRequest, res: Respons
       return res.status(409).json({ error: 'Company code already exists' });
     }
 
-    // Check duplicate owner email
+    // Check duplicate admin email in company users
     const existingEmail = await prisma.companyUser.findUnique({
-      where: { email: data.ownerEmail },
+      where: { email: data.companyEmail },
     });
     if (existingEmail) {
-      return res.status(409).json({ error: 'A user with that email already exists' });
+      return res.status(409).json({ error: 'A user with that company email already exists' });
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(data.ownerPassword, 12);
+    const passwordHash = await bcrypt.hash(data.companyPassword, 12);
 
     // Create company + settings + user in a transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -73,7 +68,7 @@ router.post('/', requireSuperAdmin, async (req: CompanyAuthRequest, res: Respons
         data: {
           companyName: data.companyName,
           companyCode: data.companyCode.toUpperCase(),
-          companyEmail: data.companyEmail || null,
+          companyEmail: data.companyEmail,
           companyPhone: data.companyPhone || null,
           companyAddress: data.companyAddress || null,
           status: data.status,
@@ -94,10 +89,10 @@ router.post('/', requireSuperAdmin, async (req: CompanyAuthRequest, res: Respons
       const user = await tx.companyUser.create({
         data: {
           companyId: company.id,
-          name: data.ownerName,
-          email: data.ownerEmail,
+          name: `${data.companyName} Admin`,
+          email: data.companyEmail,
           passwordHash,
-          role: data.ownerRole,
+          role: 'owner',
           isSuperAdmin: false,
           isActive: true,
         },

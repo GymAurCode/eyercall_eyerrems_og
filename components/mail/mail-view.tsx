@@ -57,9 +57,24 @@ export function MailView() {
   })
   const [isSending, setIsSending] = useState(false)
 
-  const fetchMessages = useCallback(async (tab: string) => {
+  const fetchMessages = useCallback(async (tab: string, forceSync = false) => {
     setIsLoading(true);
     try {
+      if (tab === "inbox") {
+        if (forceSync) {
+           toast({ title: "Syncing Inbox", description: "Pulling new emails from external server..." });
+           try {
+             const syncRes = await apiService.post("/mail/sync", {});
+             if (syncRes.data.count > 0) {
+               toast({ title: "New Mail", description: `You have ${syncRes.data.count} new message(s).` });
+             } else {
+               toast({ title: "Inbox Synced", description: "Your inbox is up to date." });
+             }
+           } catch (e: any) {
+             console.warn("IMAP Sync skipped or failed:", e?.response?.data?.error || e.message);
+           }
+        }
+      }
       const endpoint = tab === "inbox" ? "/mail/inbox" : "/mail/sent";
       const response = await apiService.get(endpoint);
       setMessages(Array.isArray(response.data) ? response.data : []);
@@ -144,7 +159,7 @@ export function MailView() {
               <h2 className="text-lg font-bold tracking-tight">Mailbox</h2>
             </div>
             <div className="flex items-center gap-2">
-              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => fetchMessages(activeTab)} disabled={isLoading}>
+              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => fetchMessages(activeTab, true)} disabled={isLoading}>
                 <RotateCcw className={cn("h-4 w-4", isLoading && "animate-spin")} />
               </Button>
               <Button size="sm" className="h-8" onClick={() => setShowCompose(true)}>

@@ -85,12 +85,31 @@ export const authenticate = async (
     }
 
     // Verify user still exists
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: { id: true, username: true, email: true, roleId: true, deviceApprovalStatus: true },
     });
 
+    let isCompanyUser = false;
+    let companyUserObj: any = null;
+
     if (!user) {
+      // Try finding in CompanyUser table
+      companyUserObj = await prisma.companyUser.findUnique({
+        where: { id: decoded.userId },
+        include: { company: true }
+      });
+
+      if (companyUserObj) {
+        if (!companyUserObj.isActive || companyUserObj.company.status !== 'active') {
+          res.status(403).json({ error: 'Account is inactive or company suspended' });
+          return;
+        }
+        isCompanyUser = true;
+      }
+    }
+
+    if (!user && !isCompanyUser) {
       logger.warn('Authentication failed: User not found', {
         path: req.path,
         method: req.method,
@@ -117,12 +136,22 @@ export const authenticate = async (
       }
     }
 
-    req.user = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      roleId: user.roleId,
-    };
+    if (user) {
+      req.user = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        roleId: user.roleId,
+      };
+    } else {
+      // Populate req.user from companyUser data for compatibility
+      req.user = {
+        id: companyUserObj.id,
+        username: companyUserObj.email, // Use email as username for company users
+        email: companyUserObj.email,
+        roleId: companyUserObj.role, // Use role string as roleId string
+      };
+    }
 
     next();
   } catch (error: any) {

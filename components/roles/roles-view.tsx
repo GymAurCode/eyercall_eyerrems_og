@@ -35,6 +35,7 @@ import {
   Home,
   AlertTriangle,
   Info,
+  ArrowLeft,
 } from "lucide-react"
 import { apiService } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
@@ -950,13 +951,24 @@ export function RolesView() {
       {/* Main Content */}
       <div className="flex-1 p-6 space-y-6 overflow-y-auto">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              {selectedRole?.name || "Roles & Permissions"}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Manage role permissions and generate invite links
-            </p>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.back()}
+              className="hover:bg-muted"
+              title="Go Back"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                {selectedRole?.name || "Roles & Permissions"}
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Manage role permissions and generate invite links
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             {user?.role?.toLowerCase() === "admin" && (

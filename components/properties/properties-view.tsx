@@ -61,8 +61,14 @@ import { AnimatedCounter } from "@/components/ui/animated-counter"
 import { formatCurrency, cn } from "@/lib/utils"
 import { getPropertyImageSrc } from "@/lib/property-image-utils"
 import { MiniChartCard } from "@/components/ui/mini-chart-card"
+import { useAuth } from "@/lib/auth-context"
+import { hasPermission } from "@/lib/permissions"
 
 export function PropertiesView() {
+  const { user } = useAuth()
+  const canCreate = hasPermission(user?.permissions, user?.isSuperAdmin, user?.role, "properties", "create")
+  const canEdit = hasPermission(user?.permissions, user?.isSuperAdmin, user?.role, "properties", "edit")
+  const canDelete = hasPermission(user?.permissions, user?.isSuperAdmin, user?.role, "properties", "delete")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -557,10 +563,12 @@ export function PropertiesView() {
           <p className="text-muted-foreground mt-1">Manage all your properties, units, and tenants</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Property
-          </Button>
+          {canCreate && (
+            <Button onClick={() => setShowAddDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Property
+            </Button>
+          )}
         </div>
       </div>
 
@@ -778,9 +786,15 @@ export function PropertiesView() {
                         <DropdownMenuItem onClick={() => router.push(`/property/${property.id}`)}><Eye className="h-4 w-4 mr-2" />View</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => router.push(`/ledger/property/${property.id}`)}><FileText className="h-4 w-4 mr-2" />Open Ledger</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleGeneratePropertyReport(property)}><FileText className="h-4 w-4 mr-2" />Generate Report</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setEditingPropertyId(property.id); setShowAddDialog(true) }}><Edit className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setStructurePropertyId(String(property.id)); setStructurePropertyName(property.tid || ""); setShowStructureDialog(true) }}><Building2 className="h-4 w-4 mr-2" />Create Structure</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => setDeletingProperty({ id: property.id, name: property.tid, propertyCode: property.propertyCode })}><Trash2 className="h-4 w-4 mr-2" />Delete</DropdownMenuItem>
+                        {canEdit && (
+                          <DropdownMenuItem onClick={() => { setEditingPropertyId(property.id); setShowAddDialog(true) }}><Edit className="h-4 w-4 mr-2" />Edit</DropdownMenuItem>
+                        )}
+                        {canEdit && (
+                          <DropdownMenuItem onClick={() => { setStructurePropertyId(String(property.id)); setStructurePropertyName(property.tid || ""); setShowStructureDialog(true) }}><Building2 className="h-4 w-4 mr-2" />Create Structure</DropdownMenuItem>
+                        )}
+                        {canDelete && (
+                          <DropdownMenuItem className="text-destructive" onClick={() => setDeletingProperty({ id: property.id, name: property.tid, propertyCode: property.propertyCode })}><Trash2 className="h-4 w-4 mr-2" />Delete</DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   )}

@@ -6,6 +6,7 @@
 import prisma, { Prisma } from '../prisma/client';
 import { DealFinanceService, CommissionType, CommissionConfig } from './deal-finance-service';
 import { generateSystemId, validateTID } from './id-generation-service';
+import { IdService } from '../utils/id-service';
 
 export interface CreateDealPayload {
   title: string;
@@ -84,7 +85,7 @@ export class DealService {
    * Format: dl-YY-#### (uses centralized ID generation service)
    */
   static async generateDealCode(): Promise<string> {
-    return await generateSystemId('dl');
+    return await IdService.generateEntityId('DEAL');
   }
 
   /**
@@ -199,15 +200,19 @@ export class DealService {
       }
     }
 
-    // Generate deal code: dl-YY-####
+    // Generate deal code
     const dealCode = await this.generateDealCode();
-    
-    // Validate TID
-    if (!payload.tid) {
-      throw new Error('TID is required');
+
+    // TID is immutable and must be inherited from client/lead lineage.
+    // Allow explicit payload only when it matches existing client TID.
+    const clientTid = client.tid;
+    if (!clientTid && !payload.tid) {
+      throw new Error('Client TID is missing. Deal creation requires a source TID.');
     }
-    await validateTID(payload.tid);
-    const tid = payload.tid;
+    if (payload.tid && clientTid && payload.tid !== clientTid) {
+      throw new Error('Deal TID must match the linked client TID.');
+    }
+    const tid = clientTid || payload.tid!;
 
     // Validate dealer is required if commission is specified
     if ((payload.commissionType && payload.commissionType !== 'none') && !payload.dealerId) {
@@ -330,6 +335,33 @@ export class DealService {
           changedBy: payload.createdBy,
         },
       });
+
+      // CREATE UNIFIED LEDGER ENTRY for Client and Property
+      await tx.ledgerEntry.create({
+        data: {
+          dealId: deal.id,
+          paymentId: null,
+          accountDebit: 'UNIFIED_CLIENT',
+          accountCredit: 'UNIFIED_DEAL_CREATED',
+          amount: deal.dealAmount,
+          remarks: `[TID:${tid}] [LEDGER:CLIENT] [TYPE:DEAL_CREATED] Deal created: ${deal.title}`,
+          date: deal.dealDate || new Date(),
+        }
+      });
+
+      if (deal.propertyId) {
+        await tx.ledgerEntry.create({
+          data: {
+            dealId: deal.id,
+            paymentId: null,
+            accountDebit: 'UNIFIED_PROPERTY',
+            accountCredit: 'UNIFIED_DEAL_CREATED',
+            amount: deal.dealAmount,
+            remarks: `[TID:${tid}] [LEDGER:PROPERTY] [TYPE:DEAL_CREATED] Deal created for property: ${deal.title}`,
+            date: deal.dealDate || new Date(),
+          }
+        });
+      }
 
       return deal;
     });

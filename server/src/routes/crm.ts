@@ -9,6 +9,8 @@ import { generateSystemId, validateManualUniqueId, validateTID, generatePrefixed
 import { generateSequenceNumber } from '../services/id-generation-service';
 import { parsePaginationQuery, calculatePagination } from '../utils/pagination';
 import { successResponse, errorResponse } from '../utils/error-handler';
+import { IdService } from '../utils/id-service';
+import { UnifiedSearchService } from '../services/unified-search-service';
 
 const router = (express as any).Router();
 
@@ -38,7 +40,7 @@ const createClientSchema = z.object({
   propertyInterest: z.string().optional().nullable(),
   manualUniqueId: z.string().optional().nullable(),
   propertySubsidiary: z.string().optional().nullable(),
-  tid: z.string().min(1, "TID is required"),
+  tid: z.string().min(1).optional(),
 });
 
 const createDealerSchema = z.object({
@@ -62,7 +64,7 @@ const createDealerSchema = z.object({
   postalCode: z.string().optional().nullable(),
   qualifications: z.string().optional().nullable(),
   manualUniqueId: z.string().optional().nullable(),
-  tid: z.string().min(1, "TID is required"),
+  tid: z.string().min(1).optional(),
 });
 
 const createLeadSchema = z.object({
@@ -86,7 +88,7 @@ const createLeadSchema = z.object({
   address: z.string().optional().nullable(),
   city: z.string().optional().nullable(),
   manualUniqueId: z.string().optional().nullable(),
-  tid: z.string().min(1, "TID is required"),
+  tid: z.string().min(1).optional(),
   status: z.string().optional().default('new'),
   notes: z.string().optional().nullable(),
   temperature: z.enum(['cold', 'warm', 'hot']).optional().default('cold'),
@@ -123,18 +125,18 @@ router.post('/leads', authenticate, upload.any(), async (req: AuthRequest, res: 
   try {
     logger.debug('Create lead request body:', JSON.stringify(req.body, null, 2));
     const parsedData = createLeadSchema.parse(req.body);
-    const { manualUniqueId, tid, ...leadData } = parsedData;
+    const { manualUniqueId, tid: requestedTid, ...leadData } = parsedData;
 
     // Validate manual unique ID if provided
     if (manualUniqueId) {
       await validateManualUniqueId(manualUniqueId, 'lead');
     }
 
-    // Validate TID
-    await validateTID(tid);
+    // Generate TID
+    const tid = requestedTid || await IdService.generateTID();
 
-    // Generate system ID: lead-YY-####
-    const leadCode = await generateSystemId('lead');
+    // Generate system ID: LDxxxx
+    const leadCode = await IdService.generateEntityId('LD');
 
     const lead = await prisma.$transaction(async (tx) => {
       return await tx.lead.create({
@@ -188,23 +190,13 @@ router.post('/leads/:id/convert', authenticate, async (req: AuthRequest, res: Re
       return res.status(400).json({ error: 'Lead has already been converted to a client' });
     }
 
-    // Generate unique TID
-    let tid = '';
-    let isUnique = false;
-    while (!isUnique) {
-      tid = await generatePrefixedId('L-CLI', 'cli');
-      try {
-        await validateTID(tid);
-        isUnique = true;
-      } catch (error) {
-        // If TID exists, loop will continue and generate next sequence number
-      }
-    }
+    // PRESERVE THE ORIGINAL TID FROM LEAD
+    const tid = lead.tid || await IdService.generateTID();
 
-    // Generate system ID: cli-YY-####
-    const clientCode = await generateSystemId('cli');
+    // Generate system ID: CLxxxx
+    const clientCode = await IdService.generateEntityId('CL');
 
-    // Get next srNo and clientNo using sequence
+    // Get next srNo and clientNo using sequence (keeping legacy fields for now)
     const srNo = await generateSequenceNumber('CLI_SR');
     const nextClientNo = `CL-${String(srNo).padStart(4, '0')}`;
 
@@ -472,13 +464,13 @@ router.post('/clients', authenticate, upload.any(), async (req: AuthRequest, res
       await validateManualUniqueId(manualUniqueId, 'cli');
     }
 
-    // Validate TID
-    await validateTID(tid);
+    // Generate TID if not provided
+    const clientTid = tid || await IdService.generateTID();
 
-    // Generate system ID: cli-YY-####
-    const clientCode = await generateSystemId('cli');
+    // Generate system ID: CLxxxx
+    const clientCode = await IdService.generateEntityId('CL');
 
-    // Get next srNo and clientNo
+    // Get next srNo and clientNo (legacy)
     const lastClient = await prisma.client.findFirst({
       orderBy: { createdAt: 'desc' },
     });
@@ -491,7 +483,7 @@ router.post('/clients', authenticate, upload.any(), async (req: AuthRequest, res
           ...clientData,
           manualUniqueId: manualUniqueId?.trim() || null,
           clientCode,
-          tid,
+          tid: clientTid,
           srNo: nextSrNo,
           clientNo: nextClientNo,
           status: clientData.status || 'active',
@@ -693,18 +685,18 @@ router.post('/dealers', authenticate, upload.any(), async (req: AuthRequest, res
       await validateManualUniqueId(manualUniqueId, 'deal');
     }
 
-    // Validate TID
-    await validateTID(tid);
+    const dealerTid = tid || await IdService.generateTID();
+    await validateTID(dealerTid);
 
     // Generate system ID: deal-YY-####
-    const dealerCode = await generateSystemId('deal');
+    const dealerCode = await IdService.generateEntityId('DL');
 
     const dealer = await prisma.$transaction(async (tx) => {
       return await tx.dealer.create({
         data: {
           ...dealerData,
           dealerCode,
-          tid,
+          tid: dealerTid,
           manualUniqueId: manualUniqueId?.trim() || null,
           createdBy: req.user?.id,
         }
@@ -1193,6 +1185,33 @@ router.get('/deals/:id', authenticate, async (req: AuthRequest, res: Response) =
     });
   } catch (error: any) {
     logger.error('Get deal error:', error);
+    return errorResponse(res, error);
+  }
+});
+
+// Global TID search across lead -> client -> deal -> payment -> ledger journey
+router.get('/search/tid/:tid', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { tid } = req.params;
+    if (!tid || !tid.trim()) {
+      return res.status(400).json({ error: 'TID is required' });
+    }
+
+    const result = await UnifiedSearchService.searchByTID(tid.trim());
+    if (!result) {
+      return res.status(404).json({
+        error: 'No records found with this TID',
+        message: `No business journey found with TID: ${tid}`,
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: result,
+      message: `Transaction journey found for TID: ${tid}`,
+    });
+  } catch (error: any) {
+    logger.error('TID search error:', error);
     return errorResponse(res, error);
   }
 });

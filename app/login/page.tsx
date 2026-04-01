@@ -82,8 +82,14 @@ export default function LoginPage() {
   )
 
   useEffect(() => {
-    if (!authLoading && user && user.role?.toLowerCase() !== "admin") {
-      router.push("/roles/login")
+    if (!authLoading && user) {
+      // If user is a multi-tenant CompanyUser or an internal Admin, stay here
+      const isCompanyUser = !!user.companyId;
+      const isAdmin = user.role?.toLowerCase() === "admin";
+
+      if (!isAdmin && !isCompanyUser) {
+        router.push("/roles/login")
+      }
     }
   }, [user, authLoading, router])
 

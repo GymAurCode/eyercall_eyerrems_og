@@ -74,11 +74,11 @@ type NavItem = {
 }
 type NavSection = { label: string; items: NavItem[] }
 
-const getNavigationForUser = (role: string, permissions?: string[]): NavSection[] => {
+const getNavigationForUser = (role: string, permissions?: string[], isSuperAdmin?: boolean): NavSection[] => {
   const normalizedRole = role?.toLowerCase() || ""
 
-  // Admin always has all access
-  if (normalizedRole === "admin") {
+  // Admin OR Company SuperAdmin (Owner) always have all access
+  if (normalizedRole === "admin" || isSuperAdmin) {
     return [
       {
         label: "Core",
@@ -106,6 +106,7 @@ const getNavigationForUser = (role: string, permissions?: string[]): NavSection[
           { name: "Internal Mail", href: "/mail", icon: Mail, color: "#f43f5e" },
           { name: "Support", href: "/support", icon: HelpCircle, color: "#10b981" },
           { name: "Settings", href: "/settings", icon: Settings, color: "#64748b" },
+          ...(isSuperAdmin ? [{ name: "Companies", href: "/companies", icon: Building2, color: "#8b5cf6" }] : []),
         ],
       },
     ]
@@ -138,6 +139,9 @@ const getNavigationForUser = (role: string, permissions?: string[]): NavSection[
   system.push({ name: "Internal Mail", href: "/mail", icon: Mail, color: "#f43f5e" })
   system.push({ name: "Support", href: "/support", icon: HelpCircle, color: "#10b981" })
   system.push({ name: "Settings", href: "/settings", icon: Settings, color: "#64748b" })
+  if (isSuperAdmin) {
+    system.push({ name: "Companies", href: "/companies", icon: Building2, color: "#8b5cf6" })
+  }
 
   const sections: NavSection[] = [{ label: "Core", items: core }]
   if (financials.length) sections.push({ label: "Financials", items: financials })
@@ -149,6 +153,7 @@ const getNavigationForUser = (role: string, permissions?: string[]): NavSection[
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const tidPattern = /^\d{4}-\d{2}-\d{4}$/
   // Load sidebar state from localStorage on mount
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -182,7 +187,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Set initial open section based on pathname
   useEffect(() => {
     if (!user) return
-    const nav = getNavigationForUser(user.role, user.permissions)
+    const nav = getNavigationForUser(user.role, user.permissions, user.isSuperAdmin)
     const currentSection = nav.find(sec =>
       sec.items.some(item => pathname === item.href || pathname.startsWith(item.href + "/"))
     )
@@ -268,7 +273,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [loading, isAuthenticated, user, router, pathname])
 
-  const navigation = user ? getNavigationForUser(user.role, user.permissions) : []
+  const navigation = user ? getNavigationForUser(user.role, user.permissions, user.isSuperAdmin) : []
   const hasAdvancedAccess =
     user &&
     (user.role?.toLowerCase() === "admin" || hasModuleAccess(user.permissions, "advanced"))
@@ -325,19 +330,21 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center justify-center px-6 border-b border-white/10">
-            <div className="flex items-center gap-2">
-              {companyLogo ? (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white overflow-hidden shrink-0 border-2 border-white/20">
-                  <img src={companyLogo} alt="Logo" className="h-full w-full object-cover" />
+            <div className="flex items-center gap-2 max-w-full">
+              {(user?.company?.settings?.logo || companyLogo) ? (
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white overflow-hidden shrink-0 border-2 border-white/10 shadow-sm">
+                  <img src={user?.company?.settings?.logo || companyLogo || ""} alt="Logo" className="h-full w-full object-contain" />
                 </div>
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500/20 overflow-hidden shrink-0 border-2 border-indigo-500/30">
                   <Building2 className="h-5 w-5 text-indigo-400" />
                 </div>
               )}
-              {!sidebarCollapsed && <span className="text-xl font-bold text-white tracking-wide truncate max-w-[160px]">
-                {companyName || "RealEstate ERP"}
-              </span>}
+              {!sidebarCollapsed && (
+                <span className="text-xl font-bold text-white tracking-wide truncate max-w-[160px]">
+                  {user?.company?.companyName || companyName || "RealEstate ERP"}
+                </span>
+              )}
             </div>
           </div>
 
@@ -537,16 +544,22 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="search"
-                placeholder="Search by property code, name..."
+                placeholder="Search by TID or property..."
                 className="h-9 w-64 rounded-lg border border-input bg-background pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const query = (e.target as HTMLInputElement).value.trim()
-                    if (query) {
-                      // Navigate to properties page with search query
-                      router.push(`/properties?search=${encodeURIComponent(query)}`)
-                        ; (e.target as HTMLInputElement).value = ''
+                    if (!query) return
+
+                    if (tidPattern.test(query)) {
+                      router.push(`/crm?search=${encodeURIComponent(query)}`)
+                      ;(e.target as HTMLInputElement).value = ''
+                      return
                     }
+
+                    // Default quick search path for non-TID terms.
+                    router.push(`/properties?search=${encodeURIComponent(query)}`)
+                    ;(e.target as HTMLInputElement).value = ''
                   }
                 }}
               />

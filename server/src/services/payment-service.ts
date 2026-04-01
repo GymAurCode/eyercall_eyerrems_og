@@ -8,6 +8,7 @@ import prisma from '../prisma/client';
 import { DealService } from './deal-service';
 import { PaymentPlanService } from './payment-plan-service';
 import { generateSystemId, validateManualUniqueId } from './id-generation-service';
+import { IdService } from '../utils/id-service';
 
 export interface CreatePaymentPayload {
   dealId: string;
@@ -194,6 +195,10 @@ export class PaymentService {
       : (await this.getPaymentAccounts(payload.paymentMode)).creditAccountId;
 
     const paymentDate = payload.date || new Date();
+    const inheritedTid = deal.tid || null;
+    if (!inheritedTid) {
+      throw new Error('Deal TID is missing. Payment requires immutable TID inheritance.');
+    }
     
     // Validate manual unique ID if provided
     const { manualUniqueId } = payload as any;
@@ -201,8 +206,8 @@ export class PaymentService {
       await validateManualUniqueId(manualUniqueId, 'pay');
     }
 
-    // Generate system ID: pay-YY-####
-    const paymentCode = payload.paymentId || await generateSystemId('pay');
+    // Generate system ID: PAYxxxx
+    const paymentCode = payload.paymentId || await IdService.generateEntityId('PAY');
 
     // Atomic transaction
     return await prisma.$transaction(async (tx) => {
@@ -268,6 +273,64 @@ export class PaymentService {
           amount: payload.amount,
           remarks: `Payment received: ${remarks}`,
           date: paymentDate,
+        },
+      });
+
+      // CREATE UNIFIED LEDGER ENTRIES
+      const tid = inheritedTid;
+      const totalPaidAfterPayment = (deal.totalPaid || 0) + payload.amount;
+      const outstandingAfterPayment = Math.max((deal.dealAmount || 0) - totalPaidAfterPayment, 0);
+
+      // Client Ledger Record
+      await tx.ledgerEntry.create({
+        data: {
+          dealId: deal.id,
+          paymentId: payment.id,
+          accountDebit: 'UNIFIED_CLIENT',
+          accountCredit: 'UNIFIED_PAYMENT_RECEIVED',
+          amount: payload.amount,
+          remarks: `[TID:${tid}] [LEDGER:CLIENT] [TYPE:PAYMENT_RECEIVED] Outstanding:${outstandingAfterPayment} Payment for deal: ${deal.title}`,
+          date: paymentDate,
+        }
+      });
+
+      // Property Ledger Record
+      if (deal.propertyId) {
+        await tx.ledgerEntry.create({
+          data: {
+            dealId: deal.id,
+            paymentId: payment.id,
+            accountDebit: 'UNIFIED_PROPERTY',
+            accountCredit: 'UNIFIED_PAYMENT_RECEIVED',
+            amount: payload.amount,
+            remarks: `[TID:${tid}] [LEDGER:PROPERTY] [TYPE:PAYMENT_RECEIVED] Outstanding:${outstandingAfterPayment} Payment received for property: ${deal.title}`,
+            date: paymentDate,
+          }
+        });
+      }
+
+      // Dealer Ledger Record (Commission)
+      if (deal.dealerId && deal.commissionAmount > 0) {
+        // Calculate proportional commission if needed, or just record event
+        await tx.ledgerEntry.create({
+          data: {
+            dealId: deal.id,
+            paymentId: payment.id,
+            accountDebit: 'UNIFIED_DEALER',
+            accountCredit: 'UNIFIED_COMMISSION_RECORDED',
+            amount: 0,
+            remarks: `[TID:${tid}] [LEDGER:DEALER] [TYPE:COMMISSION_RECORDED] Outstanding:${deal.commissionAmount} Commission milestone for deal: ${deal.title}`,
+            date: paymentDate,
+          }
+        });
+      }
+
+      // Recompute deal status
+      await tx.deal.update({
+        where: { id: payload.dealId },
+        data: {
+          totalPaid: totalPaidAfterPayment,
+          updatedAt: new Date(),
         },
       });
 

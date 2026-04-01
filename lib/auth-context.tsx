@@ -23,6 +23,11 @@ type User = {
     companyName: string
     companyCode: string
     status: string
+    settings?: {
+      logo?: string
+      currencyCode?: string
+      currencySymbol?: string
+    }
   }
 }
 
@@ -64,12 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = response.data as any
       const updatedUser: User = {
         id: userData.id,
-        name: userData.username || userData.email.split("@")[0],
+        name: userData.name || userData.username || userData.email.split("@")[0],
         username: userData.username,
         email: userData.email,
         role: userData.role,
         roleId: userData.roleId,
-        permissions: userData.permissions || [], // Include permissions
+        permissions: userData.permissions || [],
+        companyId: userData.companyId,
+        isSuperAdmin: userData.isSuperAdmin,
+        company: userData.company,
       }
       setUser(updatedUser)
       // Use localStorage for persistence across page reloads
@@ -293,12 +301,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Store user data in localStorage for persistence
       const userObj: User = {
         id: userData.id,
-        name: userData.username || userData.email.split("@")[0],
+        name: userData.name || userData.username || userData.email.split("@")[0],
         username: userData.username,
         email: userData.email,
         role: userData.role,
         roleId: userData.roleId,
-        permissions: userData.permissions || [], // Include permissions
+        permissions: userData.permissions || [],
+        companyId: userData.companyId,
+        isSuperAdmin: userData.isSuperAdmin,
+        company: userData.company,
       }
       setUser(userObj)
       localStorage.setItem("erp-user", JSON.stringify(userObj))
@@ -417,50 +428,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Redundant - unified login handles both now
   const companyLogin = async (email: string, password: string) => {
-    try {
-      if (typeof window === "undefined") {
-        throw new Error("Login can only be performed on client-side")
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/company-auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
-        }
-      )
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed")
-      }
-
-      const { token, user: userData } = data
-
-      localStorage.setItem("token", token)
-      localStorage.setItem("loginTime", Date.now().toString())
-      sessionStorage.setItem("lastActivity", Date.now().toString())
-
-      const userObj: User = {
-        id: userData.id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role,
-        isSuperAdmin: userData.isSuperAdmin,
-        companyId: userData.companyId,
-        companyRole: userData.role,
-        company: userData.company,
-        // Mark this as a company auth session
-        username: userData.email,
-      }
-      setUser(userObj)
-      localStorage.setItem("erp-user", JSON.stringify(userObj))
-      // Flag so logout knows to redirect to /company-login
-      localStorage.setItem("auth-type", "company")
-    } catch (error: any) {
-      throw error
-    }
+    return login(email, password);
   }
 
   const logout = () => {
@@ -476,9 +446,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sessionStorage.removeItem("lastActivity")
       setUser(null)
       
-      // Redirect based on auth type
-      if (authType === "company") {
-        window.location.href = "/company-login"
+      // Redirect based on user type
+      if (currentUser?.companyId) {
+        // Company users go to standard login now
+        window.location.href = "/login"
       } else if (currentUser && currentUser.role?.toLowerCase() !== "admin") {
         window.location.href = "/roles/login"
       } else {

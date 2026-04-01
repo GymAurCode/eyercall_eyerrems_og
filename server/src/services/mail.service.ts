@@ -1,4 +1,6 @@
 import { Resend } from 'resend';
+import { ImapFlow } from 'imapflow';
+import { simpleParser } from 'mailparser';
 import prisma from '../prisma/client';
 import settingsService from './settings.service';
 import logger from '../utils/logger';
@@ -74,6 +76,32 @@ class MailService {
            isRead: true
          }
       });
+      
+      // IMPORTANT FIX: If the email is sent to an internal user or the company itself, 
+      // immediately inject it into the shared Inbox. This bypasses the need for 
+      // an external inbound webhook and circumvents Resend's free-tier sandbox limitations.
+      const internalUsers = await prisma.user.findMany({ select: { email: true } });
+      const internalEmails = internalUsers.map(u => u.email.toLowerCase());
+      
+      const isInternalRecipient = 
+        internalEmails.includes(to.toLowerCase()) || 
+        (settings.companyEmail && to.toLowerCase() === settings.companyEmail.toLowerCase());
+
+      if (isInternalRecipient) {
+        logger.info(`Routing internal email directly to Inbox for: ${to}`);
+        await prisma.emailMessage.create({
+           data: {
+             to,
+             subject,
+             body: html,
+             senderEmail: senderEmail,
+             senderName: companyName,
+             status: 'received',
+             direction: 'received',
+             isRead: false
+           }
+        });
+      }
       
       return response.data;
     } catch (error) {
@@ -220,6 +248,101 @@ class MailService {
     } catch (error) {
       logger.error('Error fetching message body from DB:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Sync Inbox using IMAP configuration
+   */
+  async syncInbox() {
+    try {
+      const settings = await settingsService.getSettings();
+      const imapConfig = settings?.integrationConfig?.imap;
+
+      if (!imapConfig?.enabled || !imapConfig?.host || !imapConfig?.user || !imapConfig?.password) {
+        throw new Error('IMAP is not fully configured or enabled in settings.');
+      }
+
+      const client = new ImapFlow({
+        host: imapConfig.host,
+        port: imapConfig.port || 993,
+        secure: imapConfig.tls !== false,
+        auth: {
+          user: imapConfig.user,
+          pass: imapConfig.password
+        },
+        logger: false as any
+      });
+
+      await client.connect();
+      logger.info('IMAP client connected successfully for sync.');
+      
+      let lock = await client.getMailboxLock('INBOX');
+      try {
+        const mailbox = client.mailbox;
+        if (!mailbox || typeof mailbox === 'boolean' || typeof mailbox.exists !== 'number') {
+           return { success: true, count: 0 };
+        }
+        
+        const total = mailbox.exists;
+        const messagesAdded = [];
+        
+        if (total > 0) {
+          // Fetch the last 20 emails
+          const start = Math.max(1, total - 19);
+          const fetchQuery = `${start}:*`;
+          
+          for await (let msg of client.fetch(fetchQuery, { source: true, uid: true })) {
+            if (!msg.source) continue;
+            const parsed: any = await simpleParser(msg.source as Buffer);
+            
+            let fromField = parsed.from?.value[0]?.address || 'Unknown';
+            let senderName = parsed.from?.value[0]?.name || null;
+            let to = parsed.to?.value.map((val: any) => val.address).join(', ') || imapConfig.user;
+            let subject = parsed.subject || 'No Subject';
+            let body = parsed.html || parsed.text || '';
+            let sentAt = parsed.date || new Date();
+            
+            // Look for existing message to prevent duplicates (using direction, subject, sender, and approximate time)
+            const timeWindow = new Date(sentAt.getTime() - 24 * 60 * 60 * 1000); // 1 day window
+            
+            const existing = await prisma.emailMessage.findFirst({
+              where: {
+                direction: 'received',
+                subject: subject,
+                senderEmail: fromField,
+                sentAt: { gte: timeWindow }
+              }
+            });
+            
+            if (!existing) {
+              const newMsg = await prisma.emailMessage.create({
+                data: {
+                  to,
+                  subject,
+                  body,
+                  senderEmail: fromField,
+                  senderName,
+                  status: 'received',
+                  direction: 'received',
+                  isRead: false,
+                  sentAt: sentAt
+                }
+              });
+              
+              messagesAdded.push(newMsg.id);
+            }
+          }
+        }
+        
+        return { success: true, count: messagesAdded.length };
+      } finally {
+        lock.release();
+        await client.logout();
+      }
+    } catch (error: any) {
+      logger.error('Error syncing IMAP inbox:', error);
+      throw new Error(`IMAP Sync Failed: ${error.message}`);
     }
   }
 }
