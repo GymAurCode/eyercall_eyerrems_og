@@ -3097,7 +3097,6 @@ model LedgerEngineEntry {
   @@index([status])
 }
 
-<<<<<<< HEAD
 model TransactionIdentityRegistry {
   id         String   @id @default(uuid())
   tid        String   @unique
@@ -3222,7 +3221,8 @@ model FinInstallmentSchedule {
   
   @@index([dealId])
   @@map("fin_installment_schedules")
-=======
+}
+
 model AppSettings {
   id               String   @id @default(cuid())
   companyName      String   // Required
@@ -3335,5 +3335,4 @@ model CompanyUser {
   @@index([email])
   @@index([companyId])
   @@index([isSuperAdmin])
->>>>>>> 63865f5ee8e8d67c214b87c3f61989005c159ed4
 }
