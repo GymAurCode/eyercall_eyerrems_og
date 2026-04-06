@@ -43,17 +43,26 @@ interface Company {
 
 // ─── API helper ──────────────────────────────────────────────────────────────
 
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
+const BASE = process.env.NEXT_PUBLIC_API_URL
+  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '').replace(/\/api$/, '')
+  : "http://localhost:5000"
 
 async function apiCall(path: string, options?: RequestInit) {
   const token = localStorage.getItem("token") || ""
+  const csrfToken = sessionStorage.getItem("csrfToken") || ""
+  const sessionId = sessionStorage.getItem("sessionId") || ""
+  
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  }
+  
+  if (csrfToken) headers["x-csrf-token"] = csrfToken
+  if (sessionId) headers["X-Session-Id"] = sessionId
+  
   const res = await fetch(`${BASE}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...(options?.headers ?? {}),
-    },
+    headers: { ...headers, ...(options?.headers ?? {}) },
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Request failed")
@@ -77,7 +86,7 @@ function StatusBadge({ status }: { status: "active" | "suspended" }) {
 // ─── Add Company Modal ────────────────────────────────────────────────────────
 
 function AddCompanyModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [step, setStep] = useState<1 | 2>(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [showPw, setShowPw] = useState(false)
@@ -85,10 +94,9 @@ function AddCompanyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
   const [form, setForm] = useState({
     // Step 1 – Company info
     companyName: "", companyCode: "", companyEmail: "",
+    companyPassword: "", 
     companyPhone: "", companyAddress: "", status: "active",
-    // Step 2 – Owner
-    ownerName: "", ownerEmail: "", ownerPassword: "", ownerRole: "owner",
-    // Step 3 – Settings
+    // Step 2 – Settings
     currencyCode: "PKR", currencySymbol: "Rs",
     timezone: "Asia/Karachi", invoicePrefix: "INV",
   })
@@ -129,15 +137,15 @@ function AddCompanyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
         {/* Step indicators */}
         <div className="flex items-center gap-1 px-6 py-3 border-b border-slate-700/50">
-          {[1, 2, 3].map(s => (
+          {[1, 2].map(s => (
             <div key={s} className="flex items-center gap-1">
               <div className={`w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all ${step === s ? "bg-violet-600 text-white" : step > s ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-700 text-slate-500"}`}>
                 {step > s ? <CheckCircle2 className="w-3.5 h-3.5" /> : s}
               </div>
               <span className={`text-xs ${step === s ? "text-white" : "text-slate-500"}`}>
-                {s === 1 ? "Company" : s === 2 ? "Owner" : "Settings"}
+                {s === 1 ? "Company Details" : "Financial Settings"}
               </span>
-              {s < 3 && <ChevronRight className="w-3 h-3 text-slate-600" />}
+              {s < 2 && <ChevronRight className="w-3 h-3 text-slate-600" />}
             </div>
           ))}
         </div>
@@ -161,7 +169,7 @@ function AddCompanyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                 <div>
                   <label className={labelCls}>Company Code *</label>
                   <input id="add-company-code" className={inputCls} placeholder="ACME" value={form.companyCode} onChange={e => set("companyCode", e.target.value.toUpperCase())} />
-                  <p className="text-xs text-slate-500 mt-1">Unique slug (letters, numbers, -_)</p>
+                  <p className="text-xs text-slate-500 mt-1">Unique slug</p>
                 </div>
                 <div>
                   <label className={labelCls}>Status</label>
@@ -171,15 +179,28 @@ function AddCompanyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                   </select>
                 </div>
                 <div className="col-span-2">
-                  <label className={labelCls}>Company Email</label>
-                  <input className={inputCls} type="email" placeholder="company@example.com" value={form.companyEmail} onChange={e => set("companyEmail", e.target.value)} />
+                  <label className={labelCls}>Company Account Email *</label>
+                  <input className={inputCls} type="email" placeholder="admin@company.com" value={form.companyEmail} onChange={e => set("companyEmail", e.target.value)} />
+                  <p className="text-xs text-slate-500 mt-1">This will be the initial login email</p>
+                </div>
+                <div className="col-span-2">
+                  <label className={labelCls}>Company Account Password *</label>
+                  <div className="relative">
+                    <input
+                      className={inputCls + " pr-10"}
+                      type={showPw ? "text" : "password"}
+                      placeholder="Initial admin password"
+                      value={form.companyPassword}
+                      onChange={e => set("companyPassword", e.target.value)}
+                    />
+                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className={labelCls}>Phone</label>
                   <input className={inputCls} placeholder="+92 300 0000000" value={form.companyPhone} onChange={e => set("companyPhone", e.target.value)} />
-                </div>
-                <div>
-                  <label className={labelCls} />
                 </div>
                 <div className="col-span-2">
                   <label className={labelCls}>Address</label>
@@ -190,44 +211,6 @@ function AddCompanyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           )}
 
           {step === 2 && (
-            <>
-              <div className="space-y-3">
-                <div>
-                  <label className={labelCls}>Owner Full Name *</label>
-                  <input id="add-owner-name" className={inputCls} placeholder="John Doe" value={form.ownerName} onChange={e => set("ownerName", e.target.value)} />
-                </div>
-                <div>
-                  <label className={labelCls}>Owner Email *</label>
-                  <input id="add-owner-email" className={inputCls} type="email" placeholder="owner@company.com" value={form.ownerEmail} onChange={e => set("ownerEmail", e.target.value)} />
-                </div>
-                <div>
-                  <label className={labelCls}>Password *</label>
-                  <div className="relative">
-                    <input
-                      id="add-owner-password"
-                      className={inputCls + " pr-10"}
-                      type={showPw ? "text" : "password"}
-                      placeholder="Min 6 characters"
-                      value={form.ownerPassword}
-                      onChange={e => set("ownerPassword", e.target.value)}
-                    />
-                    <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-                      {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className={labelCls}>Role</label>
-                  <select className={inputCls} value={form.ownerRole} onChange={e => set("ownerRole", e.target.value)}>
-                    <option value="owner">Owner</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -243,17 +226,11 @@ function AddCompanyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                   <select className={inputCls} value={form.timezone} onChange={e => set("timezone", e.target.value)}>
                     <option value="Asia/Karachi">Asia/Karachi (PKT +5)</option>
                     <option value="Asia/Dubai">Asia/Dubai (GST +4)</option>
-                    <option value="Asia/Riyadh">Asia/Riyadh (AST +3)</option>
-                    <option value="Europe/London">Europe/London (GMT)</option>
-                    <option value="America/New_York">America/New_York (EST -5)</option>
-                    <option value="America/Los_Angeles">America/Los_Angeles (PST -8)</option>
-                    <option value="Asia/Kolkata">Asia/Kolkata (IST +5:30)</option>
                   </select>
                 </div>
                 <div className="col-span-2">
                   <label className={labelCls}>Invoice Prefix</label>
                   <input className={inputCls} placeholder="INV" value={form.invoicePrefix} onChange={e => set("invoicePrefix", e.target.value)} />
-                  <p className="text-xs text-slate-500 mt-1">Invoices will be numbered as {form.invoicePrefix || "INV"}-0001</p>
                 </div>
               </div>
             </>
@@ -263,16 +240,16 @@ function AddCompanyModal({ onClose, onSuccess }: { onClose: () => void; onSucces
         {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-700">
           <button
-            onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2 | 3) : onClose()}
+            onClick={() => step > 1 ? setStep(s => (s - 1) as 1 | 2) : onClose()}
             className="text-sm text-slate-400 hover:text-white transition-colors px-4 py-2 rounded-lg hover:bg-slate-700"
           >
             {step === 1 ? "Cancel" : "← Back"}
           </button>
 
-          {step < 3 ? (
+          {step < 2 ? (
             <button
-              onClick={() => setStep(s => (s + 1) as 1 | 2 | 3)}
-              disabled={step === 1 && (!form.companyName || !form.companyCode) || step === 2 && (!form.ownerName || !form.ownerEmail || !form.ownerPassword)}
+              onClick={() => setStep(s => (s + 1) as 1 | 2)}
+              disabled={!form.companyName || !form.companyCode || !form.companyEmail || !form.companyPassword}
               className="flex items-center gap-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg px-5 py-2 transition-all"
             >
               Next <ChevronRight className="w-4 h-4" />

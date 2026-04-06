@@ -19,8 +19,12 @@ import { AccountLedgerModule } from "./account-ledger-module"
 import { AddTransactionDialog } from "./add-transaction-dialog"
 import { cn } from "@/lib/utils"
 import { MiniChartCard } from "@/components/ui/mini-chart-card"
+import { useAuth } from "@/lib/auth-context"
+import { hasPermission } from "@/lib/permissions"
 
 export function FinanceView({ initialData }: { initialData?: any }) {
+  const { user } = useAuth()
+  const canCreate = hasPermission(user?.permissions, user?.isSuperAdmin, user?.role, "finance", "create")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -295,11 +299,13 @@ export function FinanceView({ initialData }: { initialData?: any }) {
           <p className="text-sm sm:text-base text-muted-foreground mt-1">Track revenue, expenses, invoices, payments, and commissions</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button onClick={() => setShowAddDialog(true)} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">New Transaction</span>
-            <span className="sm:hidden">New</span>
-          </Button>
+          {canCreate && (
+            <Button onClick={() => setShowAddDialog(true)} className="w-full sm:w-auto">
+              <Plus className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">New Transaction</span>
+              <span className="sm:hidden">New</span>
+            </Button>
+          )}
         </div>
       </div>
 

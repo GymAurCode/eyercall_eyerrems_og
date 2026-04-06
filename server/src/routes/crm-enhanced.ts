@@ -11,7 +11,7 @@ import { createAuditLog } from '../services/audit-log';
 import { syncDealToFinanceLedger } from '../services/workflows';
 import { getFollowUpReminders, getOverdueFollowUps } from '../services/crm-alerts';
 import { createAttachment, saveUploadedFile } from '../services/attachments';
-import { generateSystemId, validateManualUniqueId, validateTID, generatePrefixedId } from '../services/id-generation-service';
+import { generateSystemId, validateManualUniqueId, validateTID } from '../services/id-generation-service';
 import { applyListFilters } from '../utils/filter-helper';
 import { applyListFilters as applyGlobalListFilters } from '../utils/global-filter-helper';
 import { MODULE_CONFIGS } from '../services/unified-export-service';
@@ -19,6 +19,8 @@ import { calculatePagination } from '../utils/pagination';
 import { ModuleFilterConfig } from '../services/global-filter-engine';
 import multer from 'multer';
 import logger from '../utils/logger';
+import { UnifiedSearchService } from '../services/unified-search-service';
+import { IdService } from '../utils/id-service';
 
 const router = (express as any).Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -44,11 +46,11 @@ const createLeadSchema = z.object({
   cnic: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
-  tid: z.string().min(1, "TID is required"),
+  tid: z.string().min(1).optional(),
 });
 
 const createClientSchema = z.object({
-  tid: z.string().min(1, "TID is required"), // Transaction ID - unique across Property, Deal, Client
+  tid: z.string().min(1).optional(), // Transaction ID - unique across Property, Deal, Client
   name: z.string().min(1),
   email: z.string().optional(),
   phone: z.string().optional(),
@@ -322,8 +324,8 @@ router.post('/leads/create', requireAuth, requirePermission('crm.leads.create'),
       await validateManualUniqueId(manualUniqueId, 'lead');
     }
 
-    // Validate TID
-    await validateTID(tid);
+    const leadTid = tid || await IdService.generateTID();
+    await validateTID(leadTid);
 
     // Generate system ID: lead-YY-####
     const leadCode = await generateLeadCode();
@@ -333,7 +335,7 @@ router.post('/leads/create', requireAuth, requirePermission('crm.leads.create'),
         data: {
           ...data,
           leadCode,
-          tid,
+          tid: leadTid,
           manualUniqueId: manualUniqueId?.trim() || null,
           followUpDate: data.followUpDate ? new Date(data.followUpDate) : undefined,
           expectedCloseDate: data.expectedCloseDate ? new Date(data.expectedCloseDate) : undefined,
@@ -443,8 +445,8 @@ router.post('/leads/:id/convert', requireAuth, requirePermission('crm.leads.upda
       return res.status(404).json({ error: 'Lead not found' });
     }
 
-    // Auto-generate prefixed TID for lead conversion
-    const tid = await generatePrefixedId('L-CLI', 'cli');
+    // Preserve immutable lineage TID from lead
+    const tid = lead.tid || await IdService.generateTID();
 
     const clientCode = await generateClientCode();
     const lastClient = await prisma.client.findFirst({ orderBy: { createdAt: 'desc' } });
@@ -573,8 +575,8 @@ router.post('/clients', requireAuth, requirePermission('crm.clients.create'), as
       await validateManualUniqueId(manualUniqueId, 'cli');
     }
 
-    // Validate TID
-    await validateTID(tid);
+    const clientTid = tid || await IdService.generateTID();
+    await validateTID(clientTid);
 
     // Generate system ID: cli-YY-####
     const clientCode = await generateClientCode();
@@ -586,7 +588,7 @@ router.post('/clients', requireAuth, requirePermission('crm.clients.create'), as
         data: {
           ...data,
           clientCode,
-          tid,
+          tid: clientTid,
           manualUniqueId: manualUniqueId?.trim() || null,
           srNo: nextSrNo,
           clientNo: `CL-${String(nextSrNo).padStart(4, '0')}`,
@@ -719,7 +721,7 @@ router.post('/clients/:id/upload-cnic', requireAuth, requirePermission('crm.clie
 
 // ==================== GLOBAL TID SEARCH ====================
 
-// Search by TID across Property, Deal, and Client - returns the deal
+// Search by TID (Transaction ID) - returns the entire journey
 router.get('/search/tid/:tid', requireAuth, requirePermission('crm.deals.view'), async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { tid } = req.params;
@@ -728,74 +730,43 @@ router.get('/search/tid/:tid', requireAuth, requirePermission('crm.deals.view'),
       return res.status(400).json({ error: 'TID is required' });
     }
 
-    // Search for deal by TID (primary search - returns deal)
-    // Note: This endpoint will work after migration is applied
-    // For now, return error until migration is complete
-    return res.status(503).json({ 
-      error: 'TID search is temporarily unavailable. Please apply the database migration first.',
-      message: 'The tid column migration needs to be applied to the database.'
-    });
-    
-    /* Uncomment after migration is applied:
-    const deal = await prisma.deal.findFirst({
-      where: {
-        tid: tid.trim(),
-        isDeleted: false,
-        deletedAt: null,
-      },
-      include: {
-        client: {
-          select: {
-            id: true,
-            name: true,
-            clientCode: true,
-            tid: true,
-          },
-        },
-        property: {
-          select: {
-            id: true,
-            name: true,
-            propertyCode: true,
-            tid: true,
-          },
-        },
-        dealer: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        paymentPlan: {
-          include: {
-            installments: {
-              where: { isDeleted: false },
-              orderBy: { dueDate: 'asc' },
-            },
-          },
-        },
-        payments: {
-          where: { deletedAt: null },
-          orderBy: { date: 'desc' },
-          take: 10,
-        },
-      },
-    });
+    const result = await UnifiedSearchService.searchByTID(tid.trim());
 
-    if (!deal) {
+    if (!result) {
       return res.status(404).json({ 
-        error: 'Deal not found with this TID',
-        message: `No deal found with TID: ${tid}`,
+        error: 'No records found with this TID',
+        message: `No business journey found with TID: ${tid}`,
       });
     }
 
     res.json({
       success: true,
-      data: deal,
-      message: `Deal found with TID: ${tid}`,
+      data: result,
+      message: `Transaction journey found for TID: ${tid}`,
     });
-    */
   } catch (error: any) {
+    logger.error('TID search error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Unified Ledger retrieval for Client, Property, Dealer
+router.get('/ledgers/:type/:id', requireAuth, requirePermission('crm.deals.view'), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { type, id } = req.params;
+    
+    if (!['CLIENT', 'PROPERTY', 'DEALER'].includes(type.toUpperCase())) {
+      return res.status(400).json({ error: 'Invalid ledger type' });
+    }
+
+    const entries = await UnifiedSearchService.getLedger(type.toUpperCase() as any, id);
+
+    res.json({
+      success: true,
+      data: entries,
+    });
+  } catch (error: any) {
+    logger.error('Ledger retrieval error:', error);
     res.status(500).json({ error: error.message });
   }
 });

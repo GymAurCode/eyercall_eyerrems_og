@@ -4,7 +4,10 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import prisma from '../prisma/client';
 import logger from '../utils/logger';
+import { generateCsrfToken } from '../middleware/csrf';
 import { authenticateCompanyUser, CompanyAuthRequest } from '../middleware/company-auth';
+import crypto from 'crypto';
+import { extractDeviceInfo } from '../utils/deviceInfo';
 
 const router = (express as any).Router();
 
@@ -75,8 +78,15 @@ router.post('/login', async (req: Request, res: Response) => {
 
     logger.info(`Company user logged in: ${companyUser.email} (company: ${companyUser.company.companyCode})`);
 
+    // Generate CSRF token
+    const deviceInfo = extractDeviceInfo(req);
+    const sessionId = crypto.randomBytes(16).toString('hex');
+    const csrfToken = await generateCsrfToken(sessionId, deviceInfo.deviceId, companyUser.id);
+
     return res.json({
       token,
+      csrfToken,
+      sessionId,
       user: {
         id: companyUser.id,
         name: companyUser.name,

@@ -47,8 +47,7 @@ router.post('/login', async (req: Request, res: Response) => {
   try {
     const { email, password, deviceId: clientDeviceId } = loginSchema.parse(req.body);
 
-    // Find user by email
-    // Use explicit select to avoid querying category column if it doesn't exist
+    // 1. Try to find internal User (Admin/Staff)
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
@@ -58,65 +57,143 @@ router.post('/login', async (req: Request, res: Response) => {
             name: true,
             status: true,
             permissions: true,
-            // Don't select category - may not exist yet
           },
         },
       },
     });
 
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+    if (user) {
+      // Check if user is Admin
+      if (user.role.name !== 'Admin' && user.role.name !== 'admin') {
+        return res.status(403).json({ error: 'Only Admin can login directly' });
+      }
 
-    // Check if user is Admin
-    if (user.role.name !== 'Admin') {
-      return res.status(403).json({ error: 'Only Admin can login directly' });
-    }
+      // Verify password
+      const isValid = await comparePassword(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
 
-    // Verify password
-    const isValid = await comparePassword(password, user.password);
-    if (!isValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Extract device info and use client deviceId if provided
-    const deviceInfo = extractDeviceInfo(req);
-    const finalDeviceId = clientDeviceId || deviceInfo.deviceId;
-    
-    // Update deviceInfo with the final deviceId
-    const updatedDeviceInfo = {
-      ...deviceInfo,
-      deviceId: finalDeviceId,
-    };
-
-    // Generate access and refresh token pair
-    const { accessToken, refreshToken } = await generateTokenPair({
-      userId: user.id,
-      username: user.username,
-      email: user.email,
-      roleId: user.roleId,
-      deviceId: finalDeviceId,
-    });
-
-    // Generate CSRF token
-    const sessionId = crypto.randomBytes(16).toString('hex');
-    const csrfToken = await generateCsrfToken(sessionId, finalDeviceId, user.id);
-
-    return res.json({
-      token: accessToken,
-      refreshToken,
-      csrfToken,
-      sessionId,
-      deviceId: finalDeviceId,
-      user: {
-        id: user.id,
+      const deviceInfo = extractDeviceInfo(req);
+      const finalDeviceId = clientDeviceId || deviceInfo.deviceId;
+      
+      const { accessToken, refreshToken } = await generateTokenPair({
+        userId: user.id,
         username: user.username,
         email: user.email,
-        role: user.role.name,
         roleId: user.roleId,
-        permissions: user.role.permissions || [], // Include permissions, default to empty array if null
-      },
+        deviceId: finalDeviceId,
+      });
+
+      const sessionId = crypto.randomBytes(16).toString('hex');
+      const csrfToken = await generateCsrfToken(sessionId, finalDeviceId, user.id);
+
+      return res.json({
+        token: accessToken,
+        refreshToken,
+        csrfToken,
+        sessionId,
+        deviceId: finalDeviceId,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role.name,
+          roleId: user.roleId,
+          permissions: user.role.permissions || [],
+          isSuperAdmin: true, // Internal admins are treated as super admins for UI purposes
+        },
+      });
+    }
+
+    // 2. Try to find CompanyUser
+    const companyUser = await prisma.companyUser.findUnique({
+      where: { email },
+      include: {
+        company: {
+          select: {
+            id: true,
+            companyName: true,
+            companyCode: true,
+            status: true,
+            settings: {
+              select: {
+                logo: true,
+                currencyCode: true,
+                currencySymbol: true,
+              }
+            }
+          }
+        }
+      }
     });
+
+    if (companyUser) {
+      // Verify password
+      const isValid = await comparePassword(password, companyUser.passwordHash);
+      if (!isValid) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      // Check isActive
+      if (!companyUser.isActive) {
+        return res.status(403).json({ error: 'User account is inactive' });
+      }
+
+      // Check company status
+      if (companyUser.company.status !== 'active') {
+        return res.status(403).json({ error: 'Company account is ' + companyUser.company.status });
+      }
+
+      const deviceInfo = extractDeviceInfo(req);
+      const finalDeviceId = clientDeviceId || deviceInfo.deviceId;
+
+      // Generate a long-lived access token (since we don't have RefreshToken for CompanyUser yet)
+      // We use a custom payload that includes company info
+      const tokenPayload = {
+        userId: companyUser.id,
+        username: companyUser.email,
+        email: companyUser.email,
+        roleId: companyUser.role, // Use role string as roleId for now
+        deviceId: finalDeviceId,
+        companyId: companyUser.companyId,
+        isSuperAdmin: companyUser.isSuperAdmin,
+      };
+
+      // Create a specific expiry for company users if needed, 
+      // but generateToken uses JWT_EXPIRES_IN (usually 15m).
+      // For now, let's just use generateToken.
+      const accessToken = generateToken(tokenPayload);
+
+      const sessionId = crypto.randomBytes(16).toString('hex');
+      const csrfToken = await generateCsrfToken(sessionId, finalDeviceId, companyUser.id);
+
+      // Update last login
+      await prisma.companyUser.update({
+        where: { id: companyUser.id },
+        data: { lastLoginAt: new Date() },
+      });
+
+      return res.json({
+        token: accessToken,
+        refreshToken: null, // No refresh token for company users in this phase
+        csrfToken,
+        sessionId,
+        deviceId: finalDeviceId,
+        user: {
+          id: companyUser.id,
+          name: companyUser.name,
+          email: companyUser.email,
+          role: companyUser.role,
+          companyId: companyUser.companyId,
+          isSuperAdmin: companyUser.isSuperAdmin,
+          company: companyUser.company,
+        },
+      });
+    }
+
+    // Neither found
+    return res.status(401).json({ error: 'Invalid credentials' });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors });
@@ -215,6 +292,9 @@ router.post('/role-login', async (req: Request, res: Response) => {
       where: {
         role: {
           name: 'Admin',
+        },
+        id: {
+          not: user.id,
         },
       },
     });
@@ -424,6 +504,9 @@ router.post('/invite-login', async (req: Request, res: Response) => {
         where: {
           role: {
             name: 'Admin',
+          },
+          id: {
+            not: user.id,
           },
         },
       });

@@ -6,7 +6,11 @@
 import prisma, { Prisma } from '../prisma/client';
 import { DealFinanceService, CommissionType, CommissionConfig } from './deal-finance-service';
 import { generateSystemId, validateTID } from './id-generation-service';
+<<<<<<< HEAD
+import { IdService } from '../utils/id-service';
+=======
 import { TransactionIdentityEngine } from './transactionIdentity.service';
+>>>>>>> d6206f021a9e73d9dcb19b7b601c7cf9bf9a19c7
 
 export interface CreateDealPayload {
   title: string;
@@ -85,7 +89,7 @@ export class DealService {
    * Format: dl-YY-#### (uses centralized ID generation service)
    */
   static async generateDealCode(): Promise<string> {
-    return await generateSystemId('dl');
+    return await IdService.generateEntityId('DEAL');
   }
 
   /**
@@ -200,14 +204,27 @@ export class DealService {
       }
     }
 
-    // Generate deal code: dl-YY-####
+    // Generate deal code
     const dealCode = await this.generateDealCode();
 
+<<<<<<< HEAD
+    // TID is immutable and must be inherited from client/lead lineage.
+    // Allow explicit payload only when it matches existing client TID.
+    const clientTid = client.tid;
+    if (!clientTid && !payload.tid) {
+      throw new Error('Client TID is missing. Deal creation requires a source TID.');
+    }
+    if (payload.tid && clientTid && payload.tid !== clientTid) {
+      throw new Error('Deal TID must match the linked client TID.');
+    }
+    const tid = clientTid || payload.tid!;
+=======
     // Inherit TID from Client (or generate if missing for backward compatibility)
     let tid = client.tid;
     if (!tid) {
       tid = await TransactionIdentityEngine.generateTransactionID();
     }
+>>>>>>> d6206f021a9e73d9dcb19b7b601c7cf9bf9a19c7
 
     // Validate dealer is required if commission is specified
     if ((payload.commissionType && payload.commissionType !== 'none') && !payload.dealerId) {
@@ -331,9 +348,37 @@ export class DealService {
         },
       });
 
+<<<<<<< HEAD
+      // CREATE UNIFIED LEDGER ENTRY for Client and Property
+      await tx.ledgerEntry.create({
+        data: {
+          dealId: deal.id,
+          paymentId: null,
+          accountDebit: 'UNIFIED_CLIENT',
+          accountCredit: 'UNIFIED_DEAL_CREATED',
+          amount: deal.dealAmount,
+          remarks: `[TID:${tid}] [LEDGER:CLIENT] [TYPE:DEAL_CREATED] Deal created: ${deal.title}`,
+          date: deal.dealDate || new Date(),
+        }
+      });
+
+      if (deal.propertyId) {
+        await tx.ledgerEntry.create({
+          data: {
+            dealId: deal.id,
+            paymentId: null,
+            accountDebit: 'UNIFIED_PROPERTY',
+            accountCredit: 'UNIFIED_DEAL_CREATED',
+            amount: deal.dealAmount,
+            remarks: `[TID:${tid}] [LEDGER:PROPERTY] [TYPE:DEAL_CREATED] Deal created for property: ${deal.title}`,
+            date: deal.dealDate || new Date(),
+          }
+        });
+=======
       // Attach T-ID to Identity Engine Registry
       if (tid) {
         await TransactionIdentityEngine.attachTid(tid, 'deal', deal.id, 'Properties');
+>>>>>>> d6206f021a9e73d9dcb19b7b601c7cf9bf9a19c7
       }
 
       return deal;

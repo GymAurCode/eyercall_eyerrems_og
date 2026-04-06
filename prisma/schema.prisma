@@ -1186,7 +1186,7 @@ model Dealer {
   totalDealsClosed      Int             @default(0)
   updatedBy             String?
   manualUniqueId        String?         @unique
-  tid                   String?
+  tid                   String?         @unique
   clientsAssigned       Client[]        @relation("ClientAssignedDealer")
   commissions           Commission[]
   deals                 Deal[]
@@ -1522,6 +1522,7 @@ model Payment {
   deletedAt         DateTime?
   deletedBy         String?
   manualUniqueId    String?          @unique
+  tid               String?          @index
   // Extended payment mode metadata (nullable, backward compatible)
   bankName          String?          @map("bank_name")
   chequeNumber      String?          @map("cheque_number")
@@ -1988,35 +1989,50 @@ model JournalLine {
 }
 
 model LedgerEntry {
-  id              String           @id @default(uuid())
-  dealId          String
-  paymentId       String?
-  accountDebit    String
-  accountCredit   String
-  amount          Float
-  remarks         String?
-  date            DateTime         @default(now())
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  deletedAt       DateTime?
-  deletedBy       String?
-  debitAccountId  String?
-  creditAccountId String?
-  installment     DealInstallment? @relation("InstallmentLedgerEntry")
+  id                String           @id @default(uuid())
+  tid               String           @index
+  ledgerType        String           // CLIENT, PROPERTY, DEALER
+  entryType         String           // DEAL_CREATED, PAYMENT_RECEIVED, INSTALLMENT_DUE, COMMISSION_EARNED, etc.
+  referenceType     String           // DEAL, PAYMENT, INSTALLMENT, etc.
+  referenceId       String           // UUID of the related record
+  dealAmount        Float            @default(0)
+  paymentAmount     Float            @default(0)
+  outstandingAmount Float            @default(0)
+  entryDate         DateTime         @default(now())
+  notes             String?
+  metadata          Json?            // For additional context
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+  deletedBy         String?
+  
+  // Legacy fields (optional for backward compatibility)
+  dealId            String?
+  paymentId         String?
+  accountDebit      String?
+  accountCredit     String?
+  amount            Float?
+  remarks           String?
+  date              DateTime?        @default(now())
+  debitAccountId    String?
+  creditAccountId   String?
+  
+  installment       DealInstallment? @relation("InstallmentLedgerEntry")
   dealerLedger    DealerLedger?    @relation("DealerLedgerLedgerEntry")
   dealerPayments  DealerPayment[]
   creditAccount   Account?         @relation("LedgerEntryCreditAccount", fields: [creditAccountId], references: [id], onDelete: Restrict)
-  deal            Deal             @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  deal            Deal?            @relation(fields: [dealId], references: [id], onDelete: Cascade)
   debitAccount    Account?         @relation("LedgerEntryDebitAccount", fields: [debitAccountId], references: [id], onDelete: Restrict)
   payment         Payment?         @relation(fields: [paymentId], references: [id])
 
+  @@index([tid])
+  @@index([ledgerType])
+  @@index([entryType])
+  @@index([referenceId])
+  @@index([entryDate])
   @@index([dealId])
   @@index([paymentId])
   @@index([date])
-  @@index([accountDebit])
-  @@index([accountCredit])
-  @@index([debitAccountId])
-  @@index([creditAccountId])
   @@index([deletedAt])
 }
 
@@ -2274,6 +2290,7 @@ model DealInstallment {
   remaining          Float                   @default(0)
   type               String?
   penalty            Float                   @default(0)
+  tid                String?                 @index
   client             Client                  @relation(fields: [clientId], references: [id], onDelete: Cascade)
   deal               Deal                    @relation(fields: [dealId], references: [id], onDelete: Cascade)
   ledgerEntry        LedgerEntry?            @relation("InstallmentLedgerEntry", fields: [ledgerEntryId], references: [id])
@@ -2290,6 +2307,7 @@ model DealInstallment {
   @@index([dueDate])
   @@index([isDeleted])
   @@index([type])
+  @@index([tid])
 }
 
 model DealerLedger {

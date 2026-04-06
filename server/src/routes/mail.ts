@@ -60,6 +60,19 @@ router.get('/unread-count', authenticate, async (req: AuthRequest, res: Response
 });
 
 /**
+ * Trigger IMAP Sync
+ */
+router.post('/sync', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const result = await mailService.syncInbox();
+    res.json(result);
+  } catch (error: any) {
+    logger.error('Failed to sync IMAP:', error);
+    res.status(500).json({ error: error.message || 'Failed to sync inbound emails.' });
+  }
+});
+
+/**
  * Send an email
  */
 router.post('/send', authenticate, async (req: AuthRequest, res: Response) => {

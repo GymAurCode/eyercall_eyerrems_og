@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { apiService } from "@/lib/api"
 import { cn, formatCurrency } from "@/lib/utils"
 import { MiniChartCard } from "@/components/ui/mini-chart-card"
+import { useAuth } from "@/lib/auth-context"
+import { hasPermission } from "@/lib/permissions"
 
 // Lazy load heavy components to reduce initial chunk size
 const LeadsView = lazy(() => import("./leads-view").then(m => ({ default: m.LeadsView })))
@@ -27,6 +29,8 @@ const AddDealerDialog = lazy(() => import("./add-dealer-dialog").then(m => ({ de
 const AddClientDialog = lazy(() => import("./add-client-dialog").then(m => ({ default: m.AddClientDialog })))
 
 export function CRMView({ initialData }: { initialData?: any }) {
+  const { user } = useAuth()
+  const canCreateCRM = hasPermission(user?.permissions, user?.isSuperAdmin, user?.role, "crm", "create")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -420,21 +424,25 @@ export function CRMView({ initialData }: { initialData?: any }) {
           <p className="text-muted-foreground mt-1">Manage leads, clients, deals, dealers, and communications</p>
         </div>
         <div className="flex gap-2">
-          {activeTab === "dealers" ? (
-            <Button onClick={() => setShowAddDealerDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Dealer
-            </Button>
-          ) : activeTab === "clients" ? (
-            <Button onClick={() => setShowAddClientDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Client
-            </Button>
-          ) : (
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Lead
-            </Button>
+          {canCreateCRM && (
+            <>
+              {activeTab === "dealers" ? (
+                <Button onClick={() => setShowAddDealerDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Dealer
+                </Button>
+              ) : activeTab === "clients" ? (
+                <Button onClick={() => setShowAddClientDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Client
+                </Button>
+              ) : (
+                <Button onClick={() => setShowAddDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Lead
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>

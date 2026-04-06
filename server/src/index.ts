@@ -437,3 +437,5 @@ if (server && typeof server.on === 'function') {
     }
   });
 }
+
+// trigger restart

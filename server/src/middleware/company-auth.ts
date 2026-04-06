@@ -46,7 +46,7 @@ export const authenticateCompanyUser = async (
     const jwtSecret = process.env.JWT_SECRET || 'CHANGE-THIS-IN-PRODUCTION-DEVELOPMENT-ONLY';
 
     let decoded: {
-      companyUserId: string;
+      userId: string;
       companyId: string;
       role: string;
       isSuperAdmin: boolean;
@@ -54,7 +54,7 @@ export const authenticateCompanyUser = async (
 
     try {
       decoded = jwt.verify(token, jwtSecret) as {
-        companyUserId: string;
+        userId: string;
         companyId: string;
         role: string;
         isSuperAdmin: boolean;
@@ -69,15 +69,15 @@ export const authenticateCompanyUser = async (
       return;
     }
 
-    // Ensure this is a company token (not the old user token)
-    if (!decoded.companyUserId) {
-      res.status(401).json({ error: 'Invalid token type. Please use company login.' });
+    // Ensure this is a company-specific token (has companyId)
+    if (!decoded.companyId) {
+      res.status(401).json({ error: 'Invalid token type. Only company-associated accounts allowed.' });
       return;
     }
 
     // Verify user still exists and is active
     const companyUser = await prisma.companyUser.findUnique({
-      where: { id: decoded.companyUserId },
+      where: { id: decoded.userId },
       select: {
         id: true,
         companyId: true,

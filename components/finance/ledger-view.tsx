@@ -22,6 +22,7 @@ import { apiService } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { TransactionDetailModal } from "@/components/finance/transaction-detail-modal"
 
 type SourceTypeFilter = "all" | "deal" | "payment" | "voucher" | "refund" | "transfer" | "merge" | "commission" | "expense" | "adjustment"
 
@@ -78,6 +79,8 @@ export function LedgerView({ type, id, onClose, showBackButton = true }: LedgerV
   const [error, setError] = useState<string | null>(null)
   const [selectedEntry, setSelectedEntry] = useState<LedgerEntry | null>(null)
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
+  const [transactionModalOpen, setTransactionModalOpen] = useState(false)
+  const [selectedTid, setSelectedTid] = useState<string | null>(null)
   const [filterStartDate, setFilterStartDate] = useState<string>("")
   const [filterEndDate, setFilterEndDate] = useState<string>("")
   const [filterSourceType, setFilterSourceType] = useState<SourceTypeFilter>("all")
@@ -401,6 +404,12 @@ export function LedgerView({ type, id, onClose, showBackButton = true }: LedgerV
 
   const handleViewEntry = (entry: LedgerEntry) => {
     if (entry.id === "OPENING" || entry.isLegacy) return
+    const tid =
+      String(entry.referenceNo || "").match(/\d{4}-\d{2}-\d{4}/)?.[0] ||
+      String(entry.description || "").match(/\d{4}-\d{2}-\d{4}/)?.[0] ||
+      String(entry.narration || "").match(/\d{4}-\d{2}-\d{4}/)?.[0] ||
+      null
+    setSelectedTid(tid)
     setSelectedEntry(entry)
     setDetailDialogOpen(true)
   }
@@ -522,10 +531,16 @@ export function LedgerView({ type, id, onClose, showBackButton = true }: LedgerV
                   {selectedEntry.credit > 0 && ` Credit increases liability/equity/revenue accounts.`}
                 </p>
               </div>
+              {selectedTid && (
+                <Button type="button" variant="outline" onClick={() => setTransactionModalOpen(true)}>
+                  Open Transaction Detail View
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+      <TransactionDetailModal open={transactionModalOpen} onOpenChange={setTransactionModalOpen} tid={selectedTid} />
 
       {/* Ledger Header */}
       <div className="flex items-center justify-between">

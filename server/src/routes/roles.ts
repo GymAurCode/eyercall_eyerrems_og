@@ -805,7 +805,7 @@ router.post('/generate-invite', authenticate, requireAdmin, async (req: AuthRequ
       }
     }
     
-    const inviteUrl = `${frontendUrl}/roles/login?token=${token}`;
+    const inviteUrl = `${frontendUrl}/role-login?token=${token}`;
     
     res.status(201).json({
       ...inviteLink,

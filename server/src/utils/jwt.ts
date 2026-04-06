@@ -32,6 +32,9 @@ export interface TokenPayload {
   email: string;
   roleId: string;
   deviceId?: string;
+  // Multi-tenant fields
+  companyId?: string;
+  isSuperAdmin?: boolean;
 }
 
 export const generateToken = (payload: TokenPayload): string => {

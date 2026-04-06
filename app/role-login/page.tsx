@@ -23,6 +23,7 @@ export default function RoleLoginPage() {
   const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [roleName, setRoleName] = useState<string | null>(null)
   const router = useRouter()
   const { roleLogin } = useAuth()
   const { toast } = useToast()
@@ -32,16 +33,46 @@ export default function RoleLoginPage() {
   }, [initialize])
 
   useEffect(() => {
-    // Load remembered username and password from localStorage
     if (typeof window !== "undefined") {
-      const rememberedUsername = localStorage.getItem("remembered-role-username")
-      const rememberedPassword = localStorage.getItem("remembered-role-password")
-      if (rememberedUsername) {
-        setUsername(rememberedUsername)
-        setRememberMe(true)
-      }
-      if (rememberedPassword && rememberedUsername) {
-        setPassword(rememberedPassword)
+      const urlParams = new URLSearchParams(window.location.search)
+      const token = urlParams.get("token")
+
+      if (token) {
+        // Handle invite link token
+        const fetchInviteDetails = async () => {
+          try {
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL 
+              ? process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '').replace(/\/api$/, '') 
+              : "http://localhost:5000"
+              
+            const response = await fetch(`${baseUrl}/api/roles/invite/${token}`)
+            if (response.ok) {
+              const data = await response.json()
+              if (data.username) setUsername(data.username)
+              if (data.roleName) setRoleName(data.roleName)
+              
+              // Check sessionStorage for temporarily stored password if Admin directly copied the link
+              const storedPassword = sessionStorage.getItem(`invite_password_${token}`)
+              if (storedPassword) {
+                setPassword(storedPassword)
+              }
+            }
+          } catch (err) {
+            console.error("Failed to fetch invite token details", err)
+          }
+        }
+        fetchInviteDetails()
+      } else {
+        // Load remembered credentials
+        const rememberedUsername = localStorage.getItem("remembered-role-username")
+        const rememberedPassword = localStorage.getItem("remembered-role-password")
+        if (rememberedUsername) {
+          setUsername(rememberedUsername)
+          setRememberMe(true)
+        }
+        if (rememberedPassword && rememberedUsername) {
+          setPassword(rememberedPassword)
+        }
       }
     }
   }, [])
@@ -144,7 +175,9 @@ export default function RoleLoginPage() {
           <div className="text-center lg:text-left">
             <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Role Login</h1>
             <p className="mt-2 text-neutral-500">
-              Sign in to your account with your role credentials
+              {roleName 
+                ? `Sign in to access your ${roleName} portal`
+                : "Sign in to your account with your role credentials"}
             </p>
           </div>
 
